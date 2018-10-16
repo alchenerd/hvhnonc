@@ -7,8 +7,6 @@ Created on Tue Oct 16 11:13:25 2018
 The module where I put tkinter frames, toplevels, and their functions
 """
 
-# TODO alchenerd@gmail.com: clean up register(the toplevel)
-
 import tkinter as tk
 from tkinter import messagebox, ttk
 import sqlite3
@@ -30,6 +28,8 @@ class Index(tk.Frame):
         parent.title("非消耗品管理系統 (v"+__version__+")")
         parent.focus_force()
         parent.resizable(False, False)
+        # listbox font style
+        parent.option_add('*TCombobox*Listbox.font', DEFAULT_FONT)
         # an image
         photo = tk.PhotoImage(file=WELCOME_IMAGE)
         self.label_welcome = tk.Label(image=photo)
@@ -1046,7 +1046,7 @@ class register(tk.Toplevel):
                         "keeper like '%" + phrase+ "%' or "
                         "remark like '%" + phrase+ "%')"
                         " order by in_date;")
-                print(sqlstr)
+                #print(sqlstr)
                 cursor.execute(sqlstr)
                 data = cursor.fetchall()
                 for d in data:

@@ -14,7 +14,7 @@ import sqlite3
 import hashlib
 import datetime
 
-versionString = "0.1"
+versionString = "0.1.2"
 functionToplevelGeometry = "665x410"
 
 def tableInit():
@@ -411,6 +411,7 @@ class register(tk.Toplevel):
             self.cb_keeper.config(state="disabled")
             self.ent_remark.config(state="disabled")
             self.clearAllField()
+            
             return
         elif state in ("new",):
             self.cb_cat.config(state="readonly")
@@ -436,6 +437,10 @@ class register(tk.Toplevel):
             self.ent_remark.config(state="normal")
             self.initializeAllField()
             self.clearAllField()
+            self.setAsToday(self.cb_in_date_yy, self.cb_in_date_mm, 
+                            self.cb_in_date_dd)
+            self.setAsToday(self.cb_key_date_yy, self.cb_key_date_mm, 
+                            self.cb_key_date_dd)
             return
         else:
             # lookup in book
@@ -498,6 +503,11 @@ class register(tk.Toplevel):
             self.state = "none"
             self.updateByState(self.state);
             
+    def setAsToday(self, yearbox, monthbox, daybox):
+        yearbox.set(datetime.datetime.now().year - 1911)
+        monthbox.set(datetime.datetime.now().month)
+        daybox.set(datetime.datetime.now().day)
+        
     def lookupIndexInBook(self, state):
         #print("state == ", state)
         for i, sublist in enumerate(self.book):
@@ -543,11 +553,11 @@ class register(tk.Toplevel):
                 cursor.execute(sqlstr)
                 catagories = cursor.fetchall()
                 self.cb_cat['values'] = catagories
-                self.cb_cat.bind("<<ComboboxSelected>>", self.subcatagoryUpdate)
+                self.cb_cat.bind("<<ComboboxSelected>>", self.onCategorySelected)
                 connect.close()
             elif c in (2,):
                 # 物品細目
-                self.cb_subcat.bind("<<ComboboxSelected>>", self.onSubcatagorySelected)
+                self.cb_subcat.bind("<<ComboboxSelected>>", self.onSubcategorySelected)
             elif c in (3,):
                 # 物品名稱
                 self.cb_name.bind("<<ComboboxSelected>>", self.onNameSelected)
@@ -588,7 +598,7 @@ class register(tk.Toplevel):
                 cursor = connect.cursor()
                 sqlstr = """select change_value from hvhnonc_in_cache
                 where this_ID = 0 and change_ID = (
-                select ID from hvhnonc_fields where description = '存置地點');"""
+                select ID from hvhnonc_fields where description = '存置地點') order by rowid desc limit 30;"""
                 cursor.execute(sqlstr)
                 places = cursor.fetchall()
                 self.cb_place['values'] = places
@@ -604,7 +614,7 @@ class register(tk.Toplevel):
                 cursor = connect.cursor()
                 sqlstr = """select change_value from hvhnonc_in_cache
                 where this_ID = 0 and change_ID = (
-                select ID from hvhnonc_fields where description = '保管單位');"""
+                select ID from hvhnonc_fields where description = '保管單位') order by rowid desc limit 30;"""
                 cursor.execute(sqlstr)
                 keep_depts = cursor.fetchall()
                 self.cb_keep_dept['values'] = keep_depts
@@ -617,7 +627,7 @@ class register(tk.Toplevel):
                 cursor = connect.cursor()
                 sqlstr = """select change_value from hvhnonc_in_cache
                 where this_ID = 0 and change_ID = (
-                select ID from hvhnonc_fields where description = '使用單位');"""
+                select ID from hvhnonc_fields where description = '使用單位') order by rowid desc limit 30;"""
                 cursor.execute(sqlstr)
                 use_depts = cursor.fetchall()
                 self.cb_use_dept['values'] = use_depts
@@ -630,7 +640,7 @@ class register(tk.Toplevel):
                 cursor = connect.cursor()
                 sqlstr = """select change_value from hvhnonc_in_cache
                 where this_ID = 0 and change_ID = (
-                select ID from hvhnonc_fields where description = '保管人');"""
+                select ID from hvhnonc_fields where description = '保管人') order by rowid desc limit 30;"""
                 cursor.execute(sqlstr)
                 keepers = cursor.fetchall()
                 self.cb_keeper['values'] = keepers
@@ -641,7 +651,7 @@ class register(tk.Toplevel):
             else:
                 pass
         
-    def subcatagoryUpdate(self, event):
+    def onCategorySelected(self, event):
         connect = sqlite3.connect("HVHNONC.db")
         connect.row_factory = lambda cursor, row: row[0]
         cursor = connect.cursor()
@@ -655,18 +665,18 @@ class register(tk.Toplevel):
         if len(self.cb_subcat['values']) > 0 \
         and self.cb_subcat.get() != self.cb_subcat['values'][0]:
             self.cb_subcat.set(self.cb_subcat['values'][0])
-            self.onSubcatagorySelected(None)
+            self.onSubcategorySelected(None)
         connect.close()
         
-    def onSubcatagorySelected(self, event):
+    def onSubcategorySelected(self, event):
         # update product name
         # connect to db
         connect = sqlite3.connect("HVHNONC.db")
         cursor = connect.cursor()
-        # get all item name in the same subcatagory from cache
+        # get all item name in the same subcategory from cache
         sqlstr = """select change_ID, change_value from hvhnonc_in_cache
         where this_ID = """+ str(self.getFieldIDByName('物品細目')) +""" and 
-        this_value = '""" + self.subcategory.get() + "';"
+        this_value = '""" + self.subcategory.get() + "' order by rowid desc limit 30;"
         #print(sqlstr)
         cursor.execute(sqlstr)
         cachehit = cursor.fetchall()
@@ -692,10 +702,10 @@ class register(tk.Toplevel):
         # connect to db
         connect = sqlite3.connect("HVHNONC.db")
         cursor = connect.cursor()
-        # get all item name in the same subcatagory from cache
+        # get all item name in the same subcategory from cache
         sqlstr = """select change_ID, change_value from hvhnonc_in_cache
         where this_ID = """+ str(self.getFieldIDByName('物品名稱')) +""" and 
-        this_value = '""" + self.name.get() + "';"
+        this_value = '""" + self.name.get() + "' order by rowid desc limit 30;"
         #print(sqlstr)
         cursor.execute(sqlstr)
         cachehit = cursor.fetchall()
@@ -749,7 +759,7 @@ class register(tk.Toplevel):
             """print("getFieldIDByName: ")
             print(hit)"""
             return hit
-        return None;
+        return None
         
     def lookupSerial(self):
         # open a toplevel
@@ -849,9 +859,10 @@ class register(tk.Toplevel):
             cursor = connect.cursor()
             sqlstr = """replace into hvhnonc_in_cache
             (this_ID, this_value, change_ID, change_value) 
-            values (0, null, 
+            values (0, 'none', 
             (select ID from hvhnonc_fields where description = '檢索'), 
-            '""" + self.parent.query.get() + """' );"""
+            '""" + self.parent.query.get() + """' ) 
+            order by rowid desc limit 30;"""
             #print(sqlstr)
             cursor.execute(sqlstr)
             connect.commit()
@@ -959,7 +970,7 @@ class register(tk.Toplevel):
         print("deleteThis")
         
     def lookupForm(self):
-        print("lookupForm")
+        #print("lookupForm")
         # opens a new toplevel for filtering
         self.FilterWindow(self)
         
@@ -971,7 +982,6 @@ class register(tk.Toplevel):
             self.title("請輸入要篩選的範圍")
             self.geometry("665x290")
             
-            # WIP
             self.lb_category = tk.Label(self, text="物品大項: ", font=(None, 15))
             self.lb_category.grid(row=0, column=0, padx=5, pady=5)
             self.category = tk.StringVar()
@@ -1119,15 +1129,212 @@ class register(tk.Toplevel):
             self.btn_next = ttk.Button(self.f_bottomButtons, text='確定', style="my.TButton", command=self.submit)
             self.btn_next.pack(side="left")
             self.f_bottomButtons.grid(row=7, column=3, padx=5, pady=5)
+            self.initLookupForm()
+            
+            self.bind("<Return>", self.catchReturn)
             
             self.grab_set()
             self.attributes("-topmost", "false")
+            
+        def catchReturn(self, event):
+            self.submit()
+            
+        def initLookupForm(self):
+            # connect to db
+            connect = sqlite3.connect("HVHNONC.db")
+            cursor = connect.cursor()
+
+            # 物品大項
+            sqlstr = "select description from hvhnonc_category;"
+            # print(sqlstr)
+            cursor.execute(sqlstr)
+            connect.commit()
+            catagories = cursor.fetchall()
+            self.cb_category.config(values=catagories)
+            self.cb_category.bind("<<ComboboxSelected>>", self.onCategorySelected)
+            
+            # 物品細目
+            # 物品名稱
+            # 品牌
+            # 規格
+            # initialized with onCategorySelected()
+            
+            # 單價(低)
+            # 單價(高)
+            # no need for init
+            
+            # 購置日期(低)yyymmdd
+            # 購置日期(高)yyymmdd
+            # 建帳日期(低)yyymmdd
+            # 建帳日期(高)yyymmdd
+            self.initDateComboboxes(self.cb_date_yy_min, 
+                                    self.cb_date_mm_min, 
+                                    self.cb_date_dd_min)
+            self.initDateComboboxes(self.cb_date_yy_max, 
+                                    self.cb_date_mm_max, 
+                                    self.cb_date_dd_max)
+            self.initDateComboboxes(self.cb_key_date_yy_min, 
+                                    self.cb_key_date_mm_min, 
+                                    self.cb_key_date_dd_min)
+            self.initDateComboboxes(self.cb_key_date_yy_max, 
+                                    self.cb_key_date_mm_max, 
+                                    self.cb_key_date_dd_max)
+
+            connect = sqlite3.connect("HVHNONC.db")
+            connect.row_factory = lambda cursor, row: row[0]
+            cursor = connect.cursor()
+            # 保管單位
+            sqlstr = """select change_value from hvhnonc_in_cache
+                where this_ID = 0 and change_ID = (
+                select ID from hvhnonc_fields where description = '保管單位')
+                order by rowid desc limit 30;"""
+            cursor.execute(sqlstr)
+            keep_dept = cursor.fetchall()
+            self.cb_keep_dept['values'] = keep_dept
+            # 存置地點
+            sqlstr = """select change_value from hvhnonc_in_cache
+                where this_ID = 0 and change_ID = (
+                select ID from hvhnonc_fields where description = '存置地點')
+                order by rowid desc limit 30;"""
+            cursor.execute(sqlstr)
+            places = cursor.fetchall()
+            self.cb_place['values'] = places
+            # 使用單位
+            sqlstr = """select change_value from hvhnonc_in_cache
+                where this_ID = 0 and change_ID = (
+                select ID from hvhnonc_fields where description = '使用單位')
+                order by rowid desc limit 30;"""
+            cursor.execute(sqlstr)
+            use_dept = cursor.fetchall()
+            self.cb_use_dept['values'] = use_dept
+            # 保管人
+            sqlstr = """select change_value from hvhnonc_in_cache
+                where this_ID = 0 and change_ID = (
+                select ID from hvhnonc_fields where description = '保管人')
+                order by rowid desc limit 30;"""
+            cursor.execute(sqlstr)
+            keepers = cursor.fetchall()
+            self.cb_keeper['values'] = keepers
+            connect.close()
+            
+        def initDateComboboxes(self, yearbox, monthbox, daybox):
+            thisYear = datetime.datetime.now().year - 1911
+            yearbox.config(values=list(reversed(range(1,thisYear+1))))
+            monthbox.config(values=list(range(1,12+1)))
+            daybox.config(values=list(range(1,31+1)))
+            
+        def onCategorySelected(self, event):
+            # update subcategory
+            connect = sqlite3.connect("HVHNONC.db")
+            cursor = connect.cursor()
+            sqlstr = ("select description from hvhnonc_subcategory "
+                     "where parent_ID = "
+                     "(select ID from hvhnonc_category "
+                     "where description = '"
+                     + self.cb_category.get() +
+                     "' );")
+            #print(sqlstr)
+            cursor.execute(sqlstr)
+            connect.commit()
+            subcatagories = cursor.fetchall()
+            self.cb_subcategory.config(values=subcatagories)
+            self.cb_subcategory.bind("<<ComboboxSelected>>", self.onSubcategorySelected)
+            self.onSubcategorySelected(None)
+            if (len(self.cb_subcategory['values']) > 0 
+                and self.cb_subcategory.get() != self.cb_subcategory['values'][0]):
+                self.cb_subcategory.set(self.cb_subcategory['values'][0])
+                self.onSubcategorySelected(None)
+            connect.close()
+            
+        def onSubcategorySelected(self, event):
+            # update other fields in the lookup form
+            # namely 名稱, 品牌, 規格
+                   # update product name
+            # connect to db
+            connect = sqlite3.connect("HVHNONC.db")
+            cursor = connect.cursor()
+            # get all item name in the same subcategory from cache
+            sqlstr = """select change_ID, change_value from hvhnonc_in_cache
+            where this_ID = """+ str(self.getFieldIDByName('物品細目')) +""" and 
+            this_value = '""" + self.subcategory.get() + "' order by rowid desc limit 30;"
+            #print(sqlstr)
+            cursor.execute(sqlstr)
+            cachehits = cursor.fetchall()
+            connect.close()
+            #print(cachehits)
+            # update item name only
+            tempvals = []
+            nameFieldID = self.getFieldIDByName('物品名稱')
+            #print(nameFieldID)
+            for c in cachehits:
+                #print(c[1])
+                if c[0] == nameFieldID:
+                    tempvals.append(c[1])
+            #print(tempvals)
+            self.cb_name.config(values=tempvals)
+            if len(self.cb_name['values']) > 0 \
+            and self.cb_name.get() != self.cb_name['values'][0]:
+                self.cb_name.set(self.cb_name['values'][0])
+                self.onNameSelected(None)
+                
+        def onNameSelected(self, event):
+            # update product name
+            # connect to db
+            connect = sqlite3.connect("HVHNONC.db")
+            cursor = connect.cursor()
+            # get all item name in the same subcategory from cache
+            sqlstr = """select change_ID, change_value from hvhnonc_in_cache
+            where this_ID = """+ str(self.getFieldIDByName('物品名稱')) +""" and 
+            this_value = '""" + self.name.get() + "' order by rowid desc limit 30;"
+            #print(sqlstr)
+            cursor.execute(sqlstr)
+            cachehit = cursor.fetchall()
+            connect.close()
+            #print(cachehit)
+            # update things with a switch
+            isCacheHit = [False]*7
+            tempBrand = []
+            tempSpec = []
+            for c in cachehit:
+                if c[0] in (5,):
+                    # 品牌
+                    tempBrand.append(c[1])
+                    isCacheHit[5] = True
+                elif c[0] in (6,):
+                    # 規格
+                    tempSpec.append(c[1])
+                    isCacheHit[6] = True
+            if isCacheHit[5]:
+                self.cb_brand.config(values=tempBrand)
+                if len(self.cb_brand['values']) > 0 \
+                and self.cb_brand.get() != self.cb_brand['values'][0]:
+                    self.cb_brand.set(self.cb_brand['values'][0])
+            if isCacheHit[6]:
+                self.cb_spec.config(values=tempSpec)
+                if len(self.cb_spec['values']) > 0 \
+                and self.cb_spec.get() != self.cb_spec['values'][0]:
+                    self.cb_spec.set(self.cb_spec['values'][0])
+                    
+        def getFieldIDByName(self, name):
+            # connect to db
+            connect = sqlite3.connect("HVHNONC.db")
+            connect.row_factory = lambda cursor, row: row[0]
+            cursor = connect.cursor()
+            sqlstr = "select ID from hvhnonc_fields where description = '"+name+"';"
+            cursor.execute(sqlstr)
+            hit = cursor.fetchone()
+            if hit:
+                """print("getFieldIDByName: ")
+                print(hit)"""
+                return hit
+            return None
             
         def quitMe(self):
             self.destroy()
             
         def submit(self):
             print("lookupForm:submit")
+        
         
     def newForm(self):
         self.state = 'new'

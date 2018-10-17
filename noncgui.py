@@ -82,6 +82,7 @@ class Login(tk.Toplevel):
         tk.Toplevel.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.attributes("-topmost", "true")
+        self.attributes("-topmost", "false")
         self.title("登入")
         self.geometry("250x115")
         self.resizable(False, False)
@@ -118,7 +119,6 @@ class Login(tk.Toplevel):
         # focus and listen
         self.grab_set()
         self.protocol("WM_DELETE_WINDOW", self.abortLogin)
-        self.attributes("-topmost", "false")
 
     def abortLogin(self):
         self.parent.parent.destroy()
@@ -568,16 +568,16 @@ class register(tk.Toplevel):
                 self.brand.set(str(record[6]))
                 self.spec.set(str(record[7]))
                 self.unit.set(str(record[8]))
-                # in_date: mm/dd/yyyy
-                in_date = str(record[9]).split('/')
-                self.in_date_yy.set(in_date[2])
-                self.in_date_mm.set(in_date[0])
-                self.in_date_dd.set(in_date[1])
-                # key_date: mm/dd/yyyy
-                key_date = str(record[10]).split('/')
-                self.key_date_yy.set(key_date[2])
-                self.key_date_mm.set(key_date[0])
-                self.key_date_dd.set(key_date[1])
+                # in_date: yyyy-mm-dd
+                in_date = str(record[9]).split('-')
+                self.in_date_yy.set(str(int(in_date[0])-1911))
+                self.in_date_mm.set(in_date[1])
+                self.in_date_dd.set(in_date[2])
+                # key_date: yyyy-mm-dd
+                key_date = str(record[10]).split('-')
+                self.key_date_yy.set(str(int(key_date[0])-1911))
+                self.key_date_mm.set(key_date[1])
+                self.key_date_dd.set(key_date[2])
                 self.price.set(str(record[11]))
                 self.amount.set(str(record[12]))
                 self.place.set(str(record[13]))
@@ -995,6 +995,7 @@ class register(tk.Toplevel):
 
         class SearchResultWindow(tk.Toplevel):
             def __init__(self, parent, *args, **kwargs):
+                # bookmark reference
                 # treeview styles
                 style = ttk.Style()
                 style.configure("Treeview", font=DEFAULT_FONT)
@@ -1045,7 +1046,7 @@ class register(tk.Toplevel):
                         "use_department like '%" + phrase+ "%' or "
                         "keeper like '%" + phrase+ "%' or "
                         "remark like '%" + phrase+ "%')"
-                        " order by in_date;")
+                        " order by in_date desc;")
                 #print(sqlstr)
                 cursor.execute(sqlstr)
                 data = cursor.fetchall()
@@ -1239,26 +1240,29 @@ class register(tk.Toplevel):
                     self.f_key_date, text="建帳日期: ",
                     font=DEFAULT_FONT)
             self.lb_key_date.pack(side='left')
-            self.date_yy_min = tk.StringVar()
+            self.key_date_yy_min = tk.StringVar()
             self.cb_key_date_yy_min = ttk.Combobox(
                     self.f_key_date, width=3,
-                    textvariable=self.date_yy_min, font=DEFAULT_FONT)
+                    textvariable=self.key_date_yy_min,
+                    font=DEFAULT_FONT)
             self.cb_key_date_yy_min.pack(side='left')
             self.lb_key_date_yy_min = tk.Label(
                     self.f_key_date, text="年", font=DEFAULT_FONT)
             self.lb_key_date_yy_min.pack(side='left')
-            self.date_mm_min = tk.StringVar()
+            self.key_date_mm_min = tk.StringVar()
             self.cb_key_date_mm_min = ttk.Combobox(
                     self.f_key_date, width=2,
-                    textvariable=self.date_mm_min, font=DEFAULT_FONT)
+                    textvariable=self.key_date_mm_min,
+                    font=DEFAULT_FONT)
             self.cb_key_date_mm_min.pack(side='left')
             self.lb_key_date_mm_min = tk.Label(
                     self.f_key_date, text="月", font=DEFAULT_FONT)
             self.lb_key_date_mm_min.pack(side='left')
-            self.date_dd_min = tk.StringVar()
+            self.key_date_dd_min = tk.StringVar()
             self.cb_key_date_dd_min = ttk.Combobox(
                     self.f_key_date, width=2,
-                    textvariable=self.date_dd_min, font=DEFAULT_FONT)
+                    textvariable=self.key_date_dd_min,
+                    font=DEFAULT_FONT)
             self.cb_key_date_dd_min.pack(side='left')
             self.lb_key_date_dd_min = tk.Label(
                     self.f_key_date, text="日", font=DEFAULT_FONT)
@@ -1266,26 +1270,29 @@ class register(tk.Toplevel):
             self.lb_sqig_key_date = tk.Label(
                     self.f_key_date, text="~", font=DEFAULT_FONT)
             self.lb_sqig_key_date.pack(side='left')
-            self.date_yy_max = tk.StringVar()
+            self.key_date_yy_max = tk.StringVar()
             self.cb_key_date_yy_max = ttk.Combobox(
                     self.f_key_date, width=3,
-                    textvariable=self.date_yy_max, font=DEFAULT_FONT)
+                    textvariable=self.key_date_yy_max,
+                    font=DEFAULT_FONT)
             self.cb_key_date_yy_max.pack(side='left')
             self.lb_key_date_yy_max = tk.Label(
                     self.f_key_date, text="年", font=DEFAULT_FONT)
             self.lb_key_date_yy_max.pack(side='left')
-            self.date_mm_max = tk.StringVar()
+            self.key_date_mm_max = tk.StringVar()
             self.cb_key_date_mm_max = ttk.Combobox(
                     self.f_key_date, width=2,
-                    textvariable=self.date_mm_max, font=DEFAULT_FONT)
+                    textvariable=self.key_date_mm_max,
+                    font=DEFAULT_FONT)
             self.cb_key_date_mm_max.pack(side='left')
             self.lb_key_date_mm_max = tk.Label(
                     self.f_key_date, text="月", font=DEFAULT_FONT)
             self.lb_key_date_mm_max.pack(side='left')
-            self.date_dd_max = tk.StringVar()
+            self.key_date_dd_max = tk.StringVar()
             self.cb_key_date_dd_max = ttk.Combobox(
                     self.f_key_date, width=2,
-                    textvariable=self.date_dd_max, font=DEFAULT_FONT)
+                    textvariable=self.key_date_dd_max,
+                    font=DEFAULT_FONT)
             self.cb_key_date_dd_max.pack(side='left')
             self.lb_key_date_dd_max = tk.Label(
                     self.f_key_date, text="日", font=DEFAULT_FONT)
@@ -1456,12 +1463,6 @@ class register(tk.Toplevel):
             self.cb_subcategory.bind(
                     "<<ComboboxSelected>>", self.onSubcategorySelected)
             self.onSubcategorySelected(None)
-            if (len(self.cb_subcategory['values']) > 0 and
-                self.cb_subcategory.get() !=
-                self.cb_subcategory['values'][0]):
-                self.cb_subcategory.set(
-                        self.cb_subcategory['values'][0])
-                self.onSubcategorySelected(None)
             connect.close()
 
         def onSubcategorySelected(self, event):
@@ -1494,10 +1495,7 @@ class register(tk.Toplevel):
                     tempvals.append(c[1])
             #print(tempvals)
             self.cb_name.config(values=tempvals)
-            if (len(self.cb_name['values']) > 0 and
-            self.cb_name.get() != self.cb_name['values'][0]):
-                self.cb_name.set(self.cb_name['values'][0])
-                self.onNameSelected(None)
+            self.onNameSelected(None)
 
         def onNameSelected(self, event):
             # update product name
@@ -1556,8 +1554,187 @@ class register(tk.Toplevel):
             self.destroy()
 
         def submit(self):
+            # open a result toplevel
             print("lookupForm:submit")
+            self.withdraw()
+            self.LookupResult(self)
 
+        class LookupResult(tk.Toplevel):
+            # basically search result toplevel
+            def __init__(self, parent, *args, **kwargs):
+                # treeview styles
+                style = ttk.Style()
+                style.configure("Treeview", font=DEFAULT_FONT)
+                style.configure("Treeview.Heading", font=DEFAULT_FONT)
+                #init
+                tk.Toplevel.__init__(self, parent, *args, **kwargs)
+                self.parent = parent
+                self.attributes("-topmost", "true")
+                self.attributes("-topmost", "false")
+                self.title("篩選結果")
+                self.geometry("1200x600")
+                self.resizable(False, False)
+                # make a tree view
+                sb = tk.Scrollbar(self)
+                self.tv = ttk.Treeview(
+                        self, yscrollcommand=sb.set,
+                        columns=('1', '2', '3', '4', '5', '6'),
+                        show="headings")
+                self.tv['displaycolumns'] = ('2','3','4','5','6')
+                self.tv.heading('1',text='ID')
+                self.tv.heading('2',text='購置日期')
+                self.tv.heading('3',text='品名')
+                self.tv.heading('4',text='存置位置')
+                self.tv.heading('5',text='保管人')
+                self.tv.heading('6',text='備註')
+                sb.config(command=self.tv.yview)
+                # fetch the data
+                connect = sqlite3.connect(DATABASE_NAME)
+                cursor = connect.cursor()
+                sqlstr = ("select ID, in_date, name, "
+                          "place, keeper, remark "
+                          "from hvhnonc_in "
+                          "where (")
+                if parent.category.get():
+                    sqlstr += ("category like '%"
+                    + parent.category.get() + "%' and ")
+                if parent.subcategory.get():
+                    sqlstr += ("subcategory like '%"
+                    + parent.subcategory.get()+ "%' and ")
+                if parent.name.get():
+                    sqlstr += ("name like '%"
+                    + parent.name.get()+ "%' and ")
+                if parent.brand.get():
+                    sqlstr += ("brand like '%"
+                    + parent.brand.get()+ "%' and ")
+                if parent.spec.get():
+                    sqlstr += ("spec like '%"
+                    + parent.spec.get()+ "%' and ")
+                if parent.place.get():
+                    sqlstr += ("place like '%"
+                    + parent.place.get()+ "%' and ")
+                if parent.keep_dept.get():
+                    sqlstr += ("keep_department like '%"
+                    + parent.keep_dept.get()+ "%' and ")
+                if parent.use_dept.get():
+                    sqlstr += ("use_department like '%"
+                    + parent.use_dept.get()+ "%' and ")
+                if parent.keeper.get():
+                    sqlstr += ("keeper like '%"
+                    + parent.keeper.get()+ "%' and ")
+                # TODO: alchenerd@gmail.com The BETWEEN statements
+                if (parent.price_min.get() or parent.price_max.get()):
+                    if parent.price_min.get():
+                        sqlstr += (
+                                "(price >= "
+                                + parent.price_min.get() + " and "
+                                )
+                    else:
+                        sqlstr += "("
+                    if parent.price_max.get():
+                        sqlstr += (
+                                "price <= "
+                                + parent.price_max.get() + ") and "
+                                )
+                    else:
+                        sqlstr += ") and "
+                # statement forging for between dates
+                if (parent.date_yy_min.get() or
+                    parent.date_yy_max.get()):
+                    if parent.date_yy_min.get():
+                        str_date_min = (
+                                "'"
+                                + str(int(parent.date_yy_min.get())+1911)
+                                + "-"
+                                + (parent.date_mm_min.get() \
+                                if parent.date_mm_min.get() else "01")
+                                + "-"
+                                + (parent.date_dd_min.get() \
+                                if parent.date_dd_min.get() else "01'")
+                                )
+                    else:
+                        str_date_min = "'1911-01-01'"
+                    if parent.date_yy_max.get():
+                        str_date_max = (
+                                "'"
+                                + str(int(parent.date_yy_max.get())+1911)
+                                + "-"
+                                + (parent.date_mm_max.get() \
+                                if parent.date_mm_max.get() else "12")
+                                + "-"
+                                + (parent.date_dd_max.get() \
+                                if parent.date_dd_max.get() else "31'")
+                                )
+                    else:
+                        str_date_max = "date('now')"
+                    sqlstr += ("(strftime('%Y-%m-%d', in_date) between " + str_date_min +
+                               " and " + str_date_max + ") and ")
+                # do the same for key_date
+                if (parent.key_date_yy_min.get() or
+                    parent.key_date_yy_max.get()):
+                    if parent.key_date_yy_min.get():
+                        str_key_date_min = (
+                                "'"
+                                + str(int(parent.key_date_yy_min.get())+1911)
+                                + "-"
+                                + (parent.key_date_mm_min.get() \
+                                if parent.key_date_mm_min.get() \
+                                else "01")
+                                + "-"
+                                + (parent.key_date_dd_min.get() \
+                                if parent.key_date_dd_min.get() \
+                                else "01'")
+                                )
+                    else:
+                        str_key_date_min = "'1911-01-01'"
+                    if parent.key_date_yy_max.get():
+                        str_key_date_max = (
+                                "'"
+                                + str(int(parent.key_date_yy_max.get())+1911)
+                                + "-"
+                                + (parent.key_date_mm_max.get() \
+                                if parent.key_date_mm_max.get() \
+                                else "12")
+                                + "-"
+                                + (parent.key_date_dd_max.get() \
+                                if parent.key_date_dd_max.get() \
+                                else "31'")
+                                )
+                    else:
+                        str_key_date_max = "date('now')"
+                    sqlstr += ("(strftime('%Y-%m-%d', key_date) between " + str_key_date_min +
+                               " and " + str_key_date_max + ") and ")
+                # where(1) if no input
+                sqlstr += "1) order by in_date desc;"
+                """
+                "price like '%" + phrase+ "%' and -r"
+                "in_date like '%" + phrase+ "%' and -r"
+                "key_date like '%" + phrase+ "%' and -r"
+                """
+                print(sqlstr)
+                cursor.execute(sqlstr)
+                data = cursor.fetchall()
+                self.title("篩選結果: 共{}筆".format(len(data)))
+                for d in data:
+                    self.tv.insert("", "end", values=d)
+                sb.pack(side="right", fill="y")
+                self.tv.pack(fill="both", expand=1)
+                # listen to double click
+                self.tv.bind("<Double-1>", self.onDoubleClick)
+                # grab focus
+                self.grab_set()
+                # listen to self close event. if so, close parent
+                self.protocol("WM_DELETE_WINDOW", self.abortLookup)
+
+            def onDoubleClick(self, event):
+                self.parent.destroy()
+                #item = self.tv.identify('item',event.x,event.y)
+                #print("you clicked on", self.tv.item(item,"values")[0])
+                #self.parent.state = self.tv.item(item,"values")[0]
+                #self.parent.updateByState(self.parent.state)
+
+            def abortLookup(self):
+                self.parent.destroy()
 
     def newForm(self):
         self.state = 'new'

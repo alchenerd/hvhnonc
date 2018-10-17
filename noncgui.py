@@ -478,6 +478,7 @@ class register(tk.Toplevel):
 
     def updateByState(self, state):
         #print(state)
+        #print(type(state))
         state = state.lower()
         if state in ("none",):
             self.cb_cat.config(state="disabled")
@@ -605,6 +606,7 @@ class register(tk.Toplevel):
             if int(state) in sublist:
                 #print("sublist found! {}, {}".format(i, sublist))
                 return i
+        return None
 
     def clearAllField(self):
         self.objID.set("")
@@ -1061,12 +1063,76 @@ class register(tk.Toplevel):
             def onDoubleClick(self, event):
                 item = self.tv.identify('item',event.x,event.y)
                 #print("you clicked on", self.tv.item(item,"values")[0])
-                self.parent.state = self.tv.item(item,"values")[0]
+                self.parent.state = str(self.tv.item(item,"values")[0])
                 self.parent.updateByState(self.parent.state)
                 self.destroy()
 
     def saveThis(self):
-        print("saveThis")
+        # connect to db
+        connect = sqlite3.connect(DATABASE_NAME)
+        cursor = connect.cursor()
+        if self.lookupIndexInBook(self.state) is not None:
+            # if collide ask new or replace
+            isWriteover = tk.messagebox.askyesnocancel(
+                    "重複寫入",
+                    "是否要複蓋掉這筆資料?(按否會新增一筆新資料)",
+                    parent=self)
+            if isWriteover is True:
+                # replace
+                sqlstr = (
+                        "replace into hvhnonc_in("
+                        "ID, "
+                        "object_ID, serial_ID, category, subcategory, "
+                        "name, brand, spec, unit, in_date, key_date, "
+                        "price, amount, place, keep_year, source, "
+                        "keep_department, use_department, keeper, "
+                        "remark) "
+                        "values("
+                        + str(self.state) + ", '"
+                        + self.objID.get() + "', '"
+                        + self.serial.get() + "', '"
+                        + self.category.get() + "', '"
+                        + self.subcategory.get() + "', '"
+                        + self.name.get() + "', '"
+                        + self.brand.get() + "', '"
+                        + self.spec.get() + "', '"
+                        + self.unit.get() + "', '"
+                        + "-".join((
+                                str(int(self.in_date_yy.get()) + 1911),
+                                self.in_date_mm.get(),
+                                self.in_date_dd.get())) + "', '"
+                        + "-".join((
+                                str(int(self.key_date_yy.get()) + 1911),
+                                self.key_date_mm.get(),
+                                self.key_date_dd.get())) + "', "
+                        + self.price.get() + ", "
+                        + self.amount.get() + ", '"
+                        + self.place.get() + "', "
+                        + self.keep_year.get() + ", '"
+                        + self.source.get() + "', '"
+                        + self.keep_dept.get() + "', '"
+                        + self.use_dept.get() + "', '"
+                        + self.keeper.get() + "', '"
+                        + self.remark.get() + "');")
+                #print(sqlstr)
+                try:
+                    cursor.execute(sqlstr)
+                except sqlite3.Error as e:
+                    self.log.error("Database error: %s" % e)
+                except Exception as e:
+                    self.log.error("Exception in saveThis: %s" % e)
+                # TODO <alchenerd@gmail.com> update cache table
+                # TODO <alchenerd@gmail.com> update book
+                # TODO <alchenerd@gmail.com> close connection
+                # TODO <alchenerd@gmail.com> set state as none and update
+            elif isWriteover is False:
+                pass
+                # TODO <alchenerd@gmail.com> insert
+                # TODO <alchenerd@gmail.com> update cache table
+                # TODO <alchenerd@gmail.com> update book
+                # TODO <alchenerd@gmail.com> close connection
+                # TODO <alchenerd@gmail.com> set state as none and update
+            # do nothing if cancel is pressed
 
     def fetchNext(self):
         if self.state in ("none", "new"):
@@ -1360,7 +1426,6 @@ class register(tk.Toplevel):
             # connect to db
             connect = sqlite3.connect(DATABASE_NAME)
             cursor = connect.cursor()
-
             # 物品大項
             sqlstr = "select description from hvhnonc_category;"
             # print(sqlstr)
@@ -1370,21 +1435,12 @@ class register(tk.Toplevel):
             self.cb_category.config(values=catagories)
             self.cb_category.bind(
                     "<<ComboboxSelected>>", self.onCategorySelected)
-
-            # 物品細目
-            # 物品名稱
-            # 品牌
-            # 規格
+            # 物品細目 # 物品名稱 # 品牌 # 規格
             # initialized with onCategorySelected()
-
-            # 單價(低)
-            # 單價(高)
+            # 單價(低) # 單價(高)
             # no need for init
-
-            # 購置日期(低)yyymmdd
-            # 購置日期(高)yyymmdd
-            # 建帳日期(低)yyymmdd
-            # 建帳日期(高)yyymmdd
+            # 購置日期(低)yyymmdd # 購置日期(高)yyymmdd
+            # 建帳日期(低)yyymmdd # 建帳日期(高)yyymmdd
             self.initDateComboboxes(self.cb_date_yy_min,
                                     self.cb_date_mm_min,
                                     self.cb_date_dd_min)
@@ -1397,7 +1453,6 @@ class register(tk.Toplevel):
             self.initDateComboboxes(self.cb_key_date_yy_max,
                                     self.cb_key_date_mm_max,
                                     self.cb_key_date_dd_max)
-
             connect = sqlite3.connect(DATABASE_NAME)
             connect.row_factory = lambda cursor, row: row[0]
             cursor = connect.cursor()
@@ -1622,7 +1677,6 @@ class register(tk.Toplevel):
                 if parent.keeper.get():
                     sqlstr += ("keeper like '%"
                     + parent.keeper.get()+ "%' and ")
-                # TODO: alchenerd@gmail.com The BETWEEN statements
                 if (parent.price_min.get() or parent.price_max.get()):
                     if parent.price_min.get():
                         sqlstr += (
@@ -1667,15 +1721,17 @@ class register(tk.Toplevel):
                                 )
                     else:
                         str_date_max = "date('now')"
-                    sqlstr += ("(strftime('%Y-%m-%d', in_date) between " + str_date_min +
-                               " and " + str_date_max + ") and ")
+                    sqlstr += ("(strftime('%Y-%m-%d', in_date) between "
+                                 + str_date_min + " and "
+                                 + str_date_max + ") and ")
                 # do the same for key_date
                 if (parent.key_date_yy_min.get() or
                     parent.key_date_yy_max.get()):
                     if parent.key_date_yy_min.get():
                         str_key_date_min = (
                                 "'"
-                                + str(int(parent.key_date_yy_min.get())+1911)
+                                + str(int(parent.key_date_yy_min.get())
+                                + 1911)
                                 + "-"
                                 + (parent.key_date_mm_min.get() \
                                 if parent.key_date_mm_min.get() \
@@ -1690,7 +1746,8 @@ class register(tk.Toplevel):
                     if parent.key_date_yy_max.get():
                         str_key_date_max = (
                                 "'"
-                                + str(int(parent.key_date_yy_max.get())+1911)
+                                + str(int(parent.key_date_yy_max.get())
+                                + 1911)
                                 + "-"
                                 + (parent.key_date_mm_max.get() \
                                 if parent.key_date_mm_max.get() \
@@ -1702,8 +1759,10 @@ class register(tk.Toplevel):
                                 )
                     else:
                         str_key_date_max = "date('now')"
-                    sqlstr += ("(strftime('%Y-%m-%d', key_date) between " + str_key_date_min +
-                               " and " + str_key_date_max + ") and ")
+                    sqlstr += (
+                            "(strftime('%Y-%m-%d', key_date) between "
+                            + str_key_date_min
+                            + " and " + str_key_date_max + ") and ")
                 # where(1) if no input
                 sqlstr += "1) order by in_date desc;"
                 """
@@ -1727,11 +1786,13 @@ class register(tk.Toplevel):
                 self.protocol("WM_DELETE_WINDOW", self.abortLookup)
 
             def onDoubleClick(self, event):
+                item = self.tv.identify('item',event.x,event.y)
+                #print("you clicked on", self.tv.item(item, "values")[0])
+                self.parent.parent.state = str(
+                        self.tv.item(item, "values")[0])
+                self.parent.parent.updateByState(
+                        self.parent.parent.state)
                 self.parent.destroy()
-                #item = self.tv.identify('item',event.x,event.y)
-                #print("you clicked on", self.tv.item(item,"values")[0])
-                #self.parent.state = self.tv.item(item,"values")[0]
-                #self.parent.updateByState(self.parent.state)
 
             def abortLookup(self):
                 self.parent.destroy()

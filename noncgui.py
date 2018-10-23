@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Oct 16 11:13:25 2018
-
 @author: alchenerd (alchenerd@gmail.com)
-
 The module where I put tkinter frames, toplevels, and their functions
 """
 
@@ -1117,21 +1115,132 @@ class register(tk.Toplevel):
                 #print(sqlstr)
                 try:
                     cursor.execute(sqlstr)
+                    connect.commit()
+                    tk.messagebox.showinfo("覆寫成功", "已覆寫一筆資料",
+                                           parent=self)
                 except sqlite3.Error as e:
-                    self.log.error("Database error: %s" % e)
+                    print("Database error: %s" % e)
                 except Exception as e:
-                    self.log.error("Exception in saveThis: %s" % e)
-                # TODO <alchenerd@gmail.com> update cache table
-                # TODO <alchenerd@gmail.com> update book
-                # TODO <alchenerd@gmail.com> close connection
-                # TODO <alchenerd@gmail.com> set state as none and update
+                    print("Exception in saveThis: %s" % e)
+                # update cache table
+                # sql insert template
+                sqlstr = ("insert or ignore into hvhnonc_in_cache"
+                "(this_ID, this_value, change_ID, change_value) "
+                "values((select ID from hvhnonc_fields where "
+                "description = ?),?,(select ID from hvhnonc_fields "
+                "where description = ?),?)")
+                # 細目>名稱
+                if self.name.get() is not "":
+                    params = ("物品細目", self.subcategory.get(),
+                             "物品名稱", self.name.get(),)
+                    try:
+                        cursor.execute(sqlstr, params)
+                        connect.commit()
+                    except sqlite3.Error as e:
+                        print("Database error: %s" % e)
+                    except Exception as e:
+                        print("Exception in saveThis: %s" % e)
+                # 名稱>單位,品牌,規格
+                if self.unit.get() is not "":
+                    params = ("物品名稱", self.name.get(), "單位",
+                              self.unit.get(),)
+                    try:
+                        cursor.execute(sqlstr, params)
+                        connect.commit()
+                    except sqlite3.Error as e:
+                        print("Database error: %s" % e)
+                    except Exception as e:
+                        print("Exception in saveThis: %s" % e)
+                if self.brand.get() is not "":
+                    params = ("物品名稱", self.name.get(), "品牌",
+                              self.brand.get(),)
+                    try:
+                        cursor.execute(sqlstr, params)
+                        connect.commit()
+                    except sqlite3.Error as e:
+                        print("Database error: %s" % e)
+                    except Exception as e:
+                        print("Exception in saveThis: %s" % e)
+                if self.spec.get() is not "":
+                    params = ("物品名稱", self.name.get(), "規格",
+                              self.spec.get(),)
+                    try:
+                        cursor.execute(sqlstr, params)
+                        connect.commit()
+                    except sqlite3.Error as e:
+                        print("Database error: %s" % e)
+                    except Exception as e:
+                        print("Exception in saveThis: %s" % e)
+                # 存置地點
+                if self.place.get() is not "":
+                    params = ("無", "none", "存置地點",
+                              self.place.get(),)
+                    try:
+                        cursor.execute(sqlstr, params)
+                        connect.commit()
+                    except sqlite3.Error as e:
+                        print("Database error: %s" % e)
+                    except Exception as e:
+                        print("Exception in saveThis: %s" % e)
+                # 保管單位
+                if self.keep_dept.get() is not "":
+                    params = ("無", "none", "保管單位",
+                              self.keep_dept.get(),)
+                    try:
+                        cursor.execute(sqlstr, params)
+                        connect.commit()
+                    except sqlite3.Error as e:
+                        print("Database error: %s" % e)
+                    except Exception as e:
+                        print("Exception in saveThis: %s" % e)
+                # 使用單位
+                if self.use_dept.get() is not "":
+                    params = ("無", "none", "使用單位",
+                              self.use_dept.get(),)
+                    try:
+                        cursor.execute(sqlstr, params)
+                        connect.commit()
+                    except sqlite3.Error as e:
+                        print("Database error: %s" % e)
+                    except Exception as e:
+                        print("Exception in saveThis: %s" % e)
+                # 保管人
+                if self.keeper.get() is not "":
+                    params = ("無", "none", "保管人",
+                              self.keeper.get(),)
+                    try:
+                        cursor.execute(sqlstr, params)
+                        connect.commit()
+                    except sqlite3.Error as e:
+                        print("Database error: %s" % e)
+                    except Exception as e:
+                        print("Exception in saveThis: %s" % e)
+                # 備註事項
+                if self.remark.get() is not "":
+                    params = ("無", "none", "備註事項",
+                              self.remark.get(),)
+                    try:
+                        cursor.execute(sqlstr, params)
+                        connect.commit()
+                    except sqlite3.Error as e:
+                        print("Database error: %s" % e)
+                    except Exception as e:
+                        print("Exception in saveThis: %s" % e)
+                # update book
+                self.book = self.getAllRecords()
+                # close connection
+                connect.close()
+                # set state as none and update
+                self.state = "none"
+                self.updateByState(self.state)
             elif isWriteover is False:
                 pass
                 # TODO <alchenerd@gmail.com> insert
                 # TODO <alchenerd@gmail.com> update cache table
                 # TODO <alchenerd@gmail.com> update book
                 # TODO <alchenerd@gmail.com> close connection
-                # TODO <alchenerd@gmail.com> set state as none and update
+                # TODO <alchenerd@gmail.com>
+                #      set state as none and update
             # do nothing if cancel is pressed
 
     def fetchNext(self):

@@ -18,6 +18,10 @@ DEFAULT_TOPLEVEL_SIZE = "665x410"
 DEFAULT_FONT = (None, 15)
 DATABASE_NAME = "HVHNONC.db"
 
+# NOTE: Try to manage variables from form in a dictionary or something
+#       Also look for similar chuncks to reuse
+#       Function or classes over ctrl+c ctrl+v
+
 class Index(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
@@ -485,6 +489,8 @@ class register(tk.Toplevel):
             self.cb_unit.config(state="disabled")
             self.cb_brand.config(state="disabled")
             self.cb_spec.config(state="disabled")
+            self.ent_objID.config(state="disabled")
+            self.ent_serial.config(state="disabled")
             self.cb_in_date_yy.config(state="disabled")
             self.cb_in_date_mm.config(state="disabled")
             self.cb_in_date_dd.config(state="disabled")
@@ -1069,7 +1075,206 @@ class register(tk.Toplevel):
         # connect to db
         connect = sqlite3.connect(DATABASE_NAME)
         cursor = connect.cursor()
-        if self.lookupIndexInBook(self.state) is not None:
+        # insert new row
+        if self.state is 'new':
+            # get the object_ID, serial_ID
+            # objID is '6-(ID_cat)-(ID_subcat)'
+            sqlstr = ("select parent_ID, ID "
+                    "from hvhnonc_subcategory "
+                    "where parent_ID=("
+                    "select ID "
+                    "from hvhnonc_category "
+                    "where description=?) "
+                    "and description=?")
+            params = (self.category.get(), self.subcategory.get(),)
+            try:
+                cursor.execute(sqlstr, params)
+            except sqlite3.Error as e:
+                print("Database error: %s" % e)
+            except Exception as e:
+                print("Exception in saveThis: %s" % e)
+            row = cursor.fetchone()
+            try:
+                objID = ("6", "{:02d}".format(int(row[0])),
+                        "{:02d}".format(int(row[1])))
+            except Exception as e:
+                print("Exception in saveThis: %s" % e)
+            objID = " - ".join(objID)
+            # serialID is count group by name + 1
+            sqlstr = ("select serial_ID from hvhnonc_in "
+                    "where object_ID=? and name=?")
+            params = (objID, self.name.get(),)
+            try:
+                cursor.execute(sqlstr, params)
+            except sqlite3.Error as e:
+                print("Database error: %s" % e)
+            except Exception as e:
+                print("Exception in saveThis: %s" % e)
+            row = cursor.fetchone()
+            if row is None:
+                sqlstr = ("select count(distinct serial_ID) "
+                        "from hvhnonc_in "
+                        "where object_ID=?;")
+                try:
+                    cursor.execute(sqlstr, params[:1])
+                except sqlite3.Error as e:
+                    print("Database error: %s" % e)
+                except Exception as e:
+                    print("Exception in saveThis: %s" % e)
+                row = cursor.fetchone()
+                serialID = "{:03}".format(int(row[0])+1)
+            else:
+                serialID = str(row[0])
+            # date string preparation
+            tmp_in_date = "-".join(
+                    (str(int(self.in_date_yy.get()) + 1911),
+                    str("{:02}".format(int(self.in_date_mm.get()))),
+                    str("{:02}".format(int(self.in_date_dd.get()))),
+                    ))
+            tmp_key_date = "-".join(
+                    (str(int(self.key_date_yy.get()) + 1911),
+                    str("{:02}".format(int(self.key_date_mm.get()))),
+                    str("{:02}".format(int(self.key_date_dd.get()))),
+                    ))
+            # insertion statement
+            sqlstr = ("insert into hvhnonc_in("
+                    "object_ID, serial_ID, category, subcategory, "
+                    "name, brand, spec, unit, in_date, key_date, "
+                    "price, amount, place, keep_year, source, "
+                    "keep_department, use_department, keeper, "
+                    "remark) "
+                    "values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+            params = (str(objID), str(serialID),
+                    self.category.get(), self.subcategory.get(),
+                    self.name.get(), self.brand.get(),
+                    self.spec.get(), self.unit.get(),
+                    str(tmp_in_date), str(tmp_key_date),
+                    self.price.get(), self.amount.get(),
+                    self.place.get(), self.keep_year.get(),
+                    self.source.get(), self.keep_dept.get(),
+                    self.use_dept.get(), self.keeper.get(),
+                    self.remark.get(),)
+            try:
+                cursor.execute(sqlstr, params)
+                connect.commit()
+                tk.messagebox.showinfo("新增成功", "已新增一筆資料",
+                                       parent=self)
+            except sqlite3.Error as e:
+                print("Database error: %s" % e)
+            except Exception as e:
+                print("Exception in saveThis: %s" % e)
+            # update cache table
+            # sql insert template
+            sqlstr = ("insert or ignore into hvhnonc_in_cache"
+            "(this_ID, this_value, change_ID, change_value) "
+            "values((select ID from hvhnonc_fields where "
+            "description = ?),?,(select ID from hvhnonc_fields "
+            "where description = ?),?)")
+            # 細目>名稱
+            if self.name.get() is not "":
+                params = ("物品細目", self.subcategory.get(),
+                         "物品名稱", self.name.get(),)
+                try:
+                    cursor.execute(sqlstr, params)
+                    connect.commit()
+                except sqlite3.Error as e:
+                    print("Database error: %s" % e)
+                except Exception as e:
+                    print("Exception in saveThis: %s" % e)
+            # 名稱>單位,品牌,規格
+            if self.unit.get() is not "":
+                params = ("物品名稱", self.name.get(), "單位",
+                          self.unit.get(),)
+                try:
+                    cursor.execute(sqlstr, params)
+                    connect.commit()
+                except sqlite3.Error as e:
+                    print("Database error: %s" % e)
+                except Exception as e:
+                    print("Exception in saveThis: %s" % e)
+            if self.brand.get() is not "":
+                params = ("物品名稱", self.name.get(), "品牌",
+                          self.brand.get(),)
+                try:
+                    cursor.execute(sqlstr, params)
+                    connect.commit()
+                except sqlite3.Error as e:
+                    print("Database error: %s" % e)
+                except Exception as e:
+                    print("Exception in saveThis: %s" % e)
+            if self.spec.get() is not "":
+                params = ("物品名稱", self.name.get(), "規格",
+                          self.spec.get(),)
+                try:
+                    cursor.execute(sqlstr, params)
+                    connect.commit()
+                except sqlite3.Error as e:
+                    print("Database error: %s" % e)
+                except Exception as e:
+                    print("Exception in saveThis: %s" % e)
+            # 存置地點
+            if self.place.get() is not "":
+                params = ("無", "none", "存置地點",
+                          self.place.get(),)
+                try:
+                    cursor.execute(sqlstr, params)
+                    connect.commit()
+                except sqlite3.Error as e:
+                    print("Database error: %s" % e)
+                except Exception as e:
+                    print("Exception in saveThis: %s" % e)
+            # 保管單位
+            if self.keep_dept.get() is not "":
+                params = ("無", "none", "保管單位",
+                          self.keep_dept.get(),)
+                try:
+                    cursor.execute(sqlstr, params)
+                    connect.commit()
+                except sqlite3.Error as e:
+                    print("Database error: %s" % e)
+                except Exception as e:
+                    print("Exception in saveThis: %s" % e)
+            # 使用單位
+            if self.use_dept.get() is not "":
+                params = ("無", "none", "使用單位",
+                          self.use_dept.get(),)
+                try:
+                    cursor.execute(sqlstr, params)
+                    connect.commit()
+                except sqlite3.Error as e:
+                    print("Database error: %s" % e)
+                except Exception as e:
+                    print("Exception in saveThis: %s" % e)
+            # 保管人
+            if self.keeper.get() is not "":
+                params = ("無", "none", "保管人",
+                          self.keeper.get(),)
+                try:
+                    cursor.execute(sqlstr, params)
+                    connect.commit()
+                except sqlite3.Error as e:
+                    print("Database error: %s" % e)
+                except Exception as e:
+                    print("Exception in saveThis: %s" % e)
+            # 備註事項
+            if self.remark.get() is not "":
+                params = ("無", "none", "備註事項",
+                          self.remark.get(),)
+                try:
+                    cursor.execute(sqlstr, params)
+                    connect.commit()
+                except sqlite3.Error as e:
+                    print("Database error: %s" % e)
+                except Exception as e:
+                    print("Exception in saveThis: %s" % e)
+            # update book
+            self.book = self.getAllRecords()
+            # close connection
+            connect.close()
+            # set state as none and update
+            self.state = "none"
+            self.updateByState(self.state)
+        elif self.lookupIndexInBook(self.state) is not None:
             # if collide ask new or replace
             isWriteover = tk.messagebox.askyesnocancel(
                     "重複寫入",

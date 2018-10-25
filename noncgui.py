@@ -5,6 +5,11 @@ Created on Tue Oct 16 11:13:25 2018
 The module where I put tkinter frames, toplevels, and their functions
 """
 
+# TODO: <alchenerd@gmail.com>
+#       Since this file is large and repetitive
+#       Scheduled refactorization at 2018/10/25
+# TODO: <alchenerd@gmail.com> Check all sqlstr
+
 import tkinter as tk
 from tkinter import messagebox, ttk
 import sqlite3
@@ -13,14 +18,16 @@ import datetime
 
 from __init__ import __version__
 
-WELCOME_IMAGE = "kaiba.gif"
-DEFAULT_TOPLEVEL_SIZE = "665x410"
-DEFAULT_FONT = (None, 15)
-DATABASE_NAME = "HVHNONC.db"
+_welcome_image = "kaiba.gif"
+_default_toplevel_size = "665x410"
+_default_font = (None, 15)
+_default_database = "HVHNONC.db"
 
-# NOTE: Try to manage variables from form in a dictionary or something
-#       Also look for similar chuncks to reuse
-#       Function or classes over ctrl+c ctrl+v
+def _getConnection(databaseName):
+    connect = sqlite3.connect(_default_database)
+    cursor = connect.cursor()
+    return connect, cursor
+
 
 class Index(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
@@ -31,9 +38,9 @@ class Index(tk.Frame):
         parent.focus_force()
         parent.resizable(False, False)
         # listbox font style
-        parent.option_add('*TCombobox*Listbox.font', DEFAULT_FONT)
+        parent.option_add('*TCombobox*Listbox.font', _default_font)
         # an image
-        photo = tk.PhotoImage(file=WELCOME_IMAGE)
+        photo = tk.PhotoImage(file=_welcome_image)
         self.label_welcome = tk.Label(image=photo)
         self.label_welcome.image = photo
         self.label_welcome.place(x=20, y=20)
@@ -90,9 +97,9 @@ class Login(tk.Toplevel):
         self.resizable(False, False)
         # user info
         self.label_username = tk.Label(self, text="帳號:",
-                                       font=DEFAULT_FONT)
+                                       font=_default_font)
         self.label_password = tk.Label(self, text="密碼:",
-                                       font=DEFAULT_FONT)
+                                       font=_default_font)
         self.label_username.place(x=4,y=10)
         self.label_password.place(x=4,y=40)
         self.var_username = tk.StringVar()
@@ -100,10 +107,10 @@ class Login(tk.Toplevel):
         self.var_password = tk.StringVar()
         self.var_password.set("veteranshome")
         self.entry_username = tk.Entry(
-                self, textvariable=self.var_username, font=DEFAULT_FONT)
+                self, textvariable=self.var_username, font=_default_font)
         self.entry_password = tk.Entry(
                 self, textvariable=self.var_password,
-                font=DEFAULT_FONT, show="*")
+                font=_default_font, show="*")
         self.entry_username.place(x=58, y=13)
         self.entry_password.place(x=58, y=43)
         # buttons
@@ -135,8 +142,7 @@ class Login(tk.Toplevel):
         password = self.var_password.get()
         if self.isValid(username, password):
             # database stuff
-            connect = sqlite3.connect(DATABASE_NAME)
-            cursor = connect.cursor()
+            connect, cursor = _getConnection(_default_database)
             sqlstr = ("select * from hvhnonc_users where username='"
                       + self.var_username.get() + "';")
             #print(sqlstr)
@@ -194,245 +200,246 @@ class register(tk.Toplevel):
         self.attributes("-topmost", "true")
         self.attributes("-topmost", "false")
         self.title("輸入")
-        self.geometry(DEFAULT_TOPLEVEL_SIZE)
+        self.geometry(_default_toplevel_size)
         self.resizable(False, False)
         # register form GUI
         # category
         self.lb_cat = tk.Label(self, text="物品大項: ",
-                               font=DEFAULT_FONT)
+                               font=_default_font)
         self.lb_cat.grid(row=0, column=0, padx=5, pady=5)
         self.category = tk.StringVar()
         self.cb_cat = ttk.Combobox(
                 self, width=20, textvariable=self.category,
-                font=DEFAULT_FONT, state="readonly")
+                font=_default_font, state="readonly")
         self.cb_cat.grid(row=0, column=1, padx=5, pady=5)
         # subcategory
         self.lb_subcat = tk.Label(self, text="物品細目: ",
-                                  font=DEFAULT_FONT)
+                                  font=_default_font)
         self.lb_subcat.grid(row=0, column=2, padx=5, pady=5)
         self.subcategory = tk.StringVar()
         self.cb_subcat = ttk.Combobox(
                 self, width=20, textvariable=self.subcategory,
-                font=DEFAULT_FONT, state="readonly")
+                font=_default_font, state="readonly")
         self.cb_subcat.grid(row=0, column=3, padx=5, pady=5)
         # name
         self.lb_name = tk.Label(self, text="物品名稱: ",
-                                font=DEFAULT_FONT)
+                                font=_default_font)
         self.lb_name.grid(row=1, column=0, padx=5, pady=5)
         self.name = tk.StringVar()
         self.cb_name = ttk.Combobox(
                 self, width=20, textvariable=self.name,
-                font=DEFAULT_FONT)
+                font=_default_font)
         self.cb_name.grid(row=1, column=1, padx=5, pady=5)
         # unit
         self.lb_unit = tk.Label(
-                self, text="單位: ", font=DEFAULT_FONT)
+                self, text="單位: ", font=_default_font)
         self.lb_unit.grid(row=1, column=2, padx=5, pady=5)
         self.unit = tk.StringVar()
         self.cb_unit = ttk.Combobox(
                 self, width=20, textvariable=self.unit,
-                font=DEFAULT_FONT)
+                font=_default_font)
         self.cb_unit.grid(row=1, column=3, padx=5, pady=5)
         # brand
         self.lb_brand = tk.Label(self, text="品牌: ",
-                                 font=DEFAULT_FONT)
+                                 font=_default_font)
         self.lb_brand.grid(row=2, column=0, padx=5, pady=5)
         self.brand = tk.StringVar()
         self.cb_brand = ttk.Combobox(self, width=20,
                                      textvariable=self.brand,
-                                     font=DEFAULT_FONT)
+                                     font=_default_font)
         self.cb_brand.grid(row=2, column=1, padx=5, pady=5)
         # spec
-        self.lb_spec = tk.Label(self, text="規格: ", font=DEFAULT_FONT)
+        self.lb_spec = tk.Label(self, text="規格: ",
+                                font=_default_font)
         self.lb_spec.grid(row=2, column=2, padx=5, pady=5)
         self.spec = tk.StringVar()
         self.cb_spec = ttk.Combobox(self, width=20,
                                     textvariable=self.spec,
-                                    font=DEFAULT_FONT)
+                                    font=_default_font)
         self.cb_spec.grid(row=2, column=3, padx=5, pady=5)
         # serial
         self.f_serial = tk.Frame(self)
         self.lb_objID = tk.Label(
-                self.f_serial, text="物品編號: ", font=DEFAULT_FONT)
+                self.f_serial, text="物品編號: ", font=_default_font)
         self.lb_objID.pack(side='left', padx=10)
         self.objID = tk.StringVar()
         self.ent_objID = tk.Entry(
                 self.f_serial, width=18, textvariable=self.objID,
-                font=DEFAULT_FONT)
+                font=_default_font, state="disabled")
         self.ent_objID.pack(side='left', padx=10)
         self.lb_serial = tk.Label(
-                self.f_serial, text="流水號: ", font=DEFAULT_FONT)
+                self.f_serial, text="流水號: ", font=_default_font)
         self.lb_serial.pack(side='left', padx=10)
         self.serial = tk.StringVar()
         self.ent_serial = tk.Entry(
                 self.f_serial, width=5, textvariable=self.serial,
-                font=DEFAULT_FONT)
+                font=_default_font, state="disabled")
         self.ent_serial.pack(side='left', padx=10)
         self.btn_lookupSerial = ttk.Button(
-                self.f_serial, text="流水號總覽", style="register.TButton",
-                command=self.lookupSerial)
+                self.f_serial, text="流水號總覽",
+                style="register.TButton", command=self.lookupSerial)
         self.btn_lookupSerial.pack(side='left', padx=10)
         self.f_serial.grid(row=3, column=0, columnspan=4,
                            padx=5, pady=5)
         # in date
         self.lb_in_date = tk.Label(
-                self, text="購置日期: ", font=DEFAULT_FONT)
+                self, text="購置日期: ", font=_default_font)
         self.lb_in_date.grid(row=4, column=0, padx=5, pady=5)
         self.f_in_date = tk.Frame(self)
         self.in_date_yy = tk.StringVar()
         self.cb_in_date_yy = ttk.Combobox(
                 self.f_in_date, width=3, textvariable=self.in_date_yy,
-                font=DEFAULT_FONT)
+                font=_default_font)
         self.cb_in_date_yy.pack(side='left')
         self.lb_in_date_yy = tk.Label(self.f_in_date, text="年",
-                                      font=DEFAULT_FONT)
+                                      font=_default_font)
         self.lb_in_date_yy.pack(side='left')
         self.in_date_mm = tk.StringVar()
         self.cb_in_date_mm = ttk.Combobox(
                 self.f_in_date, width=2, textvariable=self.in_date_mm,
-                font=DEFAULT_FONT)
+                font=_default_font)
         self.cb_in_date_mm.pack(side='left')
         self.lb_in_date_mm = tk.Label(self.f_in_date, text="月",
-                                      font=DEFAULT_FONT)
+                                      font=_default_font)
         self.lb_in_date_mm.pack(side='left')
         self.in_date_dd = tk.StringVar()
         self.cb_in_date_dd = ttk.Combobox(
                 self.f_in_date, width=2, textvariable=self.in_date_dd,
-                font=DEFAULT_FONT)
+                font=_default_font)
         self.cb_in_date_dd.pack(side='left')
         self.lb_in_date_dd = tk.Label(self.f_in_date, text="日",
-                                      font=DEFAULT_FONT)
+                                      font=_default_font)
         self.lb_in_date_dd.pack(side='left')
         self.f_in_date.grid(row=4, column=1, padx=5, pady=5)
         # key date
         self.lb_key_date = tk.Label(self, text="建帳日期: ",
-                                    font=DEFAULT_FONT)
+                                    font=_default_font)
         self.lb_key_date.grid(row=4, column=2, padx=5, pady=5)
         self.f_key_date = tk.Frame(self)
         self.key_date_yy = tk.StringVar()
         self.cb_key_date_yy = ttk.Combobox(
-                self.f_key_date, width=3, textvariable=self.key_date_yy,
-                font=DEFAULT_FONT)
+                self.f_key_date, width=3,
+                textvariable=self.key_date_yy, font=_default_font)
         self.cb_key_date_yy.pack(side='left')
         self.lb_key_date_yy = tk.Label(self.f_key_date, text="年",
-                                       font=DEFAULT_FONT)
+                                       font=_default_font)
         self.lb_key_date_yy.pack(side='left')
         self.key_date_mm = tk.StringVar()
         self.cb_key_date_mm = ttk.Combobox(
-                self.f_key_date, width=2, textvariable=self.key_date_mm,
-                font=DEFAULT_FONT)
+                self.f_key_date, width=2,
+                textvariable=self.key_date_mm, font=_default_font)
         self.cb_key_date_mm.pack(side='left')
         self.lb_key_date_mm = tk.Label(self.f_key_date, text="月",
-                                       font=DEFAULT_FONT)
+                                       font=_default_font)
         self.lb_key_date_mm.pack(side='left')
         self.key_date_dd = tk.StringVar()
         self.cb_key_date_dd = ttk.Combobox(
-                self.f_key_date, width=2, textvariable=self.key_date_dd,
-                font=DEFAULT_FONT)
+                self.f_key_date, width=2,
+                textvariable=self.key_date_dd, font=_default_font)
         self.cb_key_date_dd.pack(side='left')
         self.lb_key_date_dd = tk.Label(self.f_key_date, text="日",
-                                       font=DEFAULT_FONT)
+                                       font=_default_font)
         self.lb_key_date_dd.pack(side='left')
         self.f_key_date.grid(row=4, column=3, padx=5, pady=5)
-        # source, price, amount in the same line(thus in the same frame)
+        # source, price, amount are in the same frame
         self.f_sourcePriceAmount = tk.Frame(self)
         self.lb_source = tk.Label(
                 self.f_sourcePriceAmount, text="來源: ",
-                font=DEFAULT_FONT)
+                font=_default_font)
         self.lb_source.pack(side='left', padx=10)
         self.source = tk.StringVar()
         self.cb_source = ttk.Combobox(
                 self.f_sourcePriceAmount, width=8,
-                textvariable=self.source, font=DEFAULT_FONT,
+                textvariable=self.source, font=_default_font,
                 state="readonly")
         self.cb_source.pack(side='left', padx=10)
         self.lb_price = tk.Label(self.f_sourcePriceAmount,
-                                 text="價格: ", font=DEFAULT_FONT)
+                                 text="價格: ", font=_default_font)
         self.lb_price.pack(side='left', padx=10)
         self.price = tk.StringVar()
         self.ent_price = tk.Entry(
                 self.f_sourcePriceAmount, width=8,
-                textvariable=self.price, font=DEFAULT_FONT)
+                textvariable=self.price, font=_default_font)
         self.ent_price.pack(side='left', padx=10)
         self.lb_amount = tk.Label(self.f_sourcePriceAmount,
-                                  text="數量: ", font=DEFAULT_FONT)
+                                  text="數量: ", font=_default_font)
         self.lb_amount.pack(side='left', padx=10)
         self.amount = tk.StringVar()
         self.cb_amount = tk.Entry(
                 self.f_sourcePriceAmount, width=8,
-                textvariable=self.amount, font=DEFAULT_FONT)
+                textvariable=self.amount, font=_default_font)
         self.cb_amount.pack(side='left', padx=10)
         self.f_sourcePriceAmount.grid(row=5, column=0, columnspan=4,
                                       padx=5, pady=5)
         # place
         self.lb_place = tk.Label(self, text="存置地點: ",
-                                 font=DEFAULT_FONT)
+                                 font=_default_font)
         self.lb_place.grid(row=6, column=0, padx=5, pady=5)
         self.place = tk.StringVar()
         self.cb_place = ttk.Combobox(
                 self, width=20, textvariable=self.place,
-                font=DEFAULT_FONT)
+                font=_default_font)
         self.cb_place.grid(row=6, column=1, padx=5, pady=5)
         # lifespan(in years)
         self.lb_keep_year = tk.Label(self, text="保管年限: ",
-                                     font=DEFAULT_FONT)
+                                     font=_default_font)
         self.lb_keep_year.grid(row=6, column=2, padx=5, pady=5)
         self.keep_year = tk.StringVar()
         self.f_keep_year = tk.Frame(self)
         self.ent_keep_year = tk.Entry(
-                self.f_keep_year, width=15, textvariable=self.keep_year,
-                font=DEFAULT_FONT)
+                self.f_keep_year, width=15,
+                textvariable=self.keep_year, font=_default_font)
         self.ent_keep_year.pack(side="left")
         self.lb_keep_year_yy = tk.Label(self.f_keep_year, text="年",
-                                        font=DEFAULT_FONT)
+                                        font=_default_font)
         self.lb_keep_year_yy.pack(side="left")
         self.f_keep_year.grid(row=6, column=3, padx=5, pady=5)
         # keeper department
         self.lb_keep_dept = tk.Label(self, text="保管單位: ",
-                                     font=DEFAULT_FONT)
+                                     font=_default_font)
         self.lb_keep_dept.grid(row=7, column=0, padx=5, pady=5)
         self.keep_dept = tk.StringVar()
         self.cb_keep_dept = ttk.Combobox(
                 self, width=20, textvariable=self.keep_dept,
-                font=DEFAULT_FONT)
+                font=_default_font)
         self.cb_keep_dept.grid(row=7, column=1, padx=5, pady=5)
         # use department
         self.lb_use_dept = tk.Label(self, text="使用單位: ",
-                                    font=DEFAULT_FONT)
+                                    font=_default_font)
         self.lb_use_dept.grid(row=7, column=2, padx=5, pady=5)
         self.use_dept = tk.StringVar()
         self.cb_use_dept = ttk.Combobox(
                 self, width=20, textvariable=self.use_dept,
-                font=DEFAULT_FONT)
+                font=_default_font)
         self.cb_use_dept.grid(row=7, column=3, padx=5, pady=5)
         # keeper(person)
         self.lb_keeper = tk.Label(self, text="保管人: ",
-                                  font=DEFAULT_FONT)
+                                  font=_default_font)
         self.lb_keeper.grid(row=8, column=0, padx=5, pady=5)
         self.keeper = tk.StringVar()
         self.cb_keeper = ttk.Combobox(
                 self, width=20, textvariable=self.keeper,
-                font=DEFAULT_FONT)
+                font=_default_font)
         self.cb_keeper.grid(row=8, column=1, padx=5, pady=5)
         # remarks
         self.lb_remark = tk.Label(self, text="備註事項: ",
-                                  font=DEFAULT_FONT)
+                                  font=_default_font)
         self.lb_remark.grid(row=9, column=0, padx=5, pady=5)
         self.remark = tk.StringVar()
-        self.ent_remark = tk.Entry(
+        self.cb_remark = ttk.Combobox(
                 self, width=32, textvariable=self.remark,
-                font=DEFAULT_FONT)
-        self.ent_remark.grid(row=9, column=1, columnspan=2,
+                font=_default_font)
+        self.cb_remark.grid(row=9, column=1, columnspan=2,
                              padx=5, pady=5)
         # buttons for searching
         self.f_bottomright = tk.Frame(self)
         self.btn_search = ttk.Button(
-                self.f_bottomright, text='檢索', style="register.TButton",
-                command=self.search)
+                self.f_bottomright, text='檢索',
+                style="register.TButton", command=self.search)
         self.btn_search.pack(side="left")
         self.btn_saveThis = ttk.Button(
-                self.f_bottomright, text='本筆存入', style="register.TButton",
-                command=self.saveThis)
+                self.f_bottomright, text='本筆存入',
+                style="register.TButton", command=self.saveThis)
         self.btn_saveThis.pack(side="left")
         self.f_bottomright.grid(row=9, column=3, padx=5, pady=5)
         # seperator
@@ -441,24 +448,24 @@ class register(tk.Toplevel):
         # bottom navigation bar
         self.f_bottomButtons = tk.Frame(self)
         self.btn_quit = ttk.Button(
-                self.f_bottomButtons, text='返回', style="register.TButton",
-                command=self.quitMe)
+                self.f_bottomButtons, text='返回',
+                style="register.TButton", command=self.quitMe)
         self.btn_quit.pack(side="left")
         self.btn_next = ttk.Button(
-                self.f_bottomButtons, text='下一筆', style="register.TButton",
-                command=self.fetchNext)
+                self.f_bottomButtons, text='下一筆',
+                style="register.TButton", command=self.fetchNext)
         self.btn_next.pack(side="left")
         self.btn_last = ttk.Button(
-                self.f_bottomButtons, text='上一筆', style="register.TButton",
-                command=self.fetchLast)
+                self.f_bottomButtons, text='上一筆',
+                style="register.TButton", command=self.fetchLast)
         self.btn_last.pack(side="left")
         self.btn_del_this = ttk.Button(
                 self.f_bottomButtons, text='刪除本筆',
                 style="register.TButton", command=self.deleteThis)
         self.btn_del_this.pack(side="left")
         self.btn_lookup_form = ttk.Button(
-                self.f_bottomButtons, text='表單', style="register.TButton",
-                command=self.lookupForm)
+                self.f_bottomButtons, text='表單',
+                style="register.TButton", command=self.lookupForm)
         self.btn_lookup_form.pack(side="left")
         self.btn_new_form = ttk.Button(
                 self.f_bottomButtons, text='新增一筆',
@@ -466,14 +473,107 @@ class register(tk.Toplevel):
         self.btn_new_form.pack(side="left")
         self.f_bottomButtons.grid(row=11, column=0, columnspan=4,
                                   padx=5, pady=5)
+        # for updating purposes
+        self.widgetsToConfig = [self.cb_cat, self.cb_subcat,
+                                self.cb_name, self.cb_unit,
+                                self.cb_brand, self.cb_spec,
+                                self.cb_in_date_yy,
+                                self.cb_in_date_mm,
+                                self.cb_in_date_dd,
+                                self.cb_key_date_yy,
+                                self.cb_key_date_mm,
+                                self.cb_key_date_dd,
+                                self.cb_source, self.ent_price,
+                                self.cb_amount, self.cb_place,
+                                self.ent_keep_year, self.cb_keep_dept,
+                                self.cb_use_dept, self.cb_keeper,
+                                self.cb_remark, ]
+        self.readonlyWidgets = [self.cb_cat, self.cb_subcat,
+                                self.cb_source, ]
+        # NOTE: 'normal' here means status='normal'
+        self.normalWidgets = [self.cb_name, self.cb_unit,
+                              self.cb_brand, self.cb_spec,
+                              self.cb_in_date_yy,
+                              self.cb_in_date_mm,
+                              self.cb_in_date_dd,
+                              self.cb_key_date_yy,
+                              self.cb_key_date_mm,
+                              self.cb_key_date_dd,
+                              self.ent_price, self.cb_amount,
+                              self.cb_place, self.ent_keep_year,
+                              self.cb_keep_dept, self.cb_use_dept,
+                              self.cb_keeper, self.cb_remark, ]
+        self.textVariables = [self.objID, self.serial, self.category,
+                              self.subcategory, self.name, self.brand,
+                              self.spec, self.unit,
+                              self.in_date_yy,
+                              self.in_date_mm,
+                              self.in_date_dd,
+                              self.key_date_yy,
+                              self.key_date_mm,
+                              self.key_date_dd,
+                              self.price, self.amount, self.place,
+                              self.keep_year, self.source,
+                              self.keep_dept, self.use_dept,
+                              self.keeper, self.remark, ]
+        # dictionary for highly used widgets
+        self.widgetDict = {
+                "物品大項" : self.cb_cat,
+                "物品細目" : self.cb_subcat,
+                "物品名稱" : self.cb_name,
+                "單位" : self.cb_unit,
+                "品牌" : self.cb_brand,
+                "規格" : self.cb_spec,
+                "物品編號" : self.ent_objID,
+                "流水號" : self.ent_serial,
+                "購置日期_年" : self.cb_in_date_yy,
+                "購置日期_月" : self.cb_in_date_mm,
+                "購置日期_日" : self.cb_in_date_dd,
+                "建帳日期_年" : self.cb_key_date_yy,
+                "建帳日期_月" : self.cb_key_date_mm,
+                "建帳日期_日" : self.cb_key_date_dd,
+                "來源" : self.cb_source,
+                "價格" : self.ent_price,
+                "數量" : self.cb_amount,
+                "存置地點" : self.cb_place,
+                "保管年限" : self.ent_keep_year,
+                "保管單位" : self.cb_keep_dept,
+                "使用單位" : self.cb_use_dept,
+                "保管人" : self.cb_keeper,
+                "備註事項" : self.cb_remark,
+        }
+        self.strvarDict = {
+                "物品大項" : self.category,
+                "物品細目" : self.subcategory,
+                "物品名稱" : self.name,
+                "單位" : self.unit,
+                "品牌" : self.brand,
+                "規格" : self.spec,
+                "物品編號" : self.objID,
+                "流水號" : self.serial,
+                "購置日期_年" : self.in_date_yy,
+                "購置日期_月" : self.in_date_mm,
+                "購置日期_日" : self.in_date_dd,
+                "建帳日期_年" : self.key_date_yy,
+                "建帳日期_月" : self.key_date_mm,
+                "建帳日期_日" : self.key_date_dd,
+                "來源" : self.source,
+                "價格" : self.price,
+                "數量" : self.amount,
+                "存置地點" : self.place,
+                "保管年限" : self.keep_year,
+                "保管單位" : self.keep_dept,
+                "使用單位" : self.use_dept,
+                "保管人" : self.keeper,
+                "備註事項" : self.remark,
+        }
         self.updateByState(self.state)
         # get the focus in the system
         self.grab_set()
 
     def getAllRecords(self):
         # connect to db
-        connect = sqlite3.connect(DATABASE_NAME)
-        cursor = connect.cursor()
+        connect, cursor = _getConnection(_default_database)
         sqlstr = "select * from hvhnonc_in;"
         cursor.execute(sqlstr)
         return cursor.fetchall()
@@ -481,57 +581,20 @@ class register(tk.Toplevel):
     def updateByState(self, state):
         #print(state)
         #print(type(state))
-        state = state.lower()
+        if state.isalpha():
+            state = state.lower()
         if state in ("none",):
-            self.cb_cat.config(state="disabled")
-            self.cb_subcat.config(state="disabled")
-            self.cb_name.config(state="disabled")
-            self.cb_unit.config(state="disabled")
-            self.cb_brand.config(state="disabled")
-            self.cb_spec.config(state="disabled")
-            self.ent_objID.config(state="disabled")
-            self.ent_serial.config(state="disabled")
-            self.cb_in_date_yy.config(state="disabled")
-            self.cb_in_date_mm.config(state="disabled")
-            self.cb_in_date_dd.config(state="disabled")
-            self.cb_key_date_yy.config(state="disabled")
-            self.cb_key_date_mm.config(state="disabled")
-            self.cb_key_date_dd.config(state="disabled")
-            self.cb_source.config(state="disabled")
-            self.ent_price.config(state="disabled")
-            self.cb_amount.config(state="disabled")
-            self.cb_place.config(state="disabled")
-            self.ent_keep_year.config(state="disabled")
-            self.cb_keep_dept.config(state="disabled")
-            self.cb_use_dept.config(state="disabled")
-            self.cb_keeper.config(state="disabled")
-            self.ent_remark.config(state="disabled")
-            self.clearAllField()
+            for i in self.widgetsToConfig:
+                i.config(state="disabled")
+            self.clearAllFields()
             return
         elif state in ("new",):
-            self.cb_cat.config(state="readonly")
-            self.cb_subcat.config(state="readonly")
-            self.cb_name.config(state="normal")
-            self.cb_unit.config(state="normal")
-            self.cb_brand.config(state="normal")
-            self.cb_spec.config(state="normal")
-            self.cb_in_date_yy.config(state="normal")
-            self.cb_in_date_mm.config(state="normal")
-            self.cb_in_date_dd.config(state="normal")
-            self.cb_key_date_yy.config(state="normal")
-            self.cb_key_date_mm.config(state="normal")
-            self.cb_key_date_dd.config(state="normal")
-            self.cb_source.config(state="readonly")
-            self.ent_price.config(state="normal")
-            self.cb_amount.config(state="normal")
-            self.cb_place.config(state="normal")
-            self.ent_keep_year.config(state="normal")
-            self.cb_keep_dept.config(state="normal")
-            self.cb_use_dept.config(state="normal")
-            self.cb_keeper.config(state="normal")
-            self.ent_remark.config(state="normal")
+            for i in self.readonlyWidgets:
+                i.config(state="readonly")
+            for i in self.normalWidgets:
+                i.config(state="normal")
             self.initializeAllField()
-            self.clearAllField()
+            self.clearAllFields()
             self.setAsToday(self.cb_in_date_yy, self.cb_in_date_mm,
                             self.cb_in_date_dd)
             self.setAsToday(self.cb_key_date_yy, self.cb_key_date_mm,
@@ -542,27 +605,10 @@ class register(tk.Toplevel):
             self.index = self.lookupIndexInBook(state)
             #print(index)
             if self.index in range(0, len(self.book)):
-                self.cb_cat.config(state="readonly")
-                self.cb_subcat.config(state="readonly")
-                self.cb_name.config(state="normal")
-                self.cb_unit.config(state="normal")
-                self.cb_brand.config(state="normal")
-                self.cb_spec.config(state="normal")
-                self.cb_in_date_yy.config(state="normal")
-                self.cb_in_date_mm.config(state="normal")
-                self.cb_in_date_dd.config(state="normal")
-                self.cb_key_date_yy.config(state="normal")
-                self.cb_key_date_mm.config(state="normal")
-                self.cb_key_date_dd.config(state="normal")
-                self.cb_source.config(state="readonly")
-                self.ent_price.config(state="normal")
-                self.cb_amount.config(state="normal")
-                self.cb_place.config(state="normal")
-                self.ent_keep_year.config(state="normal")
-                self.cb_keep_dept.config(state="normal")
-                self.cb_use_dept.config(state="normal")
-                self.cb_keeper.config(state="normal")
-                self.ent_remark.config(state="normal")
+                for i in self.readonlyWidgets:
+                    i.config(state="readonly")
+                for i in self.normalWidgets:
+                    i.config(state="normal")
                 self.initializeAllField()
                 record = self.book[self.index]
                 self.objID.set(str(record[1]))
@@ -583,6 +629,7 @@ class register(tk.Toplevel):
                 self.key_date_yy.set(str(int(key_date[0])-1911))
                 self.key_date_mm.set(key_date[1])
                 self.key_date_dd.set(key_date[2])
+                # end of date setting
                 self.price.set(str(record[11]))
                 self.amount.set(str(record[12]))
                 self.place.set(str(record[13]))
@@ -607,169 +654,94 @@ class register(tk.Toplevel):
         #print("state == ", state)
         for i, sublist in enumerate(self.book):
             #print("sublist == {}, {}".format(i, sublist))
-            if int(state) in sublist:
+            if int(state) in (sublist[0],):
                 #print("sublist found! {}, {}".format(i, sublist))
                 return i
         return None
 
-    def clearAllField(self):
-        self.objID.set("")
-        self.serial.set("")
-        self.category.set("")
-        self.subcategory.set("")
-        self.name.set("")
-        self.brand.set("")
-        self.spec.set("")
-        self.unit.set("")
-        self.in_date_yy.set("")
-        self.in_date_mm.set("")
-        self.in_date_dd.set("")
-        self.key_date_yy.set("")
-        self.key_date_mm.set("")
-        self.key_date_dd.set("")
-        self.price.set("")
-        self.amount.set("")
-        self.place.set("")
-        self.keep_year.set("")
-        self.source.set("")
-        self.keep_dept.set("")
-        self.use_dept.set("")
-        self.keeper.set("")
-        self.remark.set("")
+    def clearAllFields(self):
+        for i in self.textVariables:
+            i.set("")
 
     def initializeAllField(self):
-        for c in range(23):
-            if c in (1,):
-                # 物品大項
-                # get categories from db
-                connect = sqlite3.connect(DATABASE_NAME)
-                connect.row_factory = lambda cursor, row: row[0]
-                cursor = connect.cursor()
-                sqlstr = "select description from hvhnonc_category;"
-                cursor.execute(sqlstr)
-                catagories = cursor.fetchall()
-                self.cb_cat['values'] = catagories
-                self.cb_cat.bind("<<ComboboxSelected>>",
-                                 self.onCategorySelected)
-                connect.close()
-            elif c in (2,):
-                # 物品細目
-                self.cb_subcat.bind("<<ComboboxSelected>>",
-                                    self.onSubcategorySelected)
-            elif c in (3,):
-                # 物品名稱
-                self.cb_name.bind("<<ComboboxSelected>>",
-                                  self.onNameSelected)
-            elif c in (4,5,6,):
-                # 單位 品牌 規格
-                pass
-            elif c in (7,8,):
-                #物品編號 流水號
-                pass
-            elif c in (9,12):
-                # 購置日期_年
-                thisYear = datetime.datetime.now().year - 1911
-                years = list(reversed(range(1, thisYear+1)))
-                self.cb_in_date_yy.config(values=years)
-                self.cb_key_date_yy.config(values=years)
-            elif c in (10,13):
-                # 購置日期_月
-                months = list(range(1,13))
-                self.cb_in_date_mm.config(values=months)
-                self.cb_key_date_mm.config(values=months)
-            elif c in (11,14):
-                # 購置日期_日
-                days = list(range(1,32))
-                self.cb_in_date_dd.config(values=days)
-                self.cb_key_date_dd.config(values=days)
-            elif c in (15,):
-                # 來源
-                sources = ["購置","撥用","贈送"]
-                self.cb_source.config(values=sources)
-            elif c in (16,17):
-                #價格 數量
-                pass
-            elif c in (18,):
-                # 存置地點
-                # grab department from db in cache
-                connect = sqlite3.connect(DATABASE_NAME)
-                connect.row_factory = lambda cursor, row: row[0]
-                cursor = connect.cursor()
-                sqlstr = ("select change_value from hvhnonc_in_cache "
-                          "where this_ID = 0 and change_ID = ("
-                          "select ID from hvhnonc_fields "
-                          "where description = '存置地點') "
-                          "order by rowid desc limit 30;")
-                cursor.execute(sqlstr)
-                places = cursor.fetchall()
-                self.cb_place['values'] = places
-                connect.close()
-            elif c in (19,):
-                # 保管年限
-                pass
-            elif c in (20,):
-                # 保管單位
-                # grab department from db in cache
-                connect = sqlite3.connect(DATABASE_NAME)
-                connect.row_factory = lambda cursor, row: row[0]
-                cursor = connect.cursor()
-                sqlstr = ("select change_value from hvhnonc_in_cache "
-                          "where this_ID = 0 and change_ID = ("
-                          "select ID from hvhnonc_fields "
-                          "where description = '保管單位') "
-                          "order by rowid desc limit 30;")
-                cursor.execute(sqlstr)
-                keep_depts = cursor.fetchall()
-                self.cb_keep_dept['values'] = keep_depts
-                connect.close()
-            elif c in (21,):
-                # 使用單位
-                # grab department from db in cache
-                connect = sqlite3.connect(DATABASE_NAME)
-                connect.row_factory = lambda cursor, row: row[0]
-                cursor = connect.cursor()
-                sqlstr = ("select change_value from hvhnonc_in_cache "
-                          "where this_ID = 0 and change_ID = ("
-                          "select ID from hvhnonc_fields "
-                          "where description = '使用單位')"
-                          "order by rowid desc limit 30;")
-                cursor.execute(sqlstr)
-                use_depts = cursor.fetchall()
-                self.cb_use_dept['values'] = use_depts
-                connect.close()
-            elif c in (22,):
-                # 保管人
-                # grab department from db in cache
-                connect = sqlite3.connect(DATABASE_NAME)
-                connect.row_factory = lambda cursor, row: row[0]
-                cursor = connect.cursor()
-                sqlstr = ("select change_value from hvhnonc_in_cache "
-                          "where this_ID = 0 and change_ID = ("
-                          "select ID from hvhnonc_fields "
-                          "where description = '保管人') "
-                          "order by rowid desc limit 30;")
-                cursor.execute(sqlstr)
-                keepers = cursor.fetchall()
-                self.cb_keeper['values'] = keepers
-                connect.close()
-            elif c in (22,):
-                # 備註事項
-                pass
-            else:
-                pass
+        # 物品大項
+        connect, cursor = _getConnection(_default_database)
+        connect.row_factory = lambda cursor, row: row[0]
+        sqlstr = "select description from hvhnonc_category;"
+        cursor.execute(sqlstr)
+        catagories = cursor.fetchall()
+        self.cb_cat['values'] = catagories
+        self.cb_cat.bind("<<ComboboxSelected>>",
+                         self.onCategorySelected)
+        # 物品細目
+        self.cb_subcat.bind("<<ComboboxSelected>>",
+                            self.onSubcategorySelected)
+        # 物品名稱
+        self.cb_name.bind("<<ComboboxSelected>>", self.onNameSelected)
+        # 年
+        thisYear = datetime.datetime.now().year - 1911
+        years = list(reversed(range(1, thisYear+1)))
+        self.cb_in_date_yy.config(values=years)
+        self.cb_key_date_yy.config(values=years)
+        # 月
+        months = list(range(1,13))
+        self.cb_in_date_mm.config(values=months)
+        self.cb_key_date_mm.config(values=months)
+        # 日
+        days = list(range(1,32))
+        self.cb_in_date_dd.config(values=days)
+        self.cb_key_date_dd.config(values=days)
+        # 來源
+        sources = ["購置","撥用","贈送"]
+        self.cb_source.config(values=sources)
+        sqlstr = (  """
+                    select change_value
+                    from hvhnonc_in_cache
+                    where (
+                        this_ID=0 and
+                        change_ID=(
+                            select ID
+                            from hvhnonc_fields
+                            where description=?))
+                    order by rowid desc limit 30;
+                    """)
+        # 存置地點
+        cursor.execute(sqlstr, ("存置地點", ))
+        places = cursor.fetchall()
+        self.cb_place['values'] = places
+        # 保管單位
+        cursor.execute(sqlstr, ("保管單位", ))
+        keep_depts = cursor.fetchall()
+        self.cb_keep_dept['values'] = keep_depts
+        # 使用單位
+        cursor.execute(sqlstr, ("使用單位", ))
+        use_depts = cursor.fetchall()
+        self.cb_use_dept['values'] = use_depts
+        # 保管人
+        cursor.execute(sqlstr, ("保管人", ))
+        keepers = cursor.fetchall()
+        self.cb_keeper['values'] = keepers
+        # 備註事項
+        cursor.execute(sqlstr, ("備註事項", ))
+        remarks = cursor.fetchall()
+        self.cb_remark['values'] = remarks
+        connect.close()
 
     def onCategorySelected(self, event):
-        connect = sqlite3.connect(DATABASE_NAME)
+        connect, cursor = _getConnection(_default_database)
         connect.row_factory = lambda cursor, row: row[0]
-        cursor = connect.cursor()
-        sqlstr = ("select description from hvhnonc_subcategory "
-                  "where parent_ID = ("
-                  "select ID from hvhnonc_category "
-                  "where description = '"
-                  + self.category.get() + "');")
-        cursor.execute(sqlstr)
+        sqlstr = ("""
+                  select description
+                  from hvhnonc_subcategory
+                  where parent_ID=(
+                      select ID
+                      from hvhnonc_category
+                      where description=?);
+                  """)
+        cursor.execute(sqlstr, (self.category.get(),))
         subcatagories = cursor.fetchall()
-        self.cb_subcat['values'] = subcatagories
+        self.cb_subcat.config(values=subcatagories)
+
         if (len(self.cb_subcat['values']) > 0 and
             self.cb_subcat.get() != self.cb_subcat['values'][0]):
             self.cb_subcat.set(self.cb_subcat['values'][0])
@@ -778,103 +750,88 @@ class register(tk.Toplevel):
 
     def onSubcategorySelected(self, event):
         # update product name
-        # connect to db
-        connect = sqlite3.connect(DATABASE_NAME)
-        cursor = connect.cursor()
-        # get all item name in the same subcategory from cache
-        sqlstr = ("select change_ID, change_value "
-                  "from hvhnonc_in_cache "
-                  "where (this_ID = '"
-                  + str(self.getFieldIDByName('物品細目')) +
-                  "' and this_value = '"
-                  + self.subcategory.get() +
-                  "') order by rowid desc limit 30;")
-        #print(sqlstr)
-        cursor.execute(sqlstr)
-        cachehit = cursor.fetchall()
-        connect.close()
-        #print(cachehit)
-        # update item name only
-        tempvals=[]
-        nameFieldID = self.getFieldIDByName('物品名稱')
-        #print(nameFieldID)
-        for c in cachehit:
-            #print(c[1])
-            if c[0] == nameFieldID:
-                tempvals.append(c[1])
-        #print(tempvals)
-        self.cb_name.config(values=tempvals)
+        connect, cursor = _getConnection(_default_database)
+        sqlstr = ("""select change_value
+                  from hvhnonc_in_cache
+                  where (
+                      this_ID=(
+                          select ID
+                          from hvhnonc_fields
+                          where description=?) and
+                      this_value=? and
+                      change_ID=(
+                          select ID
+                          from hvhnonc_fields
+                          where description=?)
+                  );""")
+        params = ("物品細目", self.subcategory.get(), "物品名稱")
+        cursor.execute(sqlstr, params)
+        rows = cursor.fetchall()
+        self.cb_name.config(values=rows)
         if (len(self.cb_name['values']) > 0 and
             self.cb_name.get() != self.cb_name['values'][0]):
             self.cb_name.set(self.cb_name['values'][0])
             self.onNameSelected(None)
+        connect.close()
 
     def onNameSelected(self, event):
         # update product name
-        # connect to db
-        connect = sqlite3.connect(DATABASE_NAME)
-        cursor = connect.cursor()
-        # get all item name in the same subcategory from cache
-        sqlstr = ("select change_ID, change_value "
-                  "from hvhnonc_in_cache "
-                  "where (this_ID = '"
-                  + str(self.getFieldIDByName('物品名稱')) +
-                  "' and this_value = '"
-                  + self.name.get() +
-                  "') order by rowid desc limit 30;")
-        #print(sqlstr)
-        cursor.execute(sqlstr)
-        cachehit = cursor.fetchall()
+        connect,cursor = _getConnection(_default_database)
+        sqlstr = ("""
+                  select change_value
+                  from hvhnonc_in_cache
+                  where (
+                      this_ID=(
+                          select ID
+                          from hvhnonc_fields
+                          where description=?) and
+                      this_value=? and
+                      change_ID=(
+                          select ID
+                          from hvhnonc_fields
+                          where description=?))
+                  order by rowid desc limit 30;
+                  """)
+        params = ["物品名稱", self.name.get(), "",]
+        # 單位
+        params[2] = "單位"
+        cursor.execute(sqlstr, params)
+        units = cursor.fetchall()
+        self.cb_unit.config(values=units)
+        if (len(self.cb_unit['values']) > 0 and
+            self.cb_unit.get() != self.cb_unit['values'][0]):
+            self.cb_unit.set(self.cb_unit['values'][0])
+        # 品牌
+        params[2] = "品牌"
+        cursor.execute(sqlstr, params)
+        brands = cursor.fetchall()
+        self.cb_brand.config(values=brands)
+        if (len(self.cb_brand['values']) > 0 and
+            self.cb_brand.get() != self.cb_brand['values'][0]):
+            self.cb_brand.set(self.cb_brand['values'][0])
+        # 規格
+        params[2] = "規格"
+        cursor.execute(sqlstr, params)
+        specs = cursor.fetchall()
+        self.cb_spec.config(values=specs)
+        if (len(self.cb_spec['values']) > 0 and
+            self.cb_spec.get() != self.cb_spec['values'][0]):
+            self.cb_spec.set(self.cb_spec['values'][0])
         connect.close()
-        #print(cachehit)
-        # update things with a switch
-        isCacheHit = [False]*7
-        tempUnit = []
-        tempBrand = []
-        tempSpec = []
-        for c in cachehit:
-            if c[0] in (4,):
-                # 單位
-                tempUnit.append(c[1])
-                isCacheHit[4] = True
-            elif c[0] in (5,):
-                # 品牌
-                tempBrand.append(c[1])
-                isCacheHit[5] = True
-            elif c[0] in (6,):
-                # 規格
-                tempSpec.append(c[1])
-                isCacheHit[6] = True
-            else:
-                tk.messagebox.showerror("錯誤", "未知的快取值",
-                                        parent=self)
-        if isCacheHit[4]:
-            self.cb_unit.config(values=tempUnit)
-            if (len(self.cb_unit['values']) > 0 and
-                self.cb_unit.get() != self.cb_unit['values'][0]):
-                self.cb_unit.set(self.cb_unit['values'][0])
-        if isCacheHit[5]:
-            self.cb_brand.config(values=tempBrand)
-            if (len(self.cb_brand['values']) > 0 and
-                self.cb_brand.get() != self.cb_brand['values'][0]):
-                self.cb_brand.set(self.cb_brand['values'][0])
-        if isCacheHit[6]:
-            self.cb_spec.config(values=tempSpec)
-            if (len(self.cb_spec['values']) > 0 and
-                self.cb_spec.get() != self.cb_spec['values'][0]):
-                self.cb_spec.set(self.cb_spec['values'][0])
 
     def getFieldIDByName(self, name):
         # connect to db
-        connect = sqlite3.connect(DATABASE_NAME)
+        connect,cursor = _getConnection(_default_database)
         connect.row_factory = lambda cursor, row: row[0]
-        cursor = connect.cursor()
-        sqlstr = ("select ID from hvhnonc_fields "
-                  "where description = '" + name + "';")
-        cursor.execute(sqlstr)
+        sqlstr = (  """
+                    select ID
+                    from hvhnonc_fields
+                    where description=?;
+                    """)
+        cursor.execute(sqlstr, name)
         hit = cursor.fetchone()
         if hit:
-            return hit
+            return hit[0]
         return None
 
     def lookupSerial(self):
@@ -885,8 +842,8 @@ class register(tk.Toplevel):
         def __init__(self, parent, *args, **kwargs):
             # treeview styles
             style = ttk.Style()
-            style.configure("Treeview", font=DEFAULT_FONT)
-            style.configure("Treeview.Heading", font=DEFAULT_FONT)
+            style.configure("Treeview", font=_default_font)
+            style.configure("Treeview.Heading", font=_default_font)
             # init
             tk.Toplevel.__init__(self, parent, *args, **kwargs)
             self.parent = parent
@@ -894,18 +851,19 @@ class register(tk.Toplevel):
             self.attributes("-topmost", "false")
             # get serials from db_in
             # connect to db
-            connect = sqlite3.connect(DATABASE_NAME)
-            cursor = connect.cursor()
+            connect,cursor = _getConnection(_default_database)
             sqlstr = "select count(distinct name) from hvhnonc_in;"
             cursor.execute(sqlstr)
             itemCount = cursor.fetchone()
             self.title("序號: 共{}筆".format(itemCount[0]))
             self.geometry("640x500")
             # get all objIDs and sqlIDs
-            sqlstr = ("select object_ID, name, count(*) "
-                      "from hvhnonc_in "
-                      "group by object_ID, name "
-                      "order by object_ID, serial_ID;")
+            sqlstr = (  """
+                        select object_ID, name, count(*)
+                        from hvhnonc_in
+                        group by object_ID, name
+                        order by object_ID, serial_ID;
+                        """)
             cursor.execute(sqlstr)
             data = cursor.fetchall()
             # make a tree view
@@ -941,21 +899,20 @@ class register(tk.Toplevel):
             self.geometry("465x60")
             # searchbar
             self.l_search = tk.Label(self, text="請輸入想要檢索的關鍵字:",
-                                     font=DEFAULT_FONT)
+                                     font=_default_font)
             self.l_search.grid(row=0, column=0)
             self.parent.query = tk.StringVar()
             self.cb_searchbar = ttk.Combobox(
                     self, width=20, textvariable=self.parent.query,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             # get search cache from db
-            connect = sqlite3.connect(DATABASE_NAME)
-            cursor = connect.cursor()
+            connect,cursor = _getConnection(_default_database)
             sqlstr = ("select change_value "
                       "from hvhnonc_in_cache "
                       "where change_ID = ("
                       "select ID from hvhnonc_fields "
                       "where description = '檢索') "
-                      "order by rowid limit 30;")
+                      "order by rowid desc limit 30;")
             cursor.execute(sqlstr)
             history = cursor.fetchall()
             self.cb_searchbar.config(values=history)
@@ -983,17 +940,18 @@ class register(tk.Toplevel):
 
         def onSubmitClick(self):
             # update search cache
-            connect = sqlite3.connect(DATABASE_NAME)
-            cursor = connect.cursor()
-            sqlstr = ("replace into hvhnonc_in_cache"
-                      "(this_ID, this_value, change_ID, change_value) "
-                      "values (0, 'none', ("
-                      "select ID from hvhnonc_fields "
-                      "where description = '檢索'), '"
-                      + self.parent.query.get() +
-                      "');")
+            connect,cursor = _getConnection(_default_database)
+            sqlstr = (  """
+                        replace into hvhnonc_in_cache(this_ID,
+                            this_value, change_ID, change_value)
+                        values(0, 'none', (
+                            select ID
+                            from hvhnonc_fields
+                            where description = '檢索'),
+                            ?);
+                        """)
             #print(sqlstr)
-            cursor.execute(sqlstr)
+            cursor.execute(sqlstr, (self.parent.query.get(), ))
             connect.commit()
             # open a result toplevel
             self.SearchResultWindow(self.parent)
@@ -1004,8 +962,8 @@ class register(tk.Toplevel):
                 # bookmark reference
                 # treeview styles
                 style = ttk.Style()
-                style.configure("Treeview", font=DEFAULT_FONT)
-                style.configure("Treeview.Heading", font=DEFAULT_FONT)
+                style.configure("Treeview", font=_default_font)
+                style.configure("Treeview.Heading", font=_default_font)
                 # init
                 tk.Toplevel.__init__(self, parent, *args, **kwargs)
                 self.parent = parent
@@ -1029,32 +987,27 @@ class register(tk.Toplevel):
                 sb.config(command=self.tv.yview)
                 # fetch the data
                 # connect to db
-                connect = sqlite3.connect(DATABASE_NAME)
-                cursor = connect.cursor()
-                phrase = parent.query.get()
-                sqlstr = (
-                        "select ID, in_date, name, "
-                        "place, keeper, remark "
-                        "from hvhnonc_in "
-                        "where ("
-                        "object_ID like '%" + phrase + "%' or "
-                        "serial_ID like '%" + phrase+ "%' or "
-                        "category like '%" + phrase+ "%' or "
-                        "subcategory like '%" + phrase+ "%' or "
-                        "name like '%" + phrase+ "%' or "
-                        "brand like '%" + phrase+ "%' or "
-                        "spec like '%" + phrase+ "%' or "
-                        "in_date like '%" + phrase+ "%' or "
-                        "key_date like '%" + phrase+ "%' or "
-                        "place like '%" + phrase+ "%' or "
-                        "source like '%" + phrase+ "%' or "
-                        "keep_department like '%" + phrase+ "%' or "
-                        "use_department like '%" + phrase+ "%' or "
-                        "keeper like '%" + phrase+ "%' or "
-                        "remark like '%" + phrase+ "%')"
-                        " order by in_date desc;")
+                connect,cursor = _getConnection(_default_database)
+                phrase = str(parent.query.get())
+                sqlstr = (  """
+                            select ID, in_date, name, place, keeper,
+                                   remark
+                            from hvhnonc_in
+                            where(
+                                category like :q or
+                                subcategory like :q or
+                                name like :q or
+                                brand like :q or
+                                spec like :q or
+                                place like :q or
+                                keep_department like :q or
+                                use_department like :q or
+                                keeper like :q or
+                                remark like :q)
+                            order by in_date desc;
+                            """)
                 #print(sqlstr)
-                cursor.execute(sqlstr)
+                cursor.execute(sqlstr, {'q': "%{}%".format(phrase)})
                 data = cursor.fetchall()
                 for d in data:
                     self.tv.insert("", "end", values=d)
@@ -1071,79 +1024,107 @@ class register(tk.Toplevel):
                 self.parent.updateByState(self.parent.state)
                 self.destroy()
 
+    def updateCache(self, sqlstr, thisName, thatName):
+        connect,cursor = _getConnection(_default_database)
+        # Update cache table
+        # So next time when thisName is fed,
+        # autocomplete thatName
+        if self.strvarDict[thatName] is not "":
+            params = [thisName, "none",
+                      thatName, self.strvarDict[thatName].get(), ]
+            if thisName not in ("無", ):
+                params[1] = self.strvarDict[thisName].get()
+            try:
+                cursor.execute(sqlstr, params)
+                connect.commit()
+            except Exception as e:
+                print("Exception in updateCache: %s" % e)
+                tk.messagebox.showerror("錯誤 updateCache", str(e),
+                                        parent=self)
+
+    def updateAllCache(self, sqlstr):
+        self.updateCache(sqlstr, "物品細目", "物品名稱")
+        self.updateCache(sqlstr, "物品名稱", "單位")
+        self.updateCache(sqlstr, "物品名稱", "品牌")
+        self.updateCache(sqlstr, "物品名稱", "規格")
+        self.updateCache(sqlstr, "無", "存置地點")
+        self.updateCache(sqlstr, "無", "保管單位")
+        self.updateCache(sqlstr, "無", "使用單位")
+        self.updateCache(sqlstr, "無", "保管人")
+        self.updateCache(sqlstr, "無", "備註事項")
+
     def saveThis(self):
-        # connect to db
-        connect = sqlite3.connect(DATABASE_NAME)
-        cursor = connect.cursor()
-        # insert new row
-        if self.state is 'new':
-            # get the object_ID, serial_ID
-            # objID is '6-(ID_cat)-(ID_subcat)'
-            sqlstr = ("select parent_ID, ID "
-                    "from hvhnonc_subcategory "
-                    "where parent_ID=("
-                    "select ID "
-                    "from hvhnonc_category "
-                    "where description=?) "
-                    "and description=?")
-            params = (self.category.get(), self.subcategory.get(),)
-            try:
-                cursor.execute(sqlstr, params)
-            except sqlite3.Error as e:
-                print("Database error: %s" % e)
-            except Exception as e:
-                print("Exception in saveThis: %s" % e)
+        # BUG: near ')' a syntax error is caught
+        if (self.category.get() is "" or
+            self.subcategory.get() is "" or
+            self.name.get() is ""):
+            tk.messagebox.showerror("錯誤","有欄位未填",parent=self)
+            return
+        connect, cursor = _getConnection(_default_database)
+        connect.set_trace_callback(print)
+        # object_ID, serial_ID
+        # objID is '6-(ID_cat)-(ID_subcat)'
+        sqlstr = ("select parent_ID, ID "
+                  "from hvhnonc_subcategory "
+                  "where parent_ID=("
+                  "select ID "
+                  "from hvhnonc_category "
+                  "where description=?) "
+                  "and description=?;")
+        params = (self.category.get(), self.subcategory.get(), )
+        try:
+            cursor.execute(sqlstr, params)
             row = cursor.fetchone()
+            objID = ("6",
+                     "{:02d}".format(int(row[0])),
+                     "{:02d}".format(int(row[1])))
+        except Exception as e:
+            print("Exception in saveThis: %s" % e)
+            tk.messagebox.showerror("錯誤1", str(e), parent=self)
+        objID = " - ".join(objID)
+        sqlstr = ("select serial_ID "
+                  "from hvhnonc_in "
+                  "where object_ID=? and name=?;")
+        params = (objID, self.name.get(), )
+        try:
+            cursor.execute(sqlstr, params)
+        except Exception as e:
+            print("Exception in saveThis: %s" % e)
+            tk.messagebox.showerror("錯誤2", str(e), parent=self)
+        row = cursor.fetchone()
+        if row is None:
+            sqlstr = ("select count(distinct serial_ID) "
+                      "from hvhnonc_in "
+                      "where object_ID=?;")
             try:
-                objID = ("6", "{:02d}".format(int(row[0])),
-                        "{:02d}".format(int(row[1])))
-            except Exception as e:
-                print("Exception in saveThis: %s" % e)
-            objID = " - ".join(objID)
-            # serialID is count group by name + 1
-            sqlstr = ("select serial_ID from hvhnonc_in "
-                    "where object_ID=? and name=?")
-            params = (objID, self.name.get(),)
-            try:
-                cursor.execute(sqlstr, params)
-            except sqlite3.Error as e:
-                print("Database error: %s" % e)
-            except Exception as e:
-                print("Exception in saveThis: %s" % e)
-            row = cursor.fetchone()
-            if row is None:
-                sqlstr = ("select count(distinct serial_ID) "
-                        "from hvhnonc_in "
-                        "where object_ID=?;")
-                try:
-                    cursor.execute(sqlstr, params[:1])
-                except sqlite3.Error as e:
-                    print("Database error: %s" % e)
-                except Exception as e:
-                    print("Exception in saveThis: %s" % e)
+                cursor.execute(sqlstr, (params[0], ))
                 row = cursor.fetchone()
                 serialID = "{:03}".format(int(row[0])+1)
-            else:
-                serialID = str(row[0])
-            # date string preparation
-            tmp_in_date = "-".join(
-                    (str(int(self.in_date_yy.get()) + 1911),
-                    str("{:02}".format(int(self.in_date_mm.get()))),
-                    str("{:02}".format(int(self.in_date_dd.get()))),
-                    ))
-            tmp_key_date = "-".join(
-                    (str(int(self.key_date_yy.get()) + 1911),
-                    str("{:02}".format(int(self.key_date_mm.get()))),
-                    str("{:02}".format(int(self.key_date_dd.get()))),
-                    ))
+            except Exception as e:
+                print("Exception in saveThis: %s" % e)
+                tk.messagebox.showerror("錯誤3", str(e), parent=self)
+        else:
+            serialID = str(row[0])
+        # date string preparation
+        tmp_in_date = "-".join(
+                (str(int(self.in_date_yy.get()) + 1911),
+                str("{:02}".format(int(self.in_date_mm.get()))),
+                str("{:02}".format(int(self.in_date_dd.get()))), ))
+        tmp_key_date = "-".join(
+                (str(int(self.key_date_yy.get()) + 1911),
+                str("{:02}".format(int(self.key_date_mm.get()))),
+                str("{:02}".format(int(self.key_date_dd.get()))), ))
+        # insert new row
+        if self.state in ("new", ):
             # insertion statement
             sqlstr = ("insert into hvhnonc_in("
-                    "object_ID, serial_ID, category, subcategory, "
-                    "name, brand, spec, unit, in_date, key_date, "
-                    "price, amount, place, keep_year, source, "
-                    "keep_department, use_department, keeper, "
-                    "remark) "
-                    "values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+                      "object_ID, serial_ID, category, subcategory, "
+                      "name, brand, spec, unit, in_date, key_date, "
+                      "price, amount, place, keep_year, source, "
+                      "keep_department, use_department, keeper, "
+                      "remark) "
+                      "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
+                      "?, ?, ?, ?, ?, ?);")
             params = (str(objID), str(serialID),
                     self.category.get(), self.subcategory.get(),
                     self.name.get(), self.brand.get(),
@@ -1153,125 +1134,32 @@ class register(tk.Toplevel):
                     self.place.get(), self.keep_year.get(),
                     self.source.get(), self.keep_dept.get(),
                     self.use_dept.get(), self.keeper.get(),
-                    self.remark.get(),)
+                    self.remark.get(), )
             try:
                 cursor.execute(sqlstr, params)
                 connect.commit()
                 tk.messagebox.showinfo("新增成功", "已新增一筆資料",
                                        parent=self)
-            except sqlite3.Error as e:
-                print("Database error: %s" % e)
             except Exception as e:
                 print("Exception in saveThis: %s" % e)
+                tk.messagebox.showerror("錯誤4", str(e), parent=self)
             # update cache table
-            # sql insert template
-            sqlstr = ("insert or ignore into hvhnonc_in_cache"
-            "(this_ID, this_value, change_ID, change_value) "
-            "values((select ID from hvhnonc_fields where "
-            "description = ?),?,(select ID from hvhnonc_fields "
-            "where description = ?),?)")
-            # 細目>名稱
-            if self.name.get() is not "":
-                params = ("物品細目", self.subcategory.get(),
-                         "物品名稱", self.name.get(),)
-                try:
-                    cursor.execute(sqlstr, params)
-                    connect.commit()
-                except sqlite3.Error as e:
-                    print("Database error: %s" % e)
-                except Exception as e:
-                    print("Exception in saveThis: %s" % e)
-            # 名稱>單位,品牌,規格
-            if self.unit.get() is not "":
-                params = ("物品名稱", self.name.get(), "單位",
-                          self.unit.get(),)
-                try:
-                    cursor.execute(sqlstr, params)
-                    connect.commit()
-                except sqlite3.Error as e:
-                    print("Database error: %s" % e)
-                except Exception as e:
-                    print("Exception in saveThis: %s" % e)
-            if self.brand.get() is not "":
-                params = ("物品名稱", self.name.get(), "品牌",
-                          self.brand.get(),)
-                try:
-                    cursor.execute(sqlstr, params)
-                    connect.commit()
-                except sqlite3.Error as e:
-                    print("Database error: %s" % e)
-                except Exception as e:
-                    print("Exception in saveThis: %s" % e)
-            if self.spec.get() is not "":
-                params = ("物品名稱", self.name.get(), "規格",
-                          self.spec.get(),)
-                try:
-                    cursor.execute(sqlstr, params)
-                    connect.commit()
-                except sqlite3.Error as e:
-                    print("Database error: %s" % e)
-                except Exception as e:
-                    print("Exception in saveThis: %s" % e)
-            # 存置地點
-            if self.place.get() is not "":
-                params = ("無", "none", "存置地點",
-                          self.place.get(),)
-                try:
-                    cursor.execute(sqlstr, params)
-                    connect.commit()
-                except sqlite3.Error as e:
-                    print("Database error: %s" % e)
-                except Exception as e:
-                    print("Exception in saveThis: %s" % e)
-            # 保管單位
-            if self.keep_dept.get() is not "":
-                params = ("無", "none", "保管單位",
-                          self.keep_dept.get(),)
-                try:
-                    cursor.execute(sqlstr, params)
-                    connect.commit()
-                except sqlite3.Error as e:
-                    print("Database error: %s" % e)
-                except Exception as e:
-                    print("Exception in saveThis: %s" % e)
-            # 使用單位
-            if self.use_dept.get() is not "":
-                params = ("無", "none", "使用單位",
-                          self.use_dept.get(),)
-                try:
-                    cursor.execute(sqlstr, params)
-                    connect.commit()
-                except sqlite3.Error as e:
-                    print("Database error: %s" % e)
-                except Exception as e:
-                    print("Exception in saveThis: %s" % e)
-            # 保管人
-            if self.keeper.get() is not "":
-                params = ("無", "none", "保管人",
-                          self.keeper.get(),)
-                try:
-                    cursor.execute(sqlstr, params)
-                    connect.commit()
-                except sqlite3.Error as e:
-                    print("Database error: %s" % e)
-                except Exception as e:
-                    print("Exception in saveThis: %s" % e)
-            # 備註事項
-            if self.remark.get() is not "":
-                params = ("無", "none", "備註事項",
-                          self.remark.get(),)
-                try:
-                    cursor.execute(sqlstr, params)
-                    connect.commit()
-                except sqlite3.Error as e:
-                    print("Database error: %s" % e)
-                except Exception as e:
-                    print("Exception in saveThis: %s" % e)
+            sqlstr = (  """
+                        insert or ignore into
+                         hvhnonc_in_cache(this_ID, this_value,
+                                          change_ID, change_value)
+                         values(
+                            (select ID from hvhnonc_fields
+                                 where description = ?),
+                             ?,
+                            (select ID from hvhnonc_fields
+                                 where description = ?),
+                             ?)
+                        """)
+            self.updateAllCache(sqlstr)
             # update book
             self.book = self.getAllRecords()
-            # close connection
             connect.close()
-            # set state as none and update
             self.state = "none"
             self.updateByState(self.state)
         elif self.lookupIndexInBook(self.state) is not None:
@@ -1282,231 +1170,66 @@ class register(tk.Toplevel):
                     parent=self)
             if isWriteover is True:
                 # replace
-                sqlstr = (
-                        "replace into hvhnonc_in("
-                        "ID, "
-                        "object_ID, serial_ID, category, subcategory, "
-                        "name, brand, spec, unit, in_date, key_date, "
-                        "price, amount, place, keep_year, source, "
-                        "keep_department, use_department, keeper, "
-                        "remark) "
-                        "values("
-                        + str(self.state) + ", '"
-                        + self.objID.get() + "', '"
-                        + self.serial.get() + "', '"
-                        + self.category.get() + "', '"
-                        + self.subcategory.get() + "', '"
-                        + self.name.get() + "', '"
-                        + self.brand.get() + "', '"
-                        + self.spec.get() + "', '"
-                        + self.unit.get() + "', '"
-                        + "-".join((
-                                str(int(self.in_date_yy.get()) + 1911),
-                                self.in_date_mm.get(),
-                                self.in_date_dd.get())) + "', '"
-                        + "-".join((
-                                str(int(self.key_date_yy.get()) + 1911),
-                                self.key_date_mm.get(),
-                                self.key_date_dd.get())) + "', "
-                        + self.price.get() + ", "
-                        + self.amount.get() + ", '"
-                        + self.place.get() + "', "
-                        + self.keep_year.get() + ", '"
-                        + self.source.get() + "', '"
-                        + self.keep_dept.get() + "', '"
-                        + self.use_dept.get() + "', '"
-                        + self.keeper.get() + "', '"
-                        + self.remark.get() + "');")
-                #print(sqlstr)
+                sqlstr = ("replace into hvhnonc_in("
+                          "ID, object_ID, serial_ID, "
+                          "category, subcategory, "
+                          "name, brand, spec, unit, "
+                          "in_date, key_date, "
+                          "price, amount, place, "
+                          "keep_year, source, "
+                          "keep_department, use_department, "
+                          "keeper, remark) "
+                          "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
+                          "?, ?, ?, ?, ?, ?, ?, ?);")
+                params = (self.state, str(objID), str(serialID),
+                        self.category.get(), self.subcategory.get(),
+                        self.name.get(), self.brand.get(),
+                        self.spec.get(), self.unit.get(),
+                        str(tmp_in_date), str(tmp_key_date),
+                        self.price.get(), self.amount.get(),
+                        self.place.get(), self.keep_year.get(),
+                        self.source.get(), self.keep_dept.get(),
+                        self.use_dept.get(), self.keeper.get(),
+                        self.remark.get(), )
                 try:
-                    cursor.execute(sqlstr)
+                    cursor.execute(sqlstr, params)
                     connect.commit()
                     tk.messagebox.showinfo("覆寫成功", "已覆寫一筆資料",
                                            parent=self)
-                except sqlite3.Error as e:
-                    print("Database error: %s" % e)
                 except Exception as e:
                     print("Exception in saveThis: %s" % e)
+                    tk.messagebox.showerror("錯誤5", str(e),
+                                            parent=self)
                 # update cache table
-                # sql insert template
-                sqlstr = ("insert or ignore into hvhnonc_in_cache"
-                "(this_ID, this_value, change_ID, change_value) "
-                "values((select ID from hvhnonc_fields where "
-                "description = ?),?,(select ID from hvhnonc_fields "
-                "where description = ?),?)")
-                # 細目>名稱
-                if self.name.get() is not "":
-                    params = ("物品細目", self.subcategory.get(),
-                             "物品名稱", self.name.get(),)
-                    try:
-                        cursor.execute(sqlstr, params)
-                        connect.commit()
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
-                # 名稱>單位,品牌,規格
-                if self.unit.get() is not "":
-                    params = ("物品名稱", self.name.get(), "單位",
-                              self.unit.get(),)
-                    try:
-                        cursor.execute(sqlstr, params)
-                        connect.commit()
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
-                if self.brand.get() is not "":
-                    params = ("物品名稱", self.name.get(), "品牌",
-                              self.brand.get(),)
-                    try:
-                        cursor.execute(sqlstr, params)
-                        connect.commit()
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
-                if self.spec.get() is not "":
-                    params = ("物品名稱", self.name.get(), "規格",
-                              self.spec.get(),)
-                    try:
-                        cursor.execute(sqlstr, params)
-                        connect.commit()
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
-                # 存置地點
-                if self.place.get() is not "":
-                    params = ("無", "none", "存置地點",
-                              self.place.get(),)
-                    try:
-                        cursor.execute(sqlstr, params)
-                        connect.commit()
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
-                # 保管單位
-                if self.keep_dept.get() is not "":
-                    params = ("無", "none", "保管單位",
-                              self.keep_dept.get(),)
-                    try:
-                        cursor.execute(sqlstr, params)
-                        connect.commit()
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
-                # 使用單位
-                if self.use_dept.get() is not "":
-                    params = ("無", "none", "使用單位",
-                              self.use_dept.get(),)
-                    try:
-                        cursor.execute(sqlstr, params)
-                        connect.commit()
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
-                # 保管人
-                if self.keeper.get() is not "":
-                    params = ("無", "none", "保管人",
-                              self.keeper.get(),)
-                    try:
-                        cursor.execute(sqlstr, params)
-                        connect.commit()
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
-                # 備註事項
-                if self.remark.get() is not "":
-                    params = ("無", "none", "備註事項",
-                              self.remark.get(),)
-                    try:
-                        cursor.execute(sqlstr, params)
-                        connect.commit()
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
+                sqlstr = ("insert or ignore into "
+                          "hvhnonc_in_cache(this_ID, this_value, "
+                          "change_ID, change_value) "
+                          "values("
+                          "(select ID from hvhnonc_fields "
+                          "where description = ?), "
+                          "?, "
+                          "(select ID from hvhnonc_fields "
+                          "where description = ?), "
+                          "?)")
+                self.updateAllCache(sqlstr)
                 # update book
                 self.book = self.getAllRecords()
-                # close connection
                 connect.close()
-                # set state as none and update
                 self.state = "none"
                 self.updateByState(self.state)
             elif isWriteover is False:
                 # insert new row
-                # get the object_ID, serial_ID
-                # objID is '6-(ID_cat)-(ID_subcat)'
-                sqlstr = ("select parent_ID, ID "
-                        "from hvhnonc_subcategory "
-                        "where parent_ID=("
-                        "select ID "
-                        "from hvhnonc_category "
-                        "where description=?) "
-                        "and description=?")
-                params = (self.category.get(), self.subcategory.get(),)
-                try:
-                    cursor.execute(sqlstr, params)
-                except sqlite3.Error as e:
-                    print("Database error: %s" % e)
-                except Exception as e:
-                    print("Exception in saveThis: %s" % e)
-                row = cursor.fetchone()
-                try:
-                    objID = ("6", "{:02d}".format(int(row[0])),
-                            "{:02d}".format(int(row[1])))
-                except Exception as e:
-                    print("Exception in saveThis: %s" % e)
-                objID = " - ".join(objID)
-                # serialID is count group by name + 1
-                sqlstr = ("select serial_ID from hvhnonc_in "
-                        "where object_ID=? and name=?")
-                params = (objID, self.name.get(),)
-                try:
-                    cursor.execute(sqlstr, params)
-                except sqlite3.Error as e:
-                    print("Database error: %s" % e)
-                except Exception as e:
-                    print("Exception in saveThis: %s" % e)
-                row = cursor.fetchone()
-                if row is None:
-                    sqlstr = ("select count(distinct serial_ID) "
-                            "from hvhnonc_in "
-                            "where object_ID=?;")
-                    try:
-                        cursor.execute(sqlstr, params[:1])
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
-                    row = cursor.fetchone()
-                    serialID = "{:03}".format(int(row[0])+1)
-                else:
-                    serialID = str(row[0])
-                # date string preparation
-                tmp_in_date = "-".join(
-                        (str(int(self.in_date_yy.get()) + 1911),
-                        str("{:02}".format(int(self.in_date_mm.get()))),
-                        str("{:02}".format(int(self.in_date_dd.get()))),
-                        ))
-                tmp_key_date = "-".join(
-                        (str(int(self.key_date_yy.get()) + 1911),
-                        str("{:02}".format(int(self.key_date_mm.get()))),
-                        str("{:02}".format(int(self.key_date_dd.get()))),
-                        ))
-                # insertion statement
                 sqlstr = ("insert into hvhnonc_in("
-                        "object_ID, serial_ID, category, subcategory, "
-                        "name, brand, spec, unit, in_date, key_date, "
-                        "price, amount, place, keep_year, source, "
-                        "keep_department, use_department, keeper, "
-                        "remark) "
-                        "values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+                          "object_ID, serial_ID, "
+                          "category, subcategory, "
+                          "name, brand, spec, unit, "
+                          "in_date, key_date, "
+                          "price, amount, place, "
+                          "keep_year, source, "
+                          "keep_department, use_department, "
+                          "keeper, remark) "
+                          "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
+                          "?, ?, ?, ?, ?, ?, ?);")
                 params = (str(objID), str(serialID),
                         self.category.get(), self.subcategory.get(),
                         self.name.get(), self.brand.get(),
@@ -1522,123 +1245,31 @@ class register(tk.Toplevel):
                     connect.commit()
                     tk.messagebox.showinfo("新增成功", "已新增一筆資料",
                                            parent=self)
-                except sqlite3.Error as e:
-                    print("Database error: %s" % e)
                 except Exception as e:
                     print("Exception in saveThis: %s" % e)
+                    tk.messagebox.showerror("錯誤6", str(e),
+                                            parent=self)
                 # update cache table
                 # sql insert template
-                sqlstr = ("insert or ignore into hvhnonc_in_cache"
-                "(this_ID, this_value, change_ID, change_value) "
-                "values((select ID from hvhnonc_fields where "
-                "description = ?),?,(select ID from hvhnonc_fields "
-                "where description = ?),?)")
-                # 細目>名稱
-                if self.name.get() is not "":
-                    params = ("物品細目", self.subcategory.get(),
-                             "物品名稱", self.name.get(),)
-                    try:
-                        cursor.execute(sqlstr, params)
-                        connect.commit()
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
-                # 名稱>單位,品牌,規格
-                if self.unit.get() is not "":
-                    params = ("物品名稱", self.name.get(), "單位",
-                              self.unit.get(),)
-                    try:
-                        cursor.execute(sqlstr, params)
-                        connect.commit()
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
-                if self.brand.get() is not "":
-                    params = ("物品名稱", self.name.get(), "品牌",
-                              self.brand.get(),)
-                    try:
-                        cursor.execute(sqlstr, params)
-                        connect.commit()
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
-                if self.spec.get() is not "":
-                    params = ("物品名稱", self.name.get(), "規格",
-                              self.spec.get(),)
-                    try:
-                        cursor.execute(sqlstr, params)
-                        connect.commit()
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
-                # 存置地點
-                if self.place.get() is not "":
-                    params = ("無", "none", "存置地點",
-                              self.place.get(),)
-                    try:
-                        cursor.execute(sqlstr, params)
-                        connect.commit()
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
-                # 保管單位
-                if self.keep_dept.get() is not "":
-                    params = ("無", "none", "保管單位",
-                              self.keep_dept.get(),)
-                    try:
-                        cursor.execute(sqlstr, params)
-                        connect.commit()
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
-                # 使用單位
-                if self.use_dept.get() is not "":
-                    params = ("無", "none", "使用單位",
-                              self.use_dept.get(),)
-                    try:
-                        cursor.execute(sqlstr, params)
-                        connect.commit()
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
-                # 保管人
-                if self.keeper.get() is not "":
-                    params = ("無", "none", "保管人",
-                              self.keeper.get(),)
-                    try:
-                        cursor.execute(sqlstr, params)
-                        connect.commit()
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
-                # 備註事項
-                if self.remark.get() is not "":
-                    params = ("無", "none", "備註事項",
-                              self.remark.get(),)
-                    try:
-                        cursor.execute(sqlstr, params)
-                        connect.commit()
-                    except sqlite3.Error as e:
-                        print("Database error: %s" % e)
-                    except Exception as e:
-                        print("Exception in saveThis: %s" % e)
+                sqlstr = ("insert or ignore into "
+                          "hvhnonc_in_cache(this_ID, this_value, "
+                          "change_ID, change_value) "
+                          "values("
+                          "(select ID from hvhnonc_fields "
+                          "where description = ?), "
+                          "?, "
+                          "(select ID from hvhnonc_fields "
+                          "where description = ?), "
+                          "?);")
+                self.updateAllCache(sqlstr)
                 # update book
                 self.book = self.getAllRecords()
-                # close connection
                 connect.close()
-                # set state as none and update
                 self.state = "none"
                 self.updateByState(self.state)
             # do nothing if cancel is pressed
 
+# TODO: alchenerd@gmail.com optimize code below next tuesday(10/30)
     def fetchNext(self):
         if self.state in ("none", "new"):
             self.index = 0
@@ -1685,123 +1316,123 @@ class register(tk.Toplevel):
             self.geometry("665x290")
             # category
             self.lb_category = tk.Label(
-                    self, text="物品大項: ", font=DEFAULT_FONT)
+                    self, text="物品大項: ", font=_default_font)
             self.lb_category.grid(row=0, column=0, padx=5, pady=5)
             self.category = tk.StringVar()
             self.cb_category = ttk.Combobox(
                     self, width=20, textvariable=self.category,
-                    font=DEFAULT_FONT, state="readonly")
+                    font=_default_font, state="readonly")
             self.cb_category.grid(row=0, column=1, padx=5, pady=5)
             # subcategory
             self.lb_subcategory = tk.Label(
-                    self, text="物品細目: ", font=DEFAULT_FONT)
+                    self, text="物品細目: ", font=_default_font)
             self.lb_subcategory.grid(row=0, column=2, padx=5, pady=5)
             self.subcategory = tk.StringVar()
             self.cb_subcategory = ttk.Combobox(
                     self, width=20, textvariable=self.subcategory,
-                    font=DEFAULT_FONT, state="readonly")
+                    font=_default_font, state="readonly")
             self.cb_subcategory.grid(row=0, column=3, padx=5, pady=5)
             # name
             self.lb_name = tk.Label(
-                    self, text="物品名稱: ", font=DEFAULT_FONT)
+                    self, text="物品名稱: ", font=_default_font)
             self.lb_name.grid(row=1, column=0, padx=5, pady=5)
             self.name = tk.StringVar()
             self.cb_name = ttk.Combobox(
                     self, width=20, textvariable=self.name,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_name.grid(row=1, column=1, padx=5, pady=5)
             # brand
             self.lb_brand = tk.Label(
-                    self, text="品牌: ", font=DEFAULT_FONT)
+                    self, text="品牌: ", font=_default_font)
             self.lb_brand.grid(row=1, column=2, padx=5, pady=5)
             self.brand = tk.StringVar()
             self.cb_brand = ttk.Combobox(
                     self, width=20, textvariable=self.brand,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_brand.grid(row=1, column=3, padx=5, pady=5)
             # spec
             self.lb_spec = tk.Label(
-                    self, text="規格: ", font=DEFAULT_FONT)
+                    self, text="規格: ", font=_default_font)
             self.lb_spec.grid(row=2, column=0, padx=5, pady=5)
             self.spec = tk.StringVar()
             self.cb_spec = ttk.Combobox(
                     self, width=20, textvariable=self.spec,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_spec.grid(row=2, column=1, padx=5, pady=5)
             # price
             self.lb_price = tk.Label(
-                    self, text="單價: ", font=DEFAULT_FONT)
+                    self, text="單價: ", font=_default_font)
             self.lb_price.grid(row=2, column=2, padx=5, pady=5)
             self.f_price = tk.Frame(self)
             self.price_min = tk.StringVar()
             self.ent_price_min = tk.Entry(
                     self.f_price, width=5, textvariable=self.price_min,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.ent_price_min.pack(side='left', padx=10)
             self.lb_sqig_price = tk.Label(
-                    self.f_price, text=" ~ ", font=DEFAULT_FONT)
+                    self.f_price, text=" ~ ", font=_default_font)
             self.lb_sqig_price.pack(side='left', padx=10)
             self.price_max = tk.StringVar()
             self.ent_price_max = tk.Entry(
                     self.f_price, width=5, textvariable=self.price_max,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.ent_price_max.pack(side='left', padx=10)
             self.f_price.grid(row=2, column=3, padx=5, pady=5)
             # in date (min~max)
             self.f_date = tk.Frame(self)
             self.lb_date = tk.Label(
-                    self.f_date, text="購置日期: ", font=DEFAULT_FONT)
+                    self.f_date, text="購置日期: ", font=_default_font)
             self.lb_date.pack(side='left')
             self.date_yy_min = tk.StringVar()
             self.cb_date_yy_min = ttk.Combobox(
                     self.f_date, width=3, textvariable=self.date_yy_min,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_date_yy_min.pack(side='left')
             self.lb_date_yy_min = tk.Label(
-                    self.f_date, text="年", font=DEFAULT_FONT)
+                    self.f_date, text="年", font=_default_font)
             self.lb_date_yy_min.pack(side='left')
             self.date_mm_min = tk.StringVar()
             self.cb_date_mm_min = ttk.Combobox(
                     self.f_date, width=2, textvariable=self.date_mm_min,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_date_mm_min.pack(side='left')
             self.lb_date_mm_min = tk.Label(
-                    self.f_date, text="月", font=DEFAULT_FONT)
+                    self.f_date, text="月", font=_default_font)
             self.lb_date_mm_min.pack(side='left')
             self.date_dd_min = tk.StringVar()
             self.cb_date_dd_min = ttk.Combobox(
                     self.f_date, width=2, textvariable=self.date_dd_min,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_date_dd_min.pack(side='left')
             self.lb_date_dd_min = tk.Label(
-                    self.f_date, text="日", font=DEFAULT_FONT)
+                    self.f_date, text="日", font=_default_font)
             self.lb_date_dd_min.pack(side='left')
             self.lb_sqig_date = tk.Label(
-                    self.f_date, text="~", font=DEFAULT_FONT)
+                    self.f_date, text="~", font=_default_font)
             self.lb_sqig_date.pack(side='left')
             self.date_yy_max = tk.StringVar()
             self.cb_date_yy_max = ttk.Combobox(
                     self.f_date, width=3, textvariable=self.date_yy_max,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_date_yy_max.pack(side='left')
             self.lb_date_yy_max = tk.Label(
-                    self.f_date, text="年", font=DEFAULT_FONT)
+                    self.f_date, text="年", font=_default_font)
             self.lb_date_yy_max.pack(side='left')
             self.date_mm_max = tk.StringVar()
             self.cb_date_mm_max = ttk.Combobox(
                     self.f_date, width=2, textvariable=self.date_mm_max,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_date_mm_max.pack(side='left')
             self.lb_date_mm_max = tk.Label(
-                    self.f_date, text="月", font=DEFAULT_FONT)
+                    self.f_date, text="月", font=_default_font)
             self.lb_date_mm_max.pack(side='left')
             self.date_dd_max = tk.StringVar()
             self.cb_date_dd_max = ttk.Combobox(
                     self.f_date, width=2, textvariable=self.date_dd_max,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_date_dd_max.pack(side='left')
             self.lb_date_dd_max = tk.Label(
-                    self.f_date, text="日", font=DEFAULT_FONT)
+                    self.f_date, text="日", font=_default_font)
             self.lb_date_dd_max.pack(side='left')
             self.f_date.grid(row=3, column=0,
                              padx=5, pady=5, columnspan=4)
@@ -1809,102 +1440,102 @@ class register(tk.Toplevel):
             self.f_key_date = tk.Frame(self)
             self.lb_key_date = tk.Label(
                     self.f_key_date, text="建帳日期: ",
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.lb_key_date.pack(side='left')
             self.key_date_yy_min = tk.StringVar()
             self.cb_key_date_yy_min = ttk.Combobox(
                     self.f_key_date, width=3,
                     textvariable=self.key_date_yy_min,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_key_date_yy_min.pack(side='left')
             self.lb_key_date_yy_min = tk.Label(
-                    self.f_key_date, text="年", font=DEFAULT_FONT)
+                    self.f_key_date, text="年", font=_default_font)
             self.lb_key_date_yy_min.pack(side='left')
             self.key_date_mm_min = tk.StringVar()
             self.cb_key_date_mm_min = ttk.Combobox(
                     self.f_key_date, width=2,
                     textvariable=self.key_date_mm_min,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_key_date_mm_min.pack(side='left')
             self.lb_key_date_mm_min = tk.Label(
-                    self.f_key_date, text="月", font=DEFAULT_FONT)
+                    self.f_key_date, text="月", font=_default_font)
             self.lb_key_date_mm_min.pack(side='left')
             self.key_date_dd_min = tk.StringVar()
             self.cb_key_date_dd_min = ttk.Combobox(
                     self.f_key_date, width=2,
                     textvariable=self.key_date_dd_min,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_key_date_dd_min.pack(side='left')
             self.lb_key_date_dd_min = tk.Label(
-                    self.f_key_date, text="日", font=DEFAULT_FONT)
+                    self.f_key_date, text="日", font=_default_font)
             self.lb_key_date_dd_min.pack(side='left')
             self.lb_sqig_key_date = tk.Label(
-                    self.f_key_date, text="~", font=DEFAULT_FONT)
+                    self.f_key_date, text="~", font=_default_font)
             self.lb_sqig_key_date.pack(side='left')
             self.key_date_yy_max = tk.StringVar()
             self.cb_key_date_yy_max = ttk.Combobox(
                     self.f_key_date, width=3,
                     textvariable=self.key_date_yy_max,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_key_date_yy_max.pack(side='left')
             self.lb_key_date_yy_max = tk.Label(
-                    self.f_key_date, text="年", font=DEFAULT_FONT)
+                    self.f_key_date, text="年", font=_default_font)
             self.lb_key_date_yy_max.pack(side='left')
             self.key_date_mm_max = tk.StringVar()
             self.cb_key_date_mm_max = ttk.Combobox(
                     self.f_key_date, width=2,
                     textvariable=self.key_date_mm_max,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_key_date_mm_max.pack(side='left')
             self.lb_key_date_mm_max = tk.Label(
-                    self.f_key_date, text="月", font=DEFAULT_FONT)
+                    self.f_key_date, text="月", font=_default_font)
             self.lb_key_date_mm_max.pack(side='left')
             self.key_date_dd_max = tk.StringVar()
             self.cb_key_date_dd_max = ttk.Combobox(
                     self.f_key_date, width=2,
                     textvariable=self.key_date_dd_max,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_key_date_dd_max.pack(side='left')
             self.lb_key_date_dd_max = tk.Label(
-                    self.f_key_date, text="日", font=DEFAULT_FONT)
+                    self.f_key_date, text="日", font=_default_font)
             self.lb_key_date_dd_max.pack(side='left')
             self.f_key_date.grid(row=4, column=0,
                                  padx=5, pady=5, columnspan=4)
             # keeper department
             self.lb_keep_dept = tk.Label(
-                    self, text="保管單位: ", font=DEFAULT_FONT)
+                    self, text="保管單位: ", font=_default_font)
             self.lb_keep_dept.grid(row=5, column=0, padx=5, pady=5)
             self.keep_dept = tk.StringVar()
             self.cb_keep_dept = ttk.Combobox(
                     self, width=20, textvariable=self.keep_dept,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_keep_dept.grid(row=5, column=1, padx=5, pady=5)
             # place
             self.lb_place = tk.Label(
-                    self, text="存置地點: ", font=DEFAULT_FONT)
+                    self, text="存置地點: ", font=_default_font)
             self.lb_place.grid(row=5, column=2, padx=5, pady=5)
             self.place = tk.StringVar()
             self.cb_place = ttk.Combobox(
                     self, width=20, textvariable=self.place,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_place.grid(row=5, column=3, padx=5, pady=5)
             # use department
             self.lb_use_dept = tk.Label(
-                    self, text="使用單位: ", font=DEFAULT_FONT)
+                    self, text="使用單位: ", font=_default_font)
             self.lb_use_dept.grid(row=6, column=0, padx=5, pady=5)
             self.use_dept = tk.StringVar()
             self.cb_use_dept = ttk.Combobox(
                     self, width=20, textvariable=self.use_dept,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_use_dept.grid(row=6, column=1, padx=5, pady=5)
             # keeper
             self.lb_keeper = tk.Label(
-                    self, text="保管人: ", font=DEFAULT_FONT)
+                    self, text="保管人: ", font=_default_font)
             self.lb_keeper.grid(row=6, column=2, padx=5, pady=5)
             self.keeper = tk.StringVar()
             self.cb_keeper = ttk.Combobox(
                     self, width=20, textvariable=self.keeper,
-                    font=DEFAULT_FONT)
+                    font=_default_font)
             self.cb_keeper.grid(row=6, column=3, padx=5, pady=5)
             # bottom navigate bar
             self.f_bottomButtons = tk.Frame(self)
@@ -1929,8 +1560,7 @@ class register(tk.Toplevel):
 
         def initLookupForm(self):
             # connect to db
-            connect = sqlite3.connect(DATABASE_NAME)
-            cursor = connect.cursor()
+            connect,cursor = _getConnection(_default_database)
             # 物品大項
             sqlstr = "select description from hvhnonc_category;"
             # print(sqlstr)
@@ -1958,9 +1588,8 @@ class register(tk.Toplevel):
             self.initDateComboboxes(self.cb_key_date_yy_max,
                                     self.cb_key_date_mm_max,
                                     self.cb_key_date_dd_max)
-            connect = sqlite3.connect(DATABASE_NAME)
+            connect,cursor = _getConnection(_default_database)
             connect.row_factory = lambda cursor, row: row[0]
-            cursor = connect.cursor()
             # 保管單位
             sqlstr = ("select change_value from hvhnonc_in_cache "
                       "where this_ID = 0 and change_ID = ("
@@ -2007,8 +1636,7 @@ class register(tk.Toplevel):
 
         def onCategorySelected(self, event):
             # update subcategory
-            connect = sqlite3.connect(DATABASE_NAME)
-            cursor = connect.cursor()
+            connect,cursor = _getConnection(_default_database)
             sqlstr = ("select description from hvhnonc_subcategory "
                       "where parent_ID = "
                       "(select ID from hvhnonc_category "
@@ -2030,8 +1658,7 @@ class register(tk.Toplevel):
             # namely 名稱, 品牌, 規格
                    # update product name
             # connect to db
-            connect = sqlite3.connect(DATABASE_NAME)
-            cursor = connect.cursor()
+            connect,cursor = _getConnection(_default_database)
             # get all item name in the same subcategory from cache
             sqlstr = ("select change_ID, change_value "
                       "from hvhnonc_in_cache "
@@ -2060,8 +1687,7 @@ class register(tk.Toplevel):
         def onNameSelected(self, event):
             # update product name
             # connect to db
-            connect = sqlite3.connect(DATABASE_NAME)
-            cursor = connect.cursor()
+            connect,cursor = _getConnection(_default_database)
             # get all item name in the same subcategory from cache
             sqlstr = ("select change_ID, change_value "
                       "from hvhnonc_in_cache "
@@ -2101,9 +1727,8 @@ class register(tk.Toplevel):
 
         def getFieldIDByName(self, name):
             # connect to db
-            connect = sqlite3.connect(DATABASE_NAME)
+            connect,cursor = _getConnection(_default_database)
             connect.row_factory = lambda cursor, row: row[0]
-            cursor = connect.cursor()
             sqlstr = ("select ID from hvhnonc_fields "
                       "where description = '" + name + "';")
             cursor.execute(sqlstr)
@@ -2124,8 +1749,8 @@ class register(tk.Toplevel):
             def __init__(self, parent, *args, **kwargs):
                 # treeview styles
                 style = ttk.Style()
-                style.configure("Treeview", font=DEFAULT_FONT)
-                style.configure("Treeview.Heading", font=DEFAULT_FONT)
+                style.configure("Treeview", font=_default_font)
+                style.configure("Treeview.Heading", font=_default_font)
                 #init
                 tk.Toplevel.__init__(self, parent, *args, **kwargs)
                 self.parent = parent
@@ -2149,8 +1774,7 @@ class register(tk.Toplevel):
                 self.tv.heading('6',text='備註')
                 sb.config(command=self.tv.yview)
                 # fetch the data
-                connect = sqlite3.connect(DATABASE_NAME)
-                cursor = connect.cursor()
+                connect,cursor = _getConnection(_default_database)
                 sqlstr = ("select ID, in_date, name, "
                           "place, keeper, remark "
                           "from hvhnonc_in "
@@ -2319,10 +1943,10 @@ class unregister(tk.Toplevel):
         self.attributes("-topmost", "true")
         self.attributes("-topmost", "false")
         self.title("除帳")
-        self.geometry(DEFAULT_TOPLEVEL_SIZE)
+        self.geometry(_default_toplevel_size)
         self.resizable(False, False)
         # gui
-        self.l = tk.Label(self, text="除帳畫面", font=DEFAULT_FONT)
+        self.l = tk.Label(self, text="除帳畫面", font=_default_font)
         self.l.pack()
         # buttons
         self.btn_quit = ttk.Button(self, text='返回',
@@ -2345,10 +1969,10 @@ class printNonc(tk.Toplevel):
         self.attributes("-topmost", "true")
         self.attributes("-topmost", "false")
         self.title("列印")
-        self.geometry(DEFAULT_TOPLEVEL_SIZE)
+        self.geometry(_default_toplevel_size)
         self.resizable(False, False)
         #gui
-        self.l = tk.Label(self, text="列印畫面", font=DEFAULT_FONT)
+        self.l = tk.Label(self, text="列印畫面", font=_default_font)
         self.l.pack()
         # buttons
         self.btn_quit = ttk.Button(self, text='返回',
@@ -2371,10 +1995,10 @@ class maintenance(tk.Toplevel):
         self.attributes("-topmost", "true")
         self.attributes("-topmost", "false")
         self.title("維護")
-        self.geometry(DEFAULT_TOPLEVEL_SIZE)
+        self.geometry(_default_toplevel_size)
         self.resizable(False, False)
         #gui
-        self.l = tk.Label(self, text="維護畫面", font=DEFAULT_FONT)
+        self.l = tk.Label(self, text="維護畫面", font=_default_font)
         self.l.pack()
         # buttons
         self.btn_quit = ttk.Button(self, text='返回',

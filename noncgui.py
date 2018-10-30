@@ -5,11 +5,6 @@ Created on Tue Oct 16 11:13:25 2018
 The module where I put tkinter frames, toplevels, and their functions
 """
 
-# TODO: <alchenerd@gmail.com>
-#       Since this file is large and repetitive
-#       Scheduled refactorization at 2018/10/25
-# TODO: <alchenerd@gmail.com> Check all sqlstr
-
 import tkinter as tk
 from tkinter import messagebox, ttk
 import sqlite3
@@ -1269,7 +1264,6 @@ class register(tk.Toplevel):
                 self.updateByState(self.state)
             # do nothing if cancel is pressed
 
-# TODO: alchenerd@gmail.com optimize code below next tuesday(10/30)
     def fetchNext(self):
         if self.state in ("none", "new"):
             self.index = 0
@@ -1311,7 +1305,6 @@ class register(tk.Toplevel):
             # init
             tk.Toplevel.__init__(self, parent, *args, **kwargs)
             self.parent = parent
-            self.attributes("-topmost", "true")
             self.title("請輸入要篩選的範圍")
             self.geometry("665x290")
             # category
@@ -1552,28 +1545,24 @@ class register(tk.Toplevel):
             # liaten to enter key
             self.bind("<Return>", self.catchReturn)
             # get focus
-            self.grab_set()
+            self.attributes("-topmost", "true")
             self.attributes("-topmost", "false")
+            self.grab_set()
 
         def catchReturn(self, event):
             self.submit()
 
         def initLookupForm(self):
-            # connect to db
             connect,cursor = _getConnection(_default_database)
             # 物品大項
             sqlstr = "select description from hvhnonc_category;"
-            # print(sqlstr)
             cursor.execute(sqlstr)
-            connect.commit()
             catagories = cursor.fetchall()
             self.cb_category.config(values=catagories)
             self.cb_category.bind(
                     "<<ComboboxSelected>>", self.onCategorySelected)
             # 物品細目 # 物品名稱 # 品牌 # 規格
             # initialized with onCategorySelected()
-            # 單價(低) # 單價(高)
-            # no need for init
             # 購置日期(低)yyymmdd # 購置日期(高)yyymmdd
             # 建帳日期(低)yyymmdd # 建帳日期(高)yyymmdd
             self.initDateComboboxes(self.cb_date_yy_min,
@@ -1588,42 +1577,26 @@ class register(tk.Toplevel):
             self.initDateComboboxes(self.cb_key_date_yy_max,
                                     self.cb_key_date_mm_max,
                                     self.cb_key_date_dd_max)
-            connect,cursor = _getConnection(_default_database)
-            connect.row_factory = lambda cursor, row: row[0]
-            # 保管單位
+            # template
             sqlstr = ("select change_value from hvhnonc_in_cache "
                       "where this_ID = 0 and change_ID = ("
                       "select ID from hvhnonc_fields "
-                      "where description = '保管單位')"
+                      "where description=?)"
                       "order by rowid desc limit 30;")
-            cursor.execute(sqlstr)
+            # 保管單位
+            cursor.execute(sqlstr, ("保管單位", ))
             keep_dept = cursor.fetchall()
             self.cb_keep_dept['values'] = keep_dept
             # 存置地點
-            sqlstr = ("select change_value from hvhnonc_in_cache "
-                      "where this_ID = 0 and change_ID = ("
-                      "select ID from hvhnonc_fields "
-                      "where description = '存置地點')"
-                      "order by rowid desc limit 30;")
-            cursor.execute(sqlstr)
+            cursor.execute(sqlstr, ("存置地點", ))
             places = cursor.fetchall()
             self.cb_place['values'] = places
             # 使用單位
-            sqlstr = ("select change_value from hvhnonc_in_cache "
-                      "where this_ID = 0 and change_ID = ("
-                      "select ID from hvhnonc_fields "
-                      "where description = '使用單位')"
-                      "order by rowid desc limit 30;")
-            cursor.execute(sqlstr)
+            cursor.execute(sqlstr, ("使用單位", ))
             use_dept = cursor.fetchall()
             self.cb_use_dept['values'] = use_dept
             # 保管人
-            sqlstr = ("select change_value from hvhnonc_in_cache "
-                      "where this_ID = 0 and change_ID = ("
-                      "select ID from hvhnonc_fields "
-                      "where description = '保管人')"
-                      "order by rowid desc limit 30;")
-            cursor.execute(sqlstr)
+            cursor.execute(sqlstr, ("保管人", ))
             keepers = cursor.fetchall()
             self.cb_keeper['values'] = keepers
             connect.close()
@@ -1637,115 +1610,105 @@ class register(tk.Toplevel):
         def onCategorySelected(self, event):
             # update subcategory
             connect,cursor = _getConnection(_default_database)
-            sqlstr = ("select description from hvhnonc_subcategory "
-                      "where parent_ID = "
-                      "(select ID from hvhnonc_category "
-                      "where description = '"
-                      + self.cb_category.get() +
-                      "' );")
-            #print(sqlstr)
-            cursor.execute(sqlstr)
-            connect.commit()
+            sqlstr = ("select description "
+                      "from hvhnonc_subcategory "
+                      "where parent_ID=("
+                          "select ID "
+                          "from hvhnonc_category "
+                          "where description=?);")
+            params = (self.cb_category.get(), )
+            cursor.execute(sqlstr, params)
             subcatagories = cursor.fetchall()
             self.cb_subcategory.config(values=subcatagories)
             self.cb_subcategory.bind(
                     "<<ComboboxSelected>>", self.onSubcategorySelected)
+            if (len(self.cb_subcategory['values']) > 0 and
+                    self.cb_subcategory.get() !=
+                    self.cb_subcategory['values'][0]):
+                self.cb_subcategory.set(
+                        self.cb_subcategory['values'][0])
             self.onSubcategorySelected(None)
             connect.close()
 
         def onSubcategorySelected(self, event):
-            # update other fields in the lookup form
-            # namely 名稱, 品牌, 規格
-                   # update product name
-            # connect to db
+            # update product name
             connect,cursor = _getConnection(_default_database)
             # get all item name in the same subcategory from cache
-            sqlstr = ("select change_ID, change_value "
+            sqlstr = ("select change_value "
                       "from hvhnonc_in_cache "
-                      "where(this_ID = "
-                      + str(self.getFieldIDByName('物品細目')) +
-                      " and this_value = '"
-                      + self.subcategory.get() +
-                      "') order by rowid desc limit 30;")
-            #print(sqlstr)
-            cursor.execute(sqlstr)
+                      "where(this_ID=? "
+                      "and this_value=? "
+                      "and change_ID=?) "
+                      "order by rowid desc limit 30;")
+            params = (str(self.getFieldIDByName('物品細目')),
+                      self.subcategory.get(),
+                      str(self.getFieldIDByName('物品名稱')),)
+            cursor.execute(sqlstr, params)
             cachehits = cursor.fetchall()
             connect.close()
             #print(cachehits)
-            # update item name only
-            tempvals = []
-            nameFieldID = self.getFieldIDByName('物品名稱')
-            #print(nameFieldID)
-            for c in cachehits:
-                #print(c[1])
-                if c[0] == nameFieldID:
-                    tempvals.append(c[1])
-            #print(tempvals)
-            self.cb_name.config(values=tempvals)
+            self.cb_name.config(values=cachehits)
+            if (len(self.cb_name['values']) > 0 and
+                    self.cb_name.get() != self.cb_name['values'][0]):
+                self.cb_name.set(self.cb_name['values'][0])
             self.onNameSelected(None)
 
         def onNameSelected(self, event):
-            # update product name
-            # connect to db
+            # update spec and unit
             connect,cursor = _getConnection(_default_database)
             # get all item name in the same subcategory from cache
-            sqlstr = ("select change_ID, change_value "
+            sqlstr = ("select change_value "
                       "from hvhnonc_in_cache "
-                      "where(this_ID = "
-                      + str(self.getFieldIDByName('物品名稱')) +
-                      " and this_value = '"
-                      + self.name.get() +
-                      "') order by rowid desc limit 30;")
-            #print(sqlstr)
-            cursor.execute(sqlstr)
-            cachehit = cursor.fetchall()
-            connect.close()
-            #print(cachehit)
-            # update things with a switch
-            isCacheHit = [False]*7
-            tempBrand = []
-            tempSpec = []
-            for c in cachehit:
-                if c[0] in (5,):
-                    # 品牌
-                    tempBrand.append(c[1])
-                    isCacheHit[5] = True
-                elif c[0] in (6,):
-                    # 規格
-                    tempSpec.append(c[1])
-                    isCacheHit[6] = True
-            if isCacheHit[5]:
-                self.cb_brand.config(values=tempBrand)
-                if (len(self.cb_brand['values']) > 0 and
+                      "where("
+                          "this_ID=? "
+                          "and this_value=? "
+                          "and change_ID=?) "
+                      "order by rowid desc limit 30;")
+            # 品牌
+            params = (str(self.getFieldIDByName('物品名稱')),
+                      self.name.get(),
+                      str(self.getFieldIDByName('品牌')), )
+            cursor.execute(sqlstr, params)
+            brands = cursor.fetchall()
+            self.cb_brand.config(values=brands)
+            if (len(self.cb_brand['values']) > 0 and
                     self.cb_brand.get() != self.cb_brand['values'][0]):
                     self.cb_brand.set(self.cb_brand['values'][0])
-            if isCacheHit[6]:
-                self.cb_spec.config(values=tempSpec)
-                if (len(self.cb_spec['values']) > 0 and
+            # 規格
+            params = (str(self.getFieldIDByName('物品名稱')),
+                      self.name.get(),
+                      str(self.getFieldIDByName('規格')), )
+            cursor.execute(sqlstr, params)
+            specs = cursor.fetchall()
+            self.cb_spec.config(values=specs)
+            if (len(self.cb_spec['values']) > 0 and
                     self.cb_spec.get() != self.cb_spec['values'][0]):
                     self.cb_spec.set(self.cb_spec['values'][0])
+            connect.close()
 
         def getFieldIDByName(self, name):
-            # connect to db
             connect,cursor = _getConnection(_default_database)
-            connect.row_factory = lambda cursor, row: row[0]
-            sqlstr = ("select ID from hvhnonc_fields "
-                      "where description = '" + name + "';")
-            cursor.execute(sqlstr)
+            #connect.row_factory = lambda cursor, row: row[0]
+            sqlstr = ("select ID "
+                      "from hvhnonc_fields "
+                      "where description=?;")
+            cursor.execute(sqlstr, (name, ))
             hit = cursor.fetchone()
-            return hit
+            if hit is not None:
+                return hit[0]
+            else:
+                return None
 
         def quitMe(self):
             self.destroy()
 
         def submit(self):
             # open a result toplevel
-            print("lookupForm:submit")
-            self.withdraw()
+            #print("lookupForm:submit")
             self.LookupResult(self)
 
         class LookupResult(tk.Toplevel):
-            # basically search result toplevel
+            # basically it's a search result toplevel
             def __init__(self, parent, *args, **kwargs):
                 # treeview styles
                 style = ttk.Style()
@@ -1775,90 +1738,92 @@ class register(tk.Toplevel):
                 sb.config(command=self.tv.yview)
                 # fetch the data
                 connect,cursor = _getConnection(_default_database)
+                connect.set_trace_callback(print)
+                params = []
                 sqlstr = ("select ID, in_date, name, "
                           "place, keeper, remark "
                           "from hvhnonc_in "
                           "where (")
                 if parent.category.get():
-                    sqlstr += ("category like '%"
-                    + parent.category.get() + "%' and ")
+                    sqlstr += ("category like ? and ")
+                    params.append("%{}%".format(parent.category.get()))
                 if parent.subcategory.get():
-                    sqlstr += ("subcategory like '%"
-                    + parent.subcategory.get()+ "%' and ")
+                    sqlstr += ("subcategory like ? and ")
+                    params.append("%{}%".format(
+                            parent.subcategory.get()))
                 if parent.name.get():
-                    sqlstr += ("name like '%"
-                    + parent.name.get()+ "%' and ")
+                    sqlstr += ("name like ? and ")
+                    params.append("%{}%".format(parent.name.get()))
                 if parent.brand.get():
-                    sqlstr += ("brand like '%"
-                    + parent.brand.get()+ "%' and ")
+                    sqlstr += ("brand like ? and ")
+                    params.append("%{}%".format(parent.brand.get()))
                 if parent.spec.get():
-                    sqlstr += ("spec like '%"
-                    + parent.spec.get()+ "%' and ")
+                    sqlstr += ("spec like ? and ")
+                    params.append("%{}%".format(parent.spec.get()))
                 if parent.place.get():
-                    sqlstr += ("place like '%"
-                    + parent.place.get()+ "%' and ")
+                    sqlstr += ("place like ? and ")
+                    params.append("%{}%".format(parent.place.get()))
                 if parent.keep_dept.get():
-                    sqlstr += ("keep_department like '%"
-                    + parent.keep_dept.get()+ "%' and ")
+                    sqlstr += ("keep_department like ? and ")
+                    params.append("%{}%".format(parent.keep_dept.get()))
                 if parent.use_dept.get():
-                    sqlstr += ("use_department like '%"
-                    + parent.use_dept.get()+ "%' and ")
+                    sqlstr += ("use_department like ? and ")
+                    params.append("%{}%".format(parent.use_dept.get()))
                 if parent.keeper.get():
-                    sqlstr += ("keeper like '%"
-                    + parent.keeper.get()+ "%' and ")
+                    sqlstr += ("keeper like ? and ")
+                    params.append("%{}%".format(parent.keeper.get()))
                 if (parent.price_min.get() or parent.price_max.get()):
                     if parent.price_min.get():
-                        sqlstr += (
-                                "(price >= "
-                                + parent.price_min.get() + " and "
-                                )
+                        sqlstr += "(price >= ? and "
+                        params.append(parent.price_min.get())
                     else:
                         sqlstr += "("
                     if parent.price_max.get():
-                        sqlstr += (
-                                "price <= "
-                                + parent.price_max.get() + ") and "
-                                )
+                        sqlstr += "price <= ?) and "
+                        params.append(parent.price_max.get())
                     else:
-                        sqlstr += ") and "
+                        sqlstr += "1) and "
                 # statement forging for between dates
                 if (parent.date_yy_min.get() or
                     parent.date_yy_max.get()):
                     if parent.date_yy_min.get():
                         str_date_min = (
-                                "'"
-                                + str(int(parent.date_yy_min.get())+1911)
+                                ""
+                                + str(int(parent.date_yy_min.get())
+                                +1911)
                                 + "-"
                                 + (parent.date_mm_min.get() \
                                 if parent.date_mm_min.get() else "01")
                                 + "-"
                                 + (parent.date_dd_min.get() \
-                                if parent.date_dd_min.get() else "01'")
+                                if parent.date_dd_min.get() else "01")
                                 )
                     else:
                         str_date_min = "'1911-01-01'"
                     if parent.date_yy_max.get():
                         str_date_max = (
-                                "'"
-                                + str(int(parent.date_yy_max.get())+1911)
+                                ""
+                                + str(int(parent.date_yy_max.get())
+                                +1911)
                                 + "-"
                                 + (parent.date_mm_max.get() \
                                 if parent.date_mm_max.get() else "12")
                                 + "-"
                                 + (parent.date_dd_max.get() \
-                                if parent.date_dd_max.get() else "31'")
+                                if parent.date_dd_max.get() else "31")
                                 )
                     else:
                         str_date_max = "date('now')"
-                    sqlstr += ("(strftime('%Y-%m-%d', in_date) between "
-                                 + str_date_min + " and "
-                                 + str_date_max + ") and ")
+                    sqlstr += ("(strftime('%Y-%m-%d', in_date) "
+                               "between ? and ?) and ")
+                    params.append(str_date_min)
+                    params.append(str_date_max)
                 # do the same for key_date
                 if (parent.key_date_yy_min.get() or
                     parent.key_date_yy_max.get()):
                     if parent.key_date_yy_min.get():
                         str_key_date_min = (
-                                "'"
+                                ""
                                 + str(int(parent.key_date_yy_min.get())
                                 + 1911)
                                 + "-"
@@ -1868,13 +1833,13 @@ class register(tk.Toplevel):
                                 + "-"
                                 + (parent.key_date_dd_min.get() \
                                 if parent.key_date_dd_min.get() \
-                                else "01'")
+                                else "01")
                                 )
                     else:
                         str_key_date_min = "'1911-01-01'"
                     if parent.key_date_yy_max.get():
                         str_key_date_max = (
-                                "'"
+                                ""
                                 + str(int(parent.key_date_yy_max.get())
                                 + 1911)
                                 + "-"
@@ -1884,23 +1849,18 @@ class register(tk.Toplevel):
                                 + "-"
                                 + (parent.key_date_dd_max.get() \
                                 if parent.key_date_dd_max.get() \
-                                else "31'")
+                                else "31")
                                 )
                     else:
                         str_key_date_max = "date('now')"
                     sqlstr += (
-                            "(strftime('%Y-%m-%d', key_date) between "
-                            + str_key_date_min
-                            + " and " + str_key_date_max + ") and ")
+                            "(strftime('%Y-%m-%d', key_date) "
+                            "between ? and ?) and ")
+                    params.append(str_key_date_min)
+                    params.append(str_key_date_max)
                 # where(1) if no input
                 sqlstr += "1) order by in_date desc;"
-                """
-                "price like '%" + phrase+ "%' and -r"
-                "in_date like '%" + phrase+ "%' and -r"
-                "key_date like '%" + phrase+ "%' and -r"
-                """
-                print(sqlstr)
-                cursor.execute(sqlstr)
+                cursor.execute(sqlstr, params)
                 data = cursor.fetchall()
                 self.title("篩選結果: 共{}筆".format(len(data)))
                 for d in data:

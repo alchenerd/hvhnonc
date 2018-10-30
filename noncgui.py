@@ -1049,7 +1049,6 @@ class register(tk.Toplevel):
         self.updateCache(sqlstr, "無", "備註事項")
 
     def saveThis(self):
-        # BUG: near ')' a syntax error is caught
         if (self.category.get() is "" or
             self.subcategory.get() is "" or
             self.name.get() is ""):
@@ -1293,7 +1292,33 @@ class register(tk.Toplevel):
                 self.updateByState(self.state)
 
     def deleteThis(self):
-        print("deleteThis")
+        # deletes the row if it's in the book
+        #print("deleteThis")
+        if self.state in ("new", "none", ):
+            tk.messagebox.showerror("錯誤", "不是資料庫內的資料",
+                                    parent=self)
+            self.state = "none"
+            self.updateByState(self.state)
+            return
+        connect,cursor = _getConnection(_default_database)
+        sqlstr = "delete from hvhnonc_in where ID=?;"
+        param = (self.state, )
+        try:
+            cursor.execute(sqlstr, param)
+            connect.commit()
+            tk.messagebox.showinfo("刪除成功",
+                                   "已刪除一筆ID為{}的資料".format(self.state),
+                                   parent=self)
+            # update the book
+            self.book = self.getAllRecords()
+        except sqlite3.Error as e:
+            tk.messagebox.showerror("錯誤", "沒有這筆資料", parent=self)
+            print(e.args[0])
+        except Exception as e:
+            tk.messagebox.showerror("錯誤", "未知的錯誤", parent=self)
+            print(e)
+        self.state = "none"
+        self.updateByState(self.state)
 
     def lookupForm(self):
         #print("lookupForm")

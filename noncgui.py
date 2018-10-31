@@ -469,7 +469,7 @@ class register(tk.Toplevel):
         self.f_bottomButtons.grid(row=11, column=0, columnspan=4,
                                   padx=5, pady=5)
         # for updating purposes
-        self.widgetsToConfig = [self.cb_cat, self.cb_subcat,
+        self.widgetsToDisable = [self.cb_cat, self.cb_subcat,
                                 self.cb_name, self.cb_unit,
                                 self.cb_brand, self.cb_spec,
                                 self.cb_in_date_yy,
@@ -511,56 +511,56 @@ class register(tk.Toplevel):
                               self.keep_year, self.source,
                               self.keep_dept, self.use_dept,
                               self.keeper, self.remark, ]
-        # dictionary for highly used widgets
+        # dictionary for frequently used widgets
         self.widgetDict = {
-                "物品大項" : self.cb_cat,
-                "物品細目" : self.cb_subcat,
-                "物品名稱" : self.cb_name,
-                "單位" : self.cb_unit,
-                "品牌" : self.cb_brand,
-                "規格" : self.cb_spec,
-                "物品編號" : self.ent_objID,
-                "流水號" : self.ent_serial,
-                "購置日期_年" : self.cb_in_date_yy,
-                "購置日期_月" : self.cb_in_date_mm,
-                "購置日期_日" : self.cb_in_date_dd,
-                "建帳日期_年" : self.cb_key_date_yy,
-                "建帳日期_月" : self.cb_key_date_mm,
-                "建帳日期_日" : self.cb_key_date_dd,
-                "來源" : self.cb_source,
-                "價格" : self.ent_price,
-                "數量" : self.cb_amount,
-                "存置地點" : self.cb_place,
-                "保管年限" : self.ent_keep_year,
-                "保管單位" : self.cb_keep_dept,
-                "使用單位" : self.cb_use_dept,
-                "保管人" : self.cb_keeper,
-                "備註事項" : self.cb_remark,
+                "物品大項": self.cb_cat,
+                "物品細目": self.cb_subcat,
+                "物品名稱": self.cb_name,
+                "單位": self.cb_unit,
+                "品牌": self.cb_brand,
+                "規格": self.cb_spec,
+                "物品編號": self.ent_objID,
+                "流水號": self.ent_serial,
+                "購置日期_年": self.cb_in_date_yy,
+                "購置日期_月": self.cb_in_date_mm,
+                "購置日期_日": self.cb_in_date_dd,
+                "建帳日期_年": self.cb_key_date_yy,
+                "建帳日期_月": self.cb_key_date_mm,
+                "建帳日期_日": self.cb_key_date_dd,
+                "來源": self.cb_source,
+                "價格": self.ent_price,
+                "數量": self.cb_amount,
+                "存置地點": self.cb_place,
+                "保管年限": self.ent_keep_year,
+                "保管單位": self.cb_keep_dept,
+                "使用單位": self.cb_use_dept,
+                "保管人": self.cb_keeper,
+                "備註事項": self.cb_remark,
         }
         self.strvarDict = {
-                "物品大項" : self.category,
-                "物品細目" : self.subcategory,
-                "物品名稱" : self.name,
-                "單位" : self.unit,
-                "品牌" : self.brand,
-                "規格" : self.spec,
-                "物品編號" : self.objID,
-                "流水號" : self.serial,
-                "購置日期_年" : self.in_date_yy,
-                "購置日期_月" : self.in_date_mm,
-                "購置日期_日" : self.in_date_dd,
-                "建帳日期_年" : self.key_date_yy,
-                "建帳日期_月" : self.key_date_mm,
-                "建帳日期_日" : self.key_date_dd,
-                "來源" : self.source,
-                "價格" : self.price,
-                "數量" : self.amount,
-                "存置地點" : self.place,
-                "保管年限" : self.keep_year,
-                "保管單位" : self.keep_dept,
-                "使用單位" : self.use_dept,
-                "保管人" : self.keeper,
-                "備註事項" : self.remark,
+                "物品大項": self.category,
+                "物品細目": self.subcategory,
+                "物品名稱": self.name,
+                "單位": self.unit,
+                "品牌": self.brand,
+                "規格": self.spec,
+                "物品編號": self.objID,
+                "流水號": self.serial,
+                "購置日期_年": self.in_date_yy,
+                "購置日期_月": self.in_date_mm,
+                "購置日期_日": self.in_date_dd,
+                "建帳日期_年": self.key_date_yy,
+                "建帳日期_月": self.key_date_mm,
+                "建帳日期_日": self.key_date_dd,
+                "來源": self.source,
+                "價格": self.price,
+                "數量": self.amount,
+                "存置地點": self.place,
+                "保管年限": self.keep_year,
+                "保管單位": self.keep_dept,
+                "使用單位": self.use_dept,
+                "保管人": self.keeper,
+                "備註事項": self.remark,
         }
         self.updateByState(self.state)
         # get the focus in the system
@@ -578,12 +578,12 @@ class register(tk.Toplevel):
         #print(type(state))
         if state.isalpha():
             state = state.lower()
-        if state in ("none",):
-            for i in self.widgetsToConfig:
+        if state == "none":
+            for i in self.widgetsToDisable:
                 i.config(state="disabled")
             self.clearAllFields()
             return
-        elif state in ("new",):
+        elif state == "new":
             for i in self.readonlyWidgets:
                 i.config(state="readonly")
             for i in self.normalWidgets:
@@ -646,11 +646,12 @@ class register(tk.Toplevel):
         daybox.set(datetime.datetime.now().day)
 
     def lookupIndexInBook(self, state):
-        #print("state == ", state)
+        try:
+            int(state)
+        except ValueError:
+            return None
         for i, sublist in enumerate(self.book):
-            #print("sublist == {}, {}".format(i, sublist))
             if int(state) in (sublist[0],):
-                #print("sublist found! {}, {}".format(i, sublist))
                 return i
         return None
 
@@ -1921,19 +1922,25 @@ class register(tk.Toplevel):
 
 class unregister(tk.Toplevel):
     def __init__(self, parent, *args, **kwargs):
+        # for update purposes
+        self.state = "none"
+        # for fetch next/fetch last purposes,
+        # needs update after every insert
+        self.book = self.getAllRecords()
+        self.index = 0
+        # styles
         s = ttk.Style()
         s.configure('unregister.TButton', font=('Helvetica', 13))
         tk.Toplevel.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.title("除帳")
-        self.geometry("1000x1000")
+        self.geometry("665x435")
         self.resizable(False, False)
         # Four main frame in the GUI
         self.f_mainForm = tk.Frame(self)
         self.f_historyForm = tk.Frame(self)
         self.f_unregisterForm = tk.Frame(self)
         self.f_bottomNavigationBar = tk.Frame(self)
-        # TODO: <alchenerd@gmail.com> Finish the main form GUI
         # main form
         # category(combobox), subcategory(combobox)
         self.l_category = tk.Label(self.f_mainForm, text="物品大項：",
@@ -2036,6 +2043,7 @@ class unregister(tk.Toplevel):
                                      textvariable=self.keepYear,
                                      font=_default_font)
         self.l_keepYear.grid(row=4, column=2, padx=5, pady=5)
+        # entry
         self.ent_keepYear.grid(row=4, column=3, padx=5, pady=5)
         # price(entry), amount(entry)
         self.l_price = tk.Label(self.f_mainForm, text="單價：",
@@ -2200,12 +2208,31 @@ class unregister(tk.Toplevel):
                                              font=_default_font)
         self.l_unregisterRemain.pack(side="left", padx=5, pady=5)
         self.ent_unregisterRemain.pack(side="left", padx=5, pady=5)
-        # TODO: <alchenerd@gmail.com> This part is unfinished
         # bottom navigation bar
         self.btn_quit = ttk.Button(self.f_bottomNavigationBar, text='返回',
                                    style="unregister.TButton",
                                    command=self.quitMe)
-        self.btn_quit.pack()
+        self.btn_next = ttk.Button(self.f_bottomNavigationBar, text='下一筆',
+                                   style="unregister.TButton",
+                                   command=self.onButtonNextClick)
+        self.btn_last = ttk.Button(self.f_bottomNavigationBar, text='上一筆',
+                                   style="unregister.TButton",
+                                   command=self.onButtonLastClick)
+        self.btn_delete = ttk.Button(self.f_bottomNavigationBar, text='刪除本筆',
+                                     style="unregister.TButton",
+                                     command=self.onButtonDeleteClick)
+        self.btn_form = ttk.Button(self.f_bottomNavigationBar, text='除帳表單',
+                                   style="unregister.TButton",
+                                   command=self.onButtonFormClick)
+        self.btn_select = ttk.Button(self.f_bottomNavigationBar, text='選取資料',
+                                     style="unregister.TButton",
+                                     command=self.onButtonSelectClick)
+        self.btn_quit.pack(side="left")
+        self.btn_next.pack(side="left")
+        self.btn_last.pack(side="left")
+        self.btn_delete.pack(side="left")
+        self.btn_form.pack(side="left")
+        self.btn_select.pack(side="left")
         # seperators
         self.seperator1 = ttk.Separator(self, orient="horizontal")
         self.seperator2 = ttk.Separator(self, orient="horizontal")
@@ -2218,6 +2245,39 @@ class unregister(tk.Toplevel):
         self.f_unregisterForm.pack()
         self.seperator3.pack(fill=tk.X)
         self.f_bottomNavigationBar.pack()
+        # keep a list of all widgets to disable
+        self.widgetsToDisable = [
+                self.cb_category,
+                self.cb_subcategory,
+                self.cb_name,
+                self.cb_unit,
+                self.cb_brand,
+                self.cb_spec,
+                self.ent_objID,
+                self.ent_serial,
+                self.cb_inDateY,
+                self.cb_inDateM,
+                self.cb_inDateD,
+                self.ent_keepYear,
+                self.ent_price,
+                self.ent_amount,
+                self.cb_keepDept,
+                self.cb_place,
+                self.cb_keeper,
+                self.cb_useDept,
+                self.ent_remark,
+                self.cb_lastUnregisterDateY,
+                self.cb_lastUnregisterDateM,
+                self.cb_lastUnregisterDateD,
+                self.ent_unregisterCount,
+                self.ent_amountUnregistered,
+                self.cb_unregisterDateY,
+                self.cb_unregisterDateM,
+                self.cb_unregisterDateD,
+                self.ent_unregisterAmount,
+                self.ent_unregisterRemain, ]
+        # initalization of all tkinter widgets
+        self.updateByState(self.state)
         # focus
         self.grab_set()
         self.attributes("-topmost", "true")
@@ -2225,6 +2285,41 @@ class unregister(tk.Toplevel):
 
     def quitMe(self):
         self.destroy()
+
+    def onButtonNextClick(self):
+        tk.messagebox.showinfo("測試", "onButtonNextClick", parent=self)
+
+    def onButtonLastClick(self):
+        tk.messagebox.showinfo("測試", "onButtonLastClick", parent=self)
+
+    def onButtonDeleteClick(self):
+        tk.messagebox.showinfo("測試", "onButtonDeleteClick", parent=self)
+
+    def onButtonFormClick(self):
+        tk.messagebox.showinfo("測試", "onButtonFormClick", parent=self)
+
+    def onButtonSelectClick(self):
+        tk.messagebox.showinfo("測試", "onButtonSelectClick", parent=self)
+
+    def getAllRecords(self):
+        connect, cursor = _getConnection(_default_database)
+        sqlstr = "select * from hvhnonc_out;"
+        cursor.execute(sqlstr)
+        return cursor.fetchall()
+    # TODO: <alchenerd@gmail.com> Finish updateByState()
+    def updateByState(self, state):
+        if state == "none":
+            # disable all widgets
+            for widget in self.widgetsToDisable:
+                widget.config(state="disabled")
+            # clear all widgets (not yet implemented)
+        elif state == "new":
+            # enable all widgets
+            # then initialize with db meta table
+            pass
+        else:
+            # lookup in the book
+            pass
 
 
 class printNonc(tk.Toplevel):

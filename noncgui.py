@@ -1934,8 +1934,8 @@ class unregister(tk.Toplevel):
         tk.Toplevel.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.title("除帳")
-        self.geometry("665x435")
-        self.resizable(False, False)
+        self.geometry("665x505")
+        self.resizable(False, True)
         # Four main frame in the GUI
         self.f_mainForm = tk.Frame(self)
         self.f_historyForm = tk.Frame(self)
@@ -2157,10 +2157,12 @@ class unregister(tk.Toplevel):
         self.l_amountUnregistered.pack(side="left", padx=5, pady=5)
         self.ent_amountUnregistered.pack(side="left", padx=5, pady=5)
         # unregister form self.f_unregisterForm
+        # pack the first line into a frame
+        self.f_firstLine = tk.Frame(self.f_unregisterForm)
         # a frame for the date
-        self.f_unregisterDate = tk.Frame(self.f_unregisterForm)
+        self.f_unregisterDate = tk.Frame(self.f_firstLine)
         self.l_unregisterDate = tk.Label(self.f_unregisterDate,
-                                         text="上次除帳：",
+                                         text="除帳日期：",
                                          font=_default_font)
         self.unregisterDateY = tk.StringVar()
         self.unregisterDateM = tk.StringVar()
@@ -2191,42 +2193,74 @@ class unregister(tk.Toplevel):
         # pack the date frame
         self.f_unregisterDate.pack(side="left", padx=5, pady=5)
         # count of the unregister
-        self.l_unregisterAmount = tk.Label(self.f_unregisterForm,
+        self.l_unregisterAmount = tk.Label(self.f_firstLine,
                                            text="除帳數量", font=_default_font)
         self.unregisterAmount = tk.StringVar()
-        self.ent_unregisterAmount = tk.Entry(self.f_unregisterForm, width=4,
-                                            textvariable=self.unregisterAmount,
-                                            font=_default_font)
+        self.ent_unregisterAmount = tk.Entry(
+                self.f_firstLine, width=4, textvariable=self.unregisterAmount,
+                font=_default_font)
         self.l_unregisterAmount.pack(side="left", padx=5, pady=5)
         self.ent_unregisterAmount.pack(side="left", padx=5, pady=5)
         # amount left
-        self.l_unregisterRemain = tk.Label(self.f_unregisterForm,
-                                           text="剩餘數量：", font=_default_font)
+        self.l_unregisterRemain = tk.Label(
+                self.f_firstLine, text="剩餘數量：", font=_default_font)
         self.unregisterRemain = tk.StringVar()
-        self.ent_unregisterRemain = tk.Entry(self.f_unregisterForm, width=4,
-                                             textvariable=self.unregisterRemain,
-                                             font=_default_font)
+        self.ent_unregisterRemain = tk.Entry(
+                self.f_firstLine, width=4, textvariable=self.unregisterRemain,
+                font=_default_font)
         self.l_unregisterRemain.pack(side="left", padx=5, pady=5)
         self.ent_unregisterRemain.pack(side="left", padx=5, pady=5)
+        # grid the f_firstLine
+        self.f_firstLine.grid(row=0, column=0, columnspan=4)
+        # unregisterReason(combobox), unregisterPlace(combobox)
+        self.l_unregisterReason = tk.Label(self.f_unregisterForm,
+                                           text="除帳原因：",
+                                           font=_default_font)
+        self.unregisterReason = tk.StringVar()
+        self.cb_unregisterReason = ttk.Combobox(
+                self.f_unregisterForm, width=20,
+                textvariable=self.unregisterReason, font=_default_font)
+        self.l_unregisterReason.grid(row=1, column=0, padx=5, pady=5)
+        self.cb_unregisterReason.grid(row=1, column=1, padx=5, pady=5)
+        self.l_unregisterPlace = tk.Label(self.f_unregisterForm,
+                                          text="繳存地點：",
+                                          font=_default_font)
+        self.unregisterPlace = tk.StringVar()
+        self.cb_unregisterPlace = ttk.Combobox(
+                self.f_unregisterForm, width=20,
+                textvariable=self.unregisterPlace, font=_default_font)
+        self.l_unregisterPlace.grid(row=1, column=2, padx=5, pady=5)
+        self.cb_unregisterPlace.grid(row=1, column=3, padx=5, pady=5)
+        # unregisterRemark(combobox)
+        self.l_unregisterRemark = tk.Label(self.f_unregisterForm,
+                                           text="備註事項：",
+                                           font=_default_font)
+        self.unregisterRemark = tk.StringVar()
+        self.cb_unregisterRemark = ttk.Combobox(
+                self.f_unregisterForm, width=32,
+                textvariable=self.unregisterRemark, font=_default_font)
+        self.l_unregisterRemark.grid(row=2, column=0, padx=5, pady=5)
+        self.cb_unregisterRemark.grid(row=2, column=1, padx=5, pady=5,
+                                      columnspan=2, sticky="w")
         # bottom navigation bar
-        self.btn_quit = ttk.Button(self.f_bottomNavigationBar, text='返回',
-                                   style="unregister.TButton",
-                                   command=self.quitMe)
-        self.btn_next = ttk.Button(self.f_bottomNavigationBar, text='下一筆',
-                                   style="unregister.TButton",
-                                   command=self.onButtonNextClick)
-        self.btn_last = ttk.Button(self.f_bottomNavigationBar, text='上一筆',
-                                   style="unregister.TButton",
-                                   command=self.onButtonLastClick)
-        self.btn_delete = ttk.Button(self.f_bottomNavigationBar, text='刪除本筆',
-                                     style="unregister.TButton",
-                                     command=self.onButtonDeleteClick)
-        self.btn_form = ttk.Button(self.f_bottomNavigationBar, text='除帳表單',
-                                   style="unregister.TButton",
-                                   command=self.onButtonFormClick)
-        self.btn_select = ttk.Button(self.f_bottomNavigationBar, text='選取資料',
-                                     style="unregister.TButton",
-                                     command=self.onButtonSelectClick)
+        self.btn_quit = ttk.Button(
+                self.f_bottomNavigationBar, text='返回',
+                style="unregister.TButton", command=self.quitMe)
+        self.btn_next = ttk.Button(
+                self.f_bottomNavigationBar, text='下一筆',
+                style="unregister.TButton", command=self.onButtonNextClick)
+        self.btn_last = ttk.Button(
+                self.f_bottomNavigationBar, text='上一筆',
+                style="unregister.TButton", command=self.onButtonLastClick)
+        self.btn_delete = ttk.Button(
+                self.f_bottomNavigationBar, text='刪除本筆',
+                style="unregister.TButton", command=self.onButtonDeleteClick)
+        self.btn_form = ttk.Button(
+                self.f_bottomNavigationBar, text='除帳表單',
+                style="unregister.TButton", command=self.onButtonFormClick)
+        self.btn_select = ttk.Button(
+                self.f_bottomNavigationBar, text='選取資料',
+                style="unregister.TButton", command=self.onButtonSelectClick)
         self.btn_quit.pack(side="left")
         self.btn_next.pack(side="left")
         self.btn_last.pack(side="left")
@@ -2245,39 +2279,6 @@ class unregister(tk.Toplevel):
         self.f_unregisterForm.pack()
         self.seperator3.pack(fill=tk.X)
         self.f_bottomNavigationBar.pack()
-        # keep a list of all widgets to disable
-        self.widgetsToDisable = [
-                self.cb_category,
-                self.cb_subcategory,
-                self.cb_name,
-                self.cb_unit,
-                self.cb_brand,
-                self.cb_spec,
-                self.ent_objID,
-                self.ent_serial,
-                self.cb_inDateY,
-                self.cb_inDateM,
-                self.cb_inDateD,
-                self.ent_keepYear,
-                self.ent_price,
-                self.ent_amount,
-                self.cb_keepDept,
-                self.cb_place,
-                self.cb_keeper,
-                self.cb_useDept,
-                self.ent_remark,
-                self.cb_lastUnregisterDateY,
-                self.cb_lastUnregisterDateM,
-                self.cb_lastUnregisterDateD,
-                self.ent_unregisterCount,
-                self.ent_amountUnregistered,
-                self.cb_unregisterDateY,
-                self.cb_unregisterDateM,
-                self.cb_unregisterDateD,
-                self.ent_unregisterAmount,
-                self.ent_unregisterRemain, ]
-        # initalization of all tkinter widgets
-        self.updateByState(self.state)
         # focus
         self.grab_set()
         self.attributes("-topmost", "true")
@@ -2306,20 +2307,6 @@ class unregister(tk.Toplevel):
         sqlstr = "select * from hvhnonc_out;"
         cursor.execute(sqlstr)
         return cursor.fetchall()
-    # TODO: <alchenerd@gmail.com> Finish updateByState()
-    def updateByState(self, state):
-        if state == "none":
-            # disable all widgets
-            for widget in self.widgetsToDisable:
-                widget.config(state="disabled")
-            # clear all widgets (not yet implemented)
-        elif state == "new":
-            # enable all widgets
-            # then initialize with db meta table
-            pass
-        else:
-            # lookup in the book
-            pass
 
 
 class printNonc(tk.Toplevel):

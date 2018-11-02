@@ -1056,7 +1056,7 @@ class register(tk.Toplevel):
             tk.messagebox.showerror("錯誤","有欄位未填",parent=self)
             return
         connect, cursor = _getConnection(_default_database)
-        connect.set_trace_callback(print)
+        #connect.set_trace_callback(print)
         # object_ID, serial_ID
         # objID is '6-(ID_cat)-(ID_subcat)'
         sqlstr = ("select parent_ID, ID "
@@ -1764,7 +1764,7 @@ class register(tk.Toplevel):
                 sb.config(command=self.tv.yview)
                 # fetch the data
                 connect,cursor = _getConnection(_default_database)
-                connect.set_trace_callback(print)
+                #connect.set_trace_callback(print)
                 params = []
                 sqlstr = ("select ID, in_date, name, "
                           "place, keeper, remark "
@@ -1926,16 +1926,18 @@ class unregister(tk.Toplevel):
         self.state = "none"
         # for fetch next/fetch last purposes,
         # needs update after every insert
-        self.book = self.getAllRecords()
-        self.index = 0
+        self.inBook = self.getAllRecords("hvhnonc_in")
+        self.outBook = self.getAllRecords("hvhnonc_out")
+        self.inIndex = 0
+        self.outIndex = 0
         # styles
         s = ttk.Style()
         s.configure('unregister.TButton', font=('Helvetica', 13))
         tk.Toplevel.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.title("除帳")
-        self.geometry("665x505")
-        self.resizable(False, True)
+        self.geometry("665x507")
+        self.resizable(False, False)
         # Four main frame in the GUI
         self.f_mainForm = tk.Frame(self)
         self.f_historyForm = tk.Frame(self)
@@ -1972,7 +1974,8 @@ class unregister(tk.Toplevel):
                                font=_default_font)
         self.unit = tk.StringVar()
         self.cb_unit = ttk.Combobox(self.f_mainForm, width=20,
-                                    textvariable=self.unit, font=_default_font)
+                                    textvariable=self.unit,
+                                    font=_default_font)
         self.l_unit.grid(row=1, column=2, padx=5, pady=5)
         self.cb_unit.grid(row=1, column=3, padx=5, pady=5)
         # brand(combobox), spec(combobox)
@@ -1988,7 +1991,8 @@ class unregister(tk.Toplevel):
                                font=_default_font)
         self.spec = tk.StringVar()
         self.cb_spec = ttk.Combobox(self.f_mainForm, width=20,
-                                    textvariable=self.spec, font=_default_font)
+                                    textvariable=self.spec,
+                                    font=_default_font)
         self.l_spec.grid(row=2, column=2, padx=5, pady=5)
         self.cb_spec.grid(row=2, column=3, padx=5, pady=5)
         # objID(entry), serial(entry)
@@ -1996,14 +2000,16 @@ class unregister(tk.Toplevel):
                               font=_default_font)
         self.objID = tk.StringVar()
         self.ent_objID = tk.Entry(self.f_mainForm, width=20,
-                                  textvariable=self.objID, font=_default_font)
+                                  textvariable=self.objID,
+                                  font=_default_font)
         self.l_objID.grid(row=3, column=0, padx=5, pady=5)
         self.ent_objID.grid(row=3, column=1, padx=5, pady=5)
         self.l_serial = tk.Label(self.f_mainForm, text="流水號：",
                                  font=_default_font)
         self.serial = tk.StringVar()
         self.ent_serial = tk.Entry(self.f_mainForm, width=20,
-                                   textvariable=self.serial, font=_default_font)
+                                   textvariable=self.serial,
+                                   font=_default_font)
         self.l_serial.grid(row=3, column=2, padx=5, pady=5)
         self.ent_serial.grid(row=3, column=3, padx=5, pady=5)
         # inDate(cb*3), keepYear(entry)
@@ -2017,15 +2023,18 @@ class unregister(tk.Toplevel):
         self.cb_inDateY = ttk.Combobox(self.f_inDate, width=3,
                                        textvariable=self.inDateY,
                                        font=_default_font)
-        self.l_inDateY = tk.Label(self.f_inDate, text="年", font=_default_font)
+        self.l_inDateY = tk.Label(self.f_inDate, text="年",
+                                  font=_default_font)
         self.cb_inDateM = ttk.Combobox(self.f_inDate, width=2,
                                        textvariable=self.inDateM,
                                        font=_default_font)
-        self.l_inDateM = tk.Label(self.f_inDate, text="月", font=_default_font)
+        self.l_inDateM = tk.Label(self.f_inDate, text="月",
+                                  font=_default_font)
         self.cb_inDateD = ttk.Combobox(self.f_inDate, width=2,
                                        textvariable=self.inDateD,
                                        font=_default_font)
-        self.l_inDateD = tk.Label(self.f_inDate, text="日", font=_default_font)
+        self.l_inDateD = tk.Label(self.f_inDate, text="日",
+                                  font=_default_font)
         # packing the date
         self.l_inDate.pack(side="left")
         self.cb_inDateY.pack(side="left")
@@ -2050,14 +2059,16 @@ class unregister(tk.Toplevel):
                               font=_default_font)
         self.price = tk.StringVar()
         self.ent_price = tk.Entry(self.f_mainForm, width=20,
-                                  textvariable=self.price, font=_default_font)
+                                  textvariable=self.price,
+                                  font=_default_font)
         self.l_price.grid(row=5, column=0, padx=5, pady=5)
         self.ent_price.grid(row=5, column=1, padx=5, pady=5)
         self.l_amount = tk.Label(self.f_mainForm, text="數量：",
                                  font=_default_font)
         self.amount = tk.StringVar()
         self.ent_amount = tk.Entry(self.f_mainForm, width=20,
-                                   textvariable=self.amount, font=_default_font)
+                                   textvariable=self.amount,
+                                   font=_default_font)
         self.l_amount.grid(row=5, column=2, padx=5, pady=5)
         self.ent_amount.grid(row=5, column=3, padx=5, pady=5)
         # keepDept(combobox), place(combobox)
@@ -2099,7 +2110,8 @@ class unregister(tk.Toplevel):
                                  font=_default_font)
         self.remark = tk.StringVar()
         self.ent_remark = tk.Entry(self.f_mainForm, width=50,
-                                  textvariable=self.remark, font=_default_font)
+                                  textvariable=self.remark,
+                                  font=_default_font)
         self.l_remark.grid(row=8, column=0, padx=5, pady=5)
         self.ent_remark.grid(row=8, column=1, padx=5, pady=5,
                              columnspan=3, sticky="w")
@@ -2212,46 +2224,57 @@ class unregister(tk.Toplevel):
         self.ent_unregisterRemain.pack(side="left", padx=5, pady=5)
         # grid the f_firstLine
         self.f_firstLine.grid(row=0, column=0, columnspan=4)
-        # unregisterReason(combobox), unregisterPlace(combobox)
-        self.l_unregisterReason = tk.Label(self.f_unregisterForm,
+        # reason(combobox), postTreatment(combobox)
+        self.l_reason = tk.Label(self.f_unregisterForm,
                                            text="除帳原因：",
                                            font=_default_font)
-        self.unregisterReason = tk.StringVar()
-        self.cb_unregisterReason = ttk.Combobox(
+        self.reason = tk.StringVar()
+        self.cb_reason = ttk.Combobox(
                 self.f_unregisterForm, width=20,
-                textvariable=self.unregisterReason, font=_default_font)
-        self.l_unregisterReason.grid(row=1, column=0, padx=5, pady=5)
-        self.cb_unregisterReason.grid(row=1, column=1, padx=5, pady=5)
-        self.l_unregisterPlace = tk.Label(self.f_unregisterForm,
+                textvariable=self.reason, font=_default_font)
+        self.l_reason.grid(row=1, column=0, padx=5, pady=5)
+        self.cb_reason.grid(row=1, column=1, padx=5, pady=5)
+        self.l_postTreatment = tk.Label(self.f_unregisterForm,
                                           text="繳存地點：",
                                           font=_default_font)
-        self.unregisterPlace = tk.StringVar()
-        self.cb_unregisterPlace = ttk.Combobox(
+        self.postTreatment = tk.StringVar()
+        self.cb_postTreatment = ttk.Combobox(
                 self.f_unregisterForm, width=20,
-                textvariable=self.unregisterPlace, font=_default_font)
-        self.l_unregisterPlace.grid(row=1, column=2, padx=5, pady=5)
-        self.cb_unregisterPlace.grid(row=1, column=3, padx=5, pady=5)
+                textvariable=self.postTreatment, font=_default_font)
+        self.l_postTreatment.grid(row=1, column=2, padx=5, pady=5)
+        self.cb_postTreatment.grid(row=1, column=3, padx=5, pady=5)
+        # frame for the last line
+        self.f_lastLine = tk.Frame(self.f_unregisterForm)
         # unregisterRemark(combobox)
-        self.l_unregisterRemark = tk.Label(self.f_unregisterForm,
-                                           text="備註事項：",
+        self.l_unregisterRemark = tk.Label(self.f_lastLine, text="備註事項：",
                                            font=_default_font)
         self.unregisterRemark = tk.StringVar()
         self.cb_unregisterRemark = ttk.Combobox(
-                self.f_unregisterForm, width=32,
-                textvariable=self.unregisterRemark, font=_default_font)
-        self.l_unregisterRemark.grid(row=2, column=0, padx=5, pady=5)
-        self.cb_unregisterRemark.grid(row=2, column=1, padx=5, pady=5,
-                                      columnspan=2, sticky="w")
+                self.f_lastLine, width=30, textvariable=self.unregisterRemark,
+                font=_default_font)
+        self.l_unregisterRemark.pack(side="left", padx=5)
+        self.cb_unregisterRemark.pack(side="left", padx=5)
+        # buttons
+        self.btn_search = ttk.Button(
+                self.f_lastLine, text='檢索', style="unregister.TButton",
+                command=self.onButtonSearchClick)
+        self.btn_save = ttk.Button(
+                self.f_lastLine, text='本筆存入', style="unregister.TButton",
+                command=self.onButtonSaveClick)
+        self.btn_search.pack(side="left", padx=5)
+        self.btn_save.pack(side="left", padx=5)
+        self.f_lastLine.grid(row=2, column=0, padx=5, pady=5, columnspan=4,
+                             sticky="w")
         # bottom navigation bar
         self.btn_quit = ttk.Button(
                 self.f_bottomNavigationBar, text='返回',
                 style="unregister.TButton", command=self.quitMe)
         self.btn_next = ttk.Button(
                 self.f_bottomNavigationBar, text='下一筆',
-                style="unregister.TButton", command=self.onButtonNextClick)
+                style="unregister.TButton", command=self.fetchNext)
         self.btn_last = ttk.Button(
                 self.f_bottomNavigationBar, text='上一筆',
-                style="unregister.TButton", command=self.onButtonLastClick)
+                style="unregister.TButton", command=self.fetchLast)
         self.btn_delete = ttk.Button(
                 self.f_bottomNavigationBar, text='刪除本筆',
                 style="unregister.TButton", command=self.onButtonDeleteClick)
@@ -2279,19 +2302,194 @@ class unregister(tk.Toplevel):
         self.f_unregisterForm.pack()
         self.seperator3.pack(fill=tk.X)
         self.f_bottomNavigationBar.pack()
+        # initalize the form
+        self.updateByState("none")
         # focus
         self.grab_set()
         self.attributes("-topmost", "true")
         self.attributes("-topmost", "false")
 
+    def updateByState(self, state):
+        self.state = state
+        if state == "none":
+            # set all widgets as disabled
+            widgets = (self.cb_category, self.cb_subcategory, self.cb_name,
+                       self.cb_unit, self.cb_brand, self.cb_spec,
+                       self.ent_objID, self.ent_serial,
+                       self.cb_inDateY,
+                       self.cb_inDateM,
+                       self.cb_inDateD,
+                       self.ent_keepYear, self.ent_price, self.ent_amount,
+                       self.cb_keepDept, self.cb_place, self.cb_keeper,
+                       self.cb_useDept, self.ent_remark,
+                       self.cb_lastUnregisterDateY,
+                       self.cb_lastUnregisterDateM,
+                       self.cb_lastUnregisterDateD,
+                       self.ent_unregisterCount, self.ent_amountUnregistered,
+                       self.cb_unregisterDateY,
+                       self.cb_unregisterDateM,
+                       self.cb_unregisterDateD,
+                       self.ent_unregisterAmount, self.ent_unregisterRemain,
+                       self.cb_reason, self.cb_postTreatment,
+                       self.cb_unregisterRemark, )
+            for widget in widgets:
+                widget.config(state="disabled")
+            #clear them
+            textVariables = (self.category, self.subcategory, self.name,
+                             self.unit, self.brand, self.spec, self.objID,
+                             self.serial,
+                             self.inDateY, self.inDateM, self.inDateD,
+                             self.keepYear, self.price, self.amount,
+                             self.keepDept, self.place, self.keeper,
+                             self.useDept, self.remark,
+                             self.lastUnregisterDateY,
+                             self.lastUnregisterDateM,
+                             self.lastUnregisterDateD,
+                             self.unregisterCount, self.amountUnregistered,
+                             self.unregisterDateY,
+                             self.unregisterDateM,
+                             self.unregisterDateD,
+                             self.unregisterAmount, self.unregisterRemain,
+                             self.reason, self.postTreatment,
+                             self.unregisterRemark, )
+            for var in textVariables:
+                var.set("")
+        else:
+            # expect an int ID
+            try:
+                int(state)
+            except ValueError as ve:
+                tk.messagebox.showerror("錯誤", ve, parent=self)
+            # lookup the state(storing an ID) in the inBook
+            inIndex = self.lookupIndexInBook(state, self.inBook)
+            if inIndex == None:
+                tk.messagebox.showerror("錯誤",
+                                        "找不到索引值{}".format(state),
+                                        parent=self)
+                self.updateByState("none")
+                return
+            # print inBook values to the widgets
+            row = self.inBook[inIndex]
+            self.category.set(row[3])
+            self.subcategory.set(row[4])
+            self.name.set(row[5])
+            self.unit.set(row[8])
+            self.brand.set(row[6])
+            self.spec.set(row[7])
+            self.objID.set(row[1])
+            self.serial.set(row[2])
+            indate = row[9].split("-")
+            self.inDateY.set(str(int(indate[0])-1911))
+            self.inDateM.set(indate[1])
+            self.inDateD.set(indate[2])
+            self.keepYear.set(row[14])
+            self.price.set(row[11])
+            self.amount.set(row[12])
+            self.keepDept.set(row[16])
+            self.place.set(row[13])
+            self.keeper.set(row[18])
+            self.useDept.set(row[17])
+            self.remark.set(row[19])
+            # enable some widgets
+            self.cb_unregisterDateY.config(state="normal")
+            self.cb_unregisterDateM.config(state="normal")
+            self.cb_unregisterDateD.config(state="normal")
+            self.ent_unregisterAmount.config(state="normal")
+            self.cb_reason.config(state="normal")
+            self.cb_postTreatment.config(state="normal")
+            self.cb_unregisterRemark.config(state="normal")
+            # print outbook values
+            # set all to ""
+            self.unregisterCount.set("")
+            self.amountUnregistered.set("")
+            self.lastUnregisterDateY.set("")
+            self.lastUnregisterDateM.set("")
+            self.lastUnregisterDateD.set("")
+            self.unregisterDateY.set("")
+            self.unregisterDateM.set("")
+            self.unregisterDateD.set("")
+            self.unregisterAmount.set("")
+            self.unregisterRemain.set("")
+            self.reason.set("")
+            self.postTreatment.set("")
+            self.unregisterRemark.set("")
+            outIndex = self.lookupIndexInBook(state, self.outBook)
+            # if not in outbook print 0s
+            if outIndex == None:
+                self.unregisterCount.set("0")
+                self.amountUnregistered.set("0")
+            # if in outBook, fetch the latest row and count of that ID
+            else:
+                # upper section
+                connect, cursor = _getConnection(_default_database)
+                sqlstr = ("select count(*), out_date, sum(amount) "
+                          "from hvhnonc_out where in_ID = ?"
+                          "order by out_date desc limit 1")
+                cursor.execute(sqlstr, (self.state, ))
+                data = cursor.fetchone()
+                # get count
+                self.unregisterCount.set(str(data[0]))
+                # get date
+                outDate = data[1].split("-")
+                self.lastUnregisterDateY.set(str(int(outDate[0])-1911))
+                self.lastUnregisterDateM.set(outDate[1])
+                self.lastUnregisterDateD.set(outDate[2])
+                # get sum
+                self.amountUnregistered.set(str(data[2]))
+                # TODO: <alchenerd@gmail.com> finish lower section
+                connect.close()
+            pass
+
+    def lookupIndexInBook(self, state, book):
+        try:
+            int(state)
+        except ValueError:
+            return None
+        if book == self.outBook:
+            i = 1
+        else:
+            i = 0
+        for index, sublist in enumerate(book):
+            if int(state) in (sublist[i],):
+                return index
+        return None
+
     def quitMe(self):
         self.destroy()
 
-    def onButtonNextClick(self):
-        tk.messagebox.showinfo("測試", "onButtonNextClick", parent=self)
+    def onButtonSearchClick(self):
+        tk.messagebox.showinfo("測試", "onButtonSearchClick", parent=self)
 
-    def onButtonLastClick(self):
-        tk.messagebox.showinfo("測試", "onButtonLastClick", parent=self)
+    def onButtonSaveClick(self):
+        tk.messagebox.showinfo("測試", "onButtonSaveClick", parent=self)
+
+    def fetchNext(self):
+        if self.state in ("none", ):
+            self.outIndex = 0
+            self.state = str(self.outBook[self.outIndex][1])
+            self.updateByState(self.state)
+        else:
+            if self.outIndex == len(self.outBook) - 1:
+                tk.messagebox.showinfo("到底了", "已到達最後一筆",
+                                       parent=self)
+            else:
+                self.outIndex = self.outIndex + 1
+                self.state = str(self.outBook[self.outIndex][1])
+                self.updateByState(self.state)
+
+    def fetchLast(self):
+        if self.state in ("none", ):
+            self.outIndex = len(self.outBook)-1
+            self.state = str(self.outBook[self.outIndex][1])
+            self.updateByState(self.state)
+        else:
+            if self.outIndex == 0:
+                tk.messagebox.showinfo("到頂了", "已到達第一筆",
+                                       parent=self)
+            else:
+                self.outIndex = self.outIndex - 1
+                self.state = str(self.outBook[self.outIndex][1])
+                self.updateByState(self.state)
 
     def onButtonDeleteClick(self):
         tk.messagebox.showinfo("測試", "onButtonDeleteClick", parent=self)
@@ -2302,9 +2500,10 @@ class unregister(tk.Toplevel):
     def onButtonSelectClick(self):
         tk.messagebox.showinfo("測試", "onButtonSelectClick", parent=self)
 
-    def getAllRecords(self):
+    def getAllRecords(self, tablename):
         connect, cursor = _getConnection(_default_database)
-        sqlstr = "select * from hvhnonc_out;"
+        #connect.set_trace_callback(print)
+        sqlstr = "select * from {};".format(tablename)
         cursor.execute(sqlstr)
         return cursor.fetchall()
 

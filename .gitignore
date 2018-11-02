@@ -105,6 +105,4 @@ venv.bak/
 
 # custom
 *.db
-HVHNONC.db.sql
-hvhnonc_in.csv
 kaiba.gif

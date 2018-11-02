@@ -1629,9 +1629,12 @@ class register(tk.Toplevel):
 
         def initDateComboboxes(self, yearbox, monthbox, daybox):
             thisYear = datetime.datetime.now().year - 1911
-            yearbox.config(values=list(reversed(range(1,thisYear+1))))
-            monthbox.config(values=list(range(1,12+1)))
-            daybox.config(values=list(range(1,31+1)))
+            years = list(reversed(range(1,thisYear+1)))
+            yearbox.config(values=years)
+            months = list(range(1,12+1))
+            monthbox.config(values=months)
+            days = list(range(1,31+1))
+            daybox.config(values=days)
 
         def onCategorySelected(self, event):
             # update subcategory
@@ -2302,7 +2305,7 @@ class unregister(tk.Toplevel):
         self.f_unregisterForm.pack()
         self.seperator3.pack(fill=tk.X)
         self.f_bottomNavigationBar.pack()
-        # initalize the form
+        # initialize the form
         self.updateByState("none")
         # focus
         self.grab_set()
@@ -2360,6 +2363,8 @@ class unregister(tk.Toplevel):
                 int(state)
             except ValueError as ve:
                 tk.messagebox.showerror("錯誤", ve, parent=self)
+                self.updateByState("none")
+                return
             # lookup the state(storing an ID) in the inBook
             inIndex = self.lookupIndexInBook(state, self.inBook)
             if inIndex == None:
@@ -2390,29 +2395,8 @@ class unregister(tk.Toplevel):
             self.keeper.set(row[18])
             self.useDept.set(row[17])
             self.remark.set(row[19])
-            # enable some widgets
-            self.cb_unregisterDateY.config(state="normal")
-            self.cb_unregisterDateM.config(state="normal")
-            self.cb_unregisterDateD.config(state="normal")
-            self.ent_unregisterAmount.config(state="normal")
-            self.cb_reason.config(state="normal")
-            self.cb_postTreatment.config(state="normal")
-            self.cb_unregisterRemark.config(state="normal")
-            # print outbook values
-            # set all to ""
-            self.unregisterCount.set("")
-            self.amountUnregistered.set("")
-            self.lastUnregisterDateY.set("")
-            self.lastUnregisterDateM.set("")
-            self.lastUnregisterDateD.set("")
-            self.unregisterDateY.set("")
-            self.unregisterDateM.set("")
-            self.unregisterDateD.set("")
-            self.unregisterAmount.set("")
-            self.unregisterRemain.set("")
-            self.reason.set("")
-            self.postTreatment.set("")
-            self.unregisterRemark.set("")
+            # initialization
+            self.initForm()
             outIndex = self.lookupIndexInBook(state, self.outBook)
             # if not in outbook print 0s
             if outIndex == None:
@@ -2424,7 +2408,7 @@ class unregister(tk.Toplevel):
                 connect, cursor = _getConnection(_default_database)
                 sqlstr = ("select count(*), out_date, sum(amount) "
                           "from hvhnonc_out where in_ID = ?"
-                          "order by out_date desc limit 1")
+                          "order by out_date desc limit 1;")
                 cursor.execute(sqlstr, (self.state, ))
                 data = cursor.fetchone()
                 # get count
@@ -2437,8 +2421,92 @@ class unregister(tk.Toplevel):
                 # get sum
                 self.amountUnregistered.set(str(data[2]))
                 # TODO: <alchenerd@gmail.com> finish lower section
+                # these are the same as the lastest date
+                self.unregisterDateY.set(self.lastUnregisterDateY.get())
+                self.unregisterDateM.set(self.lastUnregisterDateM.get())
+                self.unregisterDateD.set(self.lastUnregisterDateD.get())
+                # get unregistered amount and its total
+                sqlstr = ("select amount,  sum(amount) "
+                          "from  hvhnonc_out "
+                          "where in_ID = ?"
+                          "order by out_date desc;")
+                cursor.execute(sqlstr, (self.state, ))
+                (lastAmount, TotalOutAmount) = cursor.fetchone()
+                TotalOutAmount = int(TotalOutAmount)
+                sqlstr = ("select amount "
+                          "from  hvhnonc_in "
+                          "where ID = ?;")
+                cursor.execute(sqlstr, (self.state, ))
+                TotalInAmount = int(cursor.fetchone()[0])
+                # unregisterAmount is the last amount
+                self.unregisterAmount.set(lastAmount)
+                # remain is in.amount-sum(out.amount)
+                self.unregisterRemain.set(str(TotalInAmount - TotalOutAmount))
+                sqlstr = ("select reason,  post_treatment, remark "
+                          "from  hvhnonc_out "
+                          "where in_ID = ?"
+                          "order by out_date desc limit 1;")
+                cursor.execute(sqlstr, (self.state, ))
+                data = cursor.fetchone()
+                self.reason.set(data[0])
+                self.postTreatment.set(data[1])
+                self.unregisterRemark.set(data[2])
                 connect.close()
             pass
+
+    def initForm(self):
+        # enable some widgets
+        self.cb_unregisterDateY.config(state="normal")
+        self.cb_unregisterDateM.config(state="normal")
+        self.cb_unregisterDateD.config(state="normal")
+        self.ent_unregisterAmount.config(state="normal")
+        self.cb_reason.config(state="normal")
+        self.cb_postTreatment.config(state="normal")
+        self.cb_unregisterRemark.config(state="normal")
+        # set lower part to ""
+        self.unregisterCount.set("")
+        self.amountUnregistered.set("")
+        self.lastUnregisterDateY.set("")
+        self.lastUnregisterDateM.set("")
+        self.lastUnregisterDateD.set("")
+        self.unregisterDateY.set("")
+        self.unregisterDateM.set("")
+        self.unregisterDateD.set("")
+        self.unregisterAmount.set("")
+        self.unregisterRemain.set("")
+        self.reason.set("")
+        self.postTreatment.set("")
+        self.unregisterRemark.set("")
+        # combobox values
+        # unregisterDate: fill in the date choices
+        thisYear = datetime.datetime.now().year - 1911
+        years = list(reversed(range(1, thisYear+1)))
+        self.cb_unregisterDateY.config(values=years)
+        self.cb_unregisterDateM.config(values=list(range(1,13)))
+        self.cb_unregisterDateD.config(values=list(range(1,32)))
+        # The others: read in cache and update
+        connect, cursor = _getConnection(_default_database)
+        sqlstr = ("select change_value "
+                  "from hvhnonc_out_cache "
+                  "where this_ID=("
+                          "select ID from "
+                          "hvhnonc_fields "
+                          "where description=?) "
+                  "and change_ID=("
+                          "select ID from "
+                          "hvhnonc_fields "
+                          "where description=?)"
+                  "order by rowid desc limit 30;")
+        cursor.execute(sqlstr, ("無", "除帳原因"))
+        rows = cursor.fetchall()
+        self.cb_reason.config(values=rows)
+        cursor.execute(sqlstr, ("無", "繳存地點"))
+        rows = cursor.fetchall()
+        self.cb_postTreatment.config(values=rows)
+        cursor.execute(sqlstr, ("無", "除帳備註"))
+        rows = cursor.fetchall()
+        self.cb_unregisterRemark.config(values=rows)
+        connect.close()
 
     def lookupIndexInBook(self, state, book):
         try:

@@ -9,19 +9,95 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 import sqlite3
 import hashlib
-import datetime
+import datetime as dt
 
 from __init__ import __version__
 
 _welcome_image = "kaiba.gif"
-_default_toplevel_size = "665x410"
+_default_toplevel_size = "665x411"
 _default_font = (None, 15)
+_default_button_font = (None, 15)
 _default_database = "HVHNONC.db"
+
+# TODO: <alchenerd@gmail.com>
+# Refactor the whole thing using the CompoundField class
+# Someday it will be done...
+# ...someday.
 
 def _getConnection(databaseName):
     connect = sqlite3.connect(_default_database)
     cursor = connect.cursor()
     return connect, cursor
+
+
+class DateFrame(tk.Frame):
+    def __init__(self, parent: tk.BaseWidget = None,
+                 variable: tk.StringVar = None):
+        tk.Frame.__init__(self, parent)
+        self.variable = variable
+        self.y = tk.StringVar()
+        self.m = tk.StringVar()
+        self.d = tk.StringVar()
+        self.cb_y = ttk.Combobox(self, width=3, textvariable=self.y,
+                                 font=_default_font)
+        self.cb_m = ttk.Combobox(self, width=2, textvariable=self.m,
+                                 font=_default_font)
+        self.cb_d = ttk.Combobox(self, width=2, textvariable=self.d,
+                                 font=_default_font)
+        self.l_y = tk.Label(self, text="年", font=_default_font)
+        self.l_m = tk.Label(self, text="月", font=_default_font)
+        self.l_d = tk.Label(self, text="日", font=_default_font)
+        self.cb_y.pack(side="left")
+        self.l_y.pack(side="left")
+        self.cb_m.pack(side="left")
+        self.l_m.pack(side="left")
+        self.cb_d.pack(side="left")
+        self.l_d.pack(side="left")
+        years = list(reversed(range(1, dt.datetime.now().year - 1911 + 1)))
+        self.cb_y.config(values=years)
+        months = list(range(1, 12 + 1))
+        self.cb_m.config(values=months)
+        days = list(range(1, 31 + 1))
+        self.cb_d.config(values=days)
+        self.setAsToday()
+        self.updateDate()
+        self.cb_y.bind("<<ComboboxSelected>>", self.updateDate)
+        self.cb_m.bind("<<ComboboxSelected>>", self.updateDate)
+        self.cb_d.bind("<<ComboboxSelected>>", self.updateDate)
+
+    def setAsToday(self):
+        y = dt.datetime.now().year - 1911
+        m = dt.datetime.now().month
+        d = dt.datetime.now().day
+        self.y.set(str(y))
+        self.m.set(str(m))
+        self.d.set(str(d))
+
+    def updateDate(self, event = None):
+        d = (self.y.get(), self.m.get(), self.d.get())
+        self.variable.set("-".join(d))
+
+
+class CompoundField():
+    def __init__(self, parent: tk.BaseWidget = None, widgetType: str = None,
+                 description: str = "標籤", fieldName: str = None,
+                 enabledState: str = None):
+        self.parent = parent
+        self.label = tk.Label(parent, text=description+"：",
+                              font=_default_font)
+        self.widgetType = widgetType.title()
+        self.widget = None
+        self.variable = tk.StringVar()
+        self.enabledState = enabledState.lower()
+        if widgetType == "Entry":
+            self.widget = tk.Entry(parent, textvariable=self.variable,
+                                   font=_default_font, width=20)
+        if widgetType == "Combobox":
+            self.widget = ttk.Combobox(parent, textvariable=self.variable,
+                                       font=_default_font, width=20)
+        if widgetType == "DateFrame":
+            self.widget = DateFrame(parent, self.variable)
+        self.fieldName = fieldName
 
 
 class Index(tk.Frame):
@@ -110,7 +186,7 @@ class Login(tk.Toplevel):
         self.entry_password.place(x=58, y=43)
         # buttons
         s = ttk.Style()
-        s.configure('login.TButton', font=('Helvetica', 13))
+        s.configure('login.TButton', font=_default_button_font)
         self.btn_login = ttk.Button(
                 self, text='登入', style="login.TButton",
                 command=self.validate)
@@ -179,15 +255,12 @@ class Login(tk.Toplevel):
 
 class register(tk.Toplevel):
     def __init__(self, parent, *args, **kwargs):
-        # for update purposes
         self.state = "none"
-        # for fetch next/fetch last purposes,
-        # needs update after every insert
         self.book = self.getAllRecords()
         self.index = 0
         # button style for register form
         s = ttk.Style()
-        s.configure('register.TButton', font=('Helvetica', 13))
+        s.configure('register.TButton', font=_default_button_font)
         # initialization
         tk.Toplevel.__init__(self, parent, *args, **kwargs)
         self.parent = parent
@@ -641,9 +714,9 @@ class register(tk.Toplevel):
             self.updateByState(self.state);
 
     def setAsToday(self, yearbox, monthbox, daybox):
-        yearbox.set(datetime.datetime.now().year - 1911)
-        monthbox.set(datetime.datetime.now().month)
-        daybox.set(datetime.datetime.now().day)
+        yearbox.set(dt.datetime.now().year - 1911)
+        monthbox.set(dt.datetime.now().month)
+        daybox.set(dt.datetime.now().day)
 
     def lookupIndexInBook(self, state):
         try:
@@ -675,7 +748,7 @@ class register(tk.Toplevel):
         # 物品名稱
         self.cb_name.bind("<<ComboboxSelected>>", self.onNameSelected)
         # 年
-        thisYear = datetime.datetime.now().year - 1911
+        thisYear = dt.datetime.now().year - 1911
         years = list(reversed(range(1, thisYear+1)))
         self.cb_in_date_yy.config(values=years)
         self.cb_key_date_yy.config(values=years)
@@ -885,7 +958,7 @@ class register(tk.Toplevel):
     class SearchWindow(tk.Toplevel):
         def __init__(self, parent, *args, **kwargs):
             s = ttk.Style()
-            s.configure('search.TButton', font=('Helvetica', 13))
+            s.configure('search.TButton', font=_default_button_font)
             tk.Toplevel.__init__(self, parent, *args, **kwargs)
             self.parent = parent
             self.attributes("-topmost", "true")
@@ -937,16 +1010,14 @@ class register(tk.Toplevel):
         def onSubmitClick(self):
             # update search cache
             connect,cursor = _getConnection(_default_database)
-            sqlstr = (  """
-                        replace into hvhnonc_in_cache(this_ID,
-                            this_value, change_ID, change_value)
-                        values(0, 'none', (
-                            select ID
-                            from hvhnonc_fields
-                            where description = '檢索'),
-                            ?);
-                        """)
-            #print(sqlstr)
+            sqlstr = (
+                    "replace into hvhnonc_in_cache(this_ID, this_value, "
+                    "change_ID, change_value) "
+                    "values(0, 'none', ("
+                        "select ID "
+                        "from hvhnonc_fields "
+                        "where description = '檢索'), "
+                    "?);")
             cursor.execute(sqlstr, (self.parent.query.get(), ))
             connect.commit()
             # open a result toplevel
@@ -955,7 +1026,6 @@ class register(tk.Toplevel):
 
         class SearchResultWindow(tk.Toplevel):
             def __init__(self, parent, *args, **kwargs):
-                # bookmark reference
                 # treeview styles
                 style = ttk.Style()
                 style.configure("Treeview", font=_default_font)
@@ -985,24 +1055,21 @@ class register(tk.Toplevel):
                 # connect to db
                 connect,cursor = _getConnection(_default_database)
                 phrase = str(parent.query.get())
-                sqlstr = (  """
-                            select ID, in_date, name, place, keeper,
-                                   remark
-                            from hvhnonc_in
-                            where(
-                                category like :q or
-                                subcategory like :q or
-                                name like :q or
-                                brand like :q or
-                                spec like :q or
-                                place like :q or
-                                keep_department like :q or
-                                use_department like :q or
-                                keeper like :q or
-                                remark like :q)
-                            order by in_date desc;
-                            """)
-                #print(sqlstr)
+                sqlstr = (
+                        "select ID, in_date, name, place, keeper, remark "
+                        "from hvhnonc_in "
+                        "where("
+                            "category like :q or "
+                            "subcategory like :q or "
+                            "name like :q or "
+                            "brand like :q or "
+                            "spec like :q or "
+                            "place like :q or "
+                            "keep_department like :q or "
+                            "use_department like :q or "
+                            "keeper like :q or "
+                            "remark like :q) "
+                            "order by in_date desc;")
                 cursor.execute(sqlstr, {'q': "%{}%".format(phrase)})
                 data = cursor.fetchall()
                 for d in data:
@@ -1628,7 +1695,7 @@ class register(tk.Toplevel):
             connect.close()
 
         def initDateComboboxes(self, yearbox, monthbox, daybox):
-            thisYear = datetime.datetime.now().year - 1911
+            thisYear = dt.datetime.now().year - 1911
             years = list(reversed(range(1,thisYear+1)))
             yearbox.config(values=years)
             months = list(range(1,12+1))
@@ -1927,19 +1994,17 @@ class unregister(tk.Toplevel):
     def __init__(self, parent, *args, **kwargs):
         # for update purposes
         self.state = "none"
-        # for fetch next/fetch last purposes,
-        # needs update after every insert
         self.inBook = self.getAllRecords("hvhnonc_in")
         self.outBook = self.getAllRecords("hvhnonc_out")
         self.inIndex = 0
         self.outIndex = 0
         # styles
         s = ttk.Style()
-        s.configure('unregister.TButton', font=('Helvetica', 13))
+        s.configure('unregister.TButton', font=_default_button_font)
         tk.Toplevel.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.title("除帳")
-        self.geometry("665x507")
+        self.geometry("665x509")
         self.resizable(False, False)
         # Four main frame in the GUI
         self.f_mainForm = tk.Frame(self)
@@ -2452,7 +2517,6 @@ class unregister(tk.Toplevel):
                 self.postTreatment.set(data[1])
                 self.unregisterRemark.set(data[2])
                 connect.close()
-            pass
 
     def initForm(self):
         # enable some widgets
@@ -2479,7 +2543,7 @@ class unregister(tk.Toplevel):
         self.unregisterRemark.set("")
         # combobox values
         # unregisterDate: fill in the date choices
-        thisYear = datetime.datetime.now().year - 1911
+        thisYear = dt.datetime.now().year - 1911
         years = list(reversed(range(1, thisYear+1)))
         self.cb_unregisterDateY.config(values=years)
         self.cb_unregisterDateM.config(values=list(range(1,13)))
@@ -2526,7 +2590,141 @@ class unregister(tk.Toplevel):
         self.destroy()
 
     def onButtonSearchClick(self):
-        tk.messagebox.showinfo("測試", "onButtonSearchClick", parent=self)
+        # open a toplevel for searching
+        self.SearchWindow(self)
+
+    class SearchWindow(tk.Toplevel):
+        def __init__(self, parent, *args, **kwargs):
+            s = ttk.Style()
+            s.configure('search.TButton', font=_default_button_font)
+            tk.Toplevel.__init__(self, parent, *args, **kwargs)
+            self.parent = parent
+            self.attributes("-topmost", "true")
+            self.attributes("-topmost", "false")
+            self.title("檢索")
+            self.resizable(False, False)
+            self.geometry("465x60")
+            # searchbar
+            self.l_search = tk.Label(self, text="請輸入想要檢索的關鍵字:",
+                                     font=_default_font)
+            self.l_search.grid(row=0, column=0)
+            self.parent.query = tk.StringVar()
+            self.cb_searchbar = ttk.Combobox(
+                    self, width=20, textvariable=self.parent.query,
+                    font=_default_font)
+            # get search cache from db
+            connect,cursor = _getConnection(_default_database)
+            sqlstr = ("select change_value "
+                      "from hvhnonc_out_cache "
+                      "where change_ID = ("
+                      "select ID from hvhnonc_fields "
+                      "where description = '檢索') "
+                      "order by rowid desc limit 30;")
+            cursor.execute(sqlstr)
+            history = cursor.fetchall()
+            self.cb_searchbar.config(values=history)
+            self.cb_searchbar.grid(row=0, column=1)
+            # buttons
+            self.f_buttons = tk.Frame(self)
+            self.btn_cancel = ttk.Button(
+                    self.f_buttons, text="取消", style='search.TButton',
+                    command=self.quitMe)
+            self.btn_cancel.pack(side="left")
+            self.btn_submit = ttk.Button(
+                    self.f_buttons, text="檢索", style='search.TButton',
+                    command=self.onSubmitClick)
+            self.btn_submit.pack(side="left")
+            self.f_buttons.grid(row=1, column=1, sticky="se")
+            # listen to return
+            self.bind("<Return>", self.catchReturn)
+            self.grab_set()
+
+        def catchReturn(self, event):
+            self.onSubmitClick()
+
+        def quitMe(self):
+            self.destroy()
+
+        def onSubmitClick(self):
+            # update search cache
+            connect,cursor = _getConnection(_default_database)
+            sqlstr = (
+                    "replace into hvhnonc_out_cache(this_ID, this_value, "
+                    "change_ID, change_value) "
+                    "values(0, 'none', ("
+                        "select ID "
+                        "from hvhnonc_fields "
+                        "where description = '檢索'), "
+                    "?);")
+            cursor.execute(sqlstr, (self.parent.query.get(), ))
+            connect.commit()
+            # open a result toplevel
+            self.SearchResultWindow(self.parent)
+            self.destroy()
+
+        class SearchResultWindow(tk.Toplevel):
+            def __init__(self, parent, *args, **kwargs):
+                # treeview styles
+                style = ttk.Style()
+                style.configure("Treeview", font=_default_font)
+                style.configure("Treeview.Heading", font=_default_font)
+                # init
+                tk.Toplevel.__init__(self, parent, *args, **kwargs)
+                self.parent = parent
+                self.attributes("-topmost", "true")
+                self.attributes("-topmost", "false")
+                self.title("檢索結果")
+                self.geometry("1200x600")
+                # make a tree view
+                sb = tk.Scrollbar(self)
+                self.tv = ttk.Treeview(
+                        self, yscrollcommand=sb.set,
+                        columns=('1', '2', '3', '4', '5', '6'),
+                        show="headings")
+                self.tv['displaycolumns'] = ('2','3','4','5','6')
+                self.tv.heading('1',text='ID')
+                self.tv.heading('2',text='購置日期')
+                self.tv.heading('3',text='品名')
+                self.tv.heading('4',text='存置位置')
+                self.tv.heading('5',text='保管人')
+                self.tv.heading('6',text='備註')
+                sb.config(command=self.tv.yview)
+                # fetch the data
+                # connect to db
+                # still searching in hvhnonc_in
+                connect,cursor = _getConnection(_default_database)
+                phrase = str(parent.query.get())
+                sqlstr = (
+                        "select ID, in_date, name, place, keeper, remark "
+                        "from hvhnonc_in "
+                        "where("
+                            "category like :q or "
+                            "subcategory like :q or "
+                            "name like :q or "
+                            "brand like :q or "
+                            "spec like :q or "
+                            "place like :q or "
+                            "keep_department like :q or "
+                            "use_department like :q or "
+                            "keeper like :q or "
+                            "remark like :q) "
+                            "order by in_date desc;")
+                cursor.execute(sqlstr, {'q': "%{}%".format(phrase)})
+                data = cursor.fetchall()
+                for d in data:
+                    self.tv.insert("", "end", values=d)
+                sb.pack(side="right", fill="y")
+                self.tv.pack(fill="both", expand=1)
+                # listen to double click
+                self.tv.bind("<Double-1>", self.onDoubleClick)
+                self.grab_set()
+
+            def onDoubleClick(self, event):
+                item = self.tv.identify('item',event.x,event.y)
+                #print("you clicked on", self.tv.item(item,"values")[0])
+                self.parent.state = str(self.tv.item(item,"values")[0])
+                self.parent.updateByState(self.parent.state)
+                self.destroy()
 
     def onButtonSaveClick(self):
         tk.messagebox.showinfo("測試", "onButtonSaveClick", parent=self)
@@ -2579,7 +2777,7 @@ class unregister(tk.Toplevel):
 class printNonc(tk.Toplevel):
     def __init__(self, parent, *args, **kwargs):
         s = ttk.Style()
-        s.configure('printNonc.TButton', font=('Helvetica', 13))
+        s.configure('printNonc.TButton', font=_default_button_font)
         tk.Toplevel.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.attributes("-topmost", "true")
@@ -2605,7 +2803,7 @@ class printNonc(tk.Toplevel):
 class maintenance(tk.Toplevel):
     def __init__(self, parent, *args, **kwargs):
         s = ttk.Style()
-        s.configure('maintenance.TButton', font=('Helvetica', 13))
+        s.configure('maintenance.TButton', font=_default_button_font)
         tk.Toplevel.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.attributes("-topmost", "true")
@@ -2626,3 +2824,19 @@ class maintenance(tk.Toplevel):
 
     def quitMe(self):
         self.destroy()
+
+
+def main():
+    root = tk.Tk()
+    # The combobox style for root, also seen in Index().__init__()
+    root.option_add('*TCombobox*Listbox.font', _default_font)
+    myCompField = CompoundField(root, "DateFrame", "測試", "test", "normal")
+    myCompField.label.pack(side="left")
+    myCompField.widget.pack(side="left")
+    myCompField.pack()
+    root.mainloop()
+    root.quit()
+
+
+if __name__ == "__main__":
+    main()

@@ -81,7 +81,7 @@ class DateFrame(tk.Frame):
 class CompoundField():
     def __init__(self, parent: tk.BaseWidget = None, widgetType: str = None,
                  description: str = "標籤", fieldName: str = None,
-                 enabledState: str = None):
+                 enabledState: str = None, **kwargs):
         self.parent = parent
         self.label = tk.Label(parent, text=description+"：",
                               font=_default_font)
@@ -89,16 +89,26 @@ class CompoundField():
         self.widget = None
         self.variable = tk.StringVar()
         self.enabledState = enabledState.lower()
-        if widgetType == "Entry":
-            self.widget = tk.Entry(parent, textvariable=self.variable,
-                                   font=_default_font, width=20)
-        if widgetType == "Combobox":
-            self.widget = ttk.Combobox(parent, textvariable=self.variable,
-                                       font=_default_font, width=20)
-        if widgetType == "DateFrame":
-            self.widget = DateFrame(parent, self.variable)
+        self.widget = self.getWidget(widgetType, parent)
+        if "opt" in kwargs and kwargs["opt"] == "minmax":
+            self.widget = tk.Frame(parent)
+            self.widgetMin = self.getWidget(widgetType, self.widget)
+            self.tilde = tk.Label(self.widget, text="~", font=_default_font)
+            self.widgetMax = self.getWidget(widgetType, self.widget)
+            self.widgetMin.pack(side="left")
+            self.tilde.pack(side="left")
+            self.widgetMax.pack(side="left")
         self.fieldName = fieldName
 
+    def getWidget(self, widgetType, parent):
+        if widgetType == "Entry":
+            return tk.Entry(parent, textvariable=self.variable,
+                                   font=_default_font, width=20)
+        if widgetType == "Combobox":
+            return ttk.Combobox(parent, textvariable=self.variable,
+                                       font=_default_font, width=20)
+        if widgetType == "DateFrame":
+            return DateFrame(parent, self.variable)
 
 class Index(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
@@ -2773,7 +2783,112 @@ class unregister(tk.Toplevel):
         tk.messagebox.showinfo("測試", "onButtonFormClick", parent=self)
 
     def onButtonSelectClick(self):
-        tk.messagebox.showinfo("測試", "onButtonSelectClick", parent=self)
+        # open a select filter toplevel
+        self.selectFilter(self)
+
+    class selectFilter(tk.Toplevel):
+        def __init__(self, parent, *args, **kwargs):
+            s = ttk.Style()
+            s.configure('selectFilter.TButton', font=_default_button_font)
+            # init
+            tk.Toplevel.__init__(self, parent, *args, **kwargs)
+            self.parent = parent
+            self.attributes("-topmost", "true")
+            self.attributes("-topmost", "false")
+            self.title("請選擇資料過濾條件")
+            self.geometry(_default_toplevel_size)
+            # GUI
+            self.wdict = {}
+            # category
+            self.wdict["category"] = CompoundField(
+                    self, "Combobox", "物品大類", "category", "readonly")
+            self.wdict["category"].label.grid(row=0, column=0,
+                                              padx=5, pady=5)
+            self.wdict["category"].widget.grid(row=0, column=1,
+                                               padx=5, pady=5)
+            # subcategory
+            self.wdict["subcategory"] = CompoundField(
+                    self, "Combobox", "物品分類", "subcategory", "readonly")
+            self.wdict["subcategory"].label.grid(row=0, column=2,
+                                                 padx=5, pady=5)
+            self.wdict["subcategory"].widget.grid(row=0, column=3,
+                                                  padx=5, pady=5)
+            # name
+            self.wdict["name"] = CompoundField(
+                    self, "Combobox", "物品名稱", "name", "normal")
+            self.wdict["name"].label.grid(row=1, column=0, padx=5, pady=5)
+            self.wdict["name"].widget.grid(row=1, column=1, padx=5, pady=5)
+            # brand
+            self.wdict["brand"] = CompoundField(
+                    self, "Combobox", "品牌", "brand", "normal")
+            self.wdict["brand"].label.grid(row=1, column=2, padx=5, pady=5)
+            self.wdict["brand"].widget.grid(row=1, column=3, padx=5, pady=5)
+            # spec
+            self.wdict["spec"] = CompoundField(
+                    self, "Combobox", "規格", "spec", "normal")
+            self.wdict["spec"].label.grid(row=2, column=0, padx=5, pady=5)
+            self.wdict["spec"].widget.grid(row=2, column=1, padx=5, pady=5)
+            # price
+            self.wdict["price"] = CompoundField(
+                    self, "Entry", "單價", "price", "normal", opt="minmax")
+            self.wdict["price"].widgetMin.config(width=10)
+            self.wdict["price"].widgetMax.config(width=10)
+            self.wdict["price"].label.grid(row=2, column=2, padx=5, pady=5)
+            self.wdict["price"].widget.grid(row=2, column=3, padx=5, pady=5)
+            # in_date
+            self.wdict["in_date"] = CompoundField(
+                    self, "DateFrame", "日期範圍", "in_date", "normal",
+                    opt="minmax")
+            self.wdict["in_date"].label.grid(row=3, column=0, padx=5, pady=5)
+            self.wdict["in_date"].widget.grid(row=3, column=1, padx=5, pady=5,
+                                              columnspan=3, sticky="w")
+            # key_date
+            self.wdict["key_date"] = CompoundField(
+                    self, "DateFrame", "建帳日期", "key_date", "normal",
+                    opt="minmax")
+            self.wdict["key_date"].label.grid(row=4, column=0, padx=5, pady=5)
+            self.wdict["key_date"].widget.grid(
+                    row=4, column=1, padx=5, pady=5, columnspan=3, sticky="w")
+            # keep_department
+            self.wdict["keep_department"] = CompoundField(
+                    self, "Combobox", "保管單位", "keep_department", "normal")
+            self.wdict["keep_department"].label.grid(
+                    row=5, column=0, padx=5, pady=5)
+            self.wdict["keep_department"].widget.grid(
+                    row=5, column=1, padx=5, pady=5)
+            # place
+            self.wdict["place"] = CompoundField(
+                    self, "Combobox", "存置地點", "place", "normal")
+            self.wdict["place"].label.grid(row=5, column=2, padx=5, pady=5)
+            self.wdict["place"].widget.grid(row=5, column=3, padx=5, pady=5)
+            # use_department
+            self.wdict["use_department"] = CompoundField(
+                    self, "Combobox", "使用單位", "use_department", "normal")
+            self.wdict["use_department"].label.grid(
+                    row=6, column=0, padx=5, pady=5)
+            self.wdict["use_department"].widget.grid(
+                    row=6, column=1, padx=5, pady=5)
+            # keeper
+            self.wdict["keeper"] = CompoundField(
+                    self, "Combobox", "保管人", "keeper", "normal")
+            self.wdict["keeper"].label.grid(row=6, column=2, padx=5, pady=5)
+            self.wdict["keeper"].widget.grid(row=6, column=3, padx=5, pady=5)
+            # cancel and submit buttons
+            self.btn_cancel = ttk.Button(
+                    self, text="取消", style="selectFilter.TButton",
+                    command=self.quitMe)
+            self.btn_cancel.grid(row=7, column=2, padx=5, pady=5)
+            self.btn_submit = ttk.Button(
+                    self, text="確定", style="selectFilter.TButton",
+                    command=self.onSubmitClick)
+            self.btn_submit.grid(row=7, column=3, padx=5, pady=5)
+
+        def quitMe(self):
+            self.destroy()
+
+        def onSubmitClick(self):
+            tk.messagebox.showinfo(
+                "安安", "Unregister.selectFilter.onSubmitClick", parent=self)
 
     def getAllRecords(self, tablename):
         connect, cursor = _getConnection(_default_database)

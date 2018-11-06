@@ -976,6 +976,7 @@ class register(tk.Toplevel):
                     font=_default_font)
             # get search cache from db
             connect,cursor = _getConnection(_default_database)
+            connect.row_factory = lambda cursor, row: row[0]
             sqlstr = ("select change_value "
                       "from hvhnonc_in_cache "
                       "where change_ID = ("
@@ -983,7 +984,11 @@ class register(tk.Toplevel):
                       "where description = '檢索') "
                       "order by rowid desc limit 30;")
             cursor.execute(sqlstr)
-            history = cursor.fetchall()
+            rows = cursor.fetchall()
+            history = []
+            for row in rows:
+                history.append(row[0])
+            print(history)
             self.cb_searchbar.config(values=history)
             self.cb_searchbar.grid(row=0, column=1)
             # buttons
@@ -2614,6 +2619,7 @@ class unregister(tk.Toplevel):
                     font=_default_font)
             # get search cache from db
             connect,cursor = _getConnection(_default_database)
+            connect.row_factory = lambda cursor, row: row[0]
             sqlstr = ("select change_value "
                       "from hvhnonc_out_cache "
                       "where change_ID = ("
@@ -2621,7 +2627,10 @@ class unregister(tk.Toplevel):
                       "where description = '檢索') "
                       "order by rowid desc limit 30;")
             cursor.execute(sqlstr)
-            history = cursor.fetchall()
+            rows = cursor.fetchall()
+            history = []
+            for row in rows:
+                history.append(row[0])
             self.cb_searchbar.config(values=history)
             self.cb_searchbar.grid(row=0, column=1)
             # buttons
@@ -2830,10 +2839,10 @@ def main():
     root = tk.Tk()
     # The combobox style for root, also seen in Index().__init__()
     root.option_add('*TCombobox*Listbox.font', _default_font)
-    myCompField = CompoundField(root, "DateFrame", "測試", "test", "normal")
+    myCompField = CompoundField(root, "Combobox", "測試", "test", "normal")
+    myCompField.widget.config(values=("",))
     myCompField.label.pack(side="left")
     myCompField.widget.pack(side="left")
-    myCompField.pack()
     root.mainloop()
     root.quit()
 

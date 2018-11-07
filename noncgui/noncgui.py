@@ -73,6 +73,11 @@ class DateFrame(tk.Frame):
         self.m.set(str(m))
         self.d.set(str(d))
 
+    def clear(self):
+        self.y.set("")
+        self.m.set("")
+        self.d.set("")
+
     def updateDate(self, event = None):
         d = (self.y.get(), self.m.get(), self.d.get())
         self.variable.set("-".join(d))
@@ -91,6 +96,7 @@ class CompoundField():
         self.enabledState = enabledState.lower()
         self.widget = self.getWidget(widgetType, parent)
         if "opt" in kwargs and kwargs["opt"] == "minmax":
+            self.opt = "minmax"
             self.widget = tk.Frame(parent)
             self.widgetMin = self.getWidget(widgetType, self.widget)
             self.tilde = tk.Label(self.widget, text="~", font=_default_font)
@@ -99,6 +105,7 @@ class CompoundField():
             self.tilde.pack(side="left")
             self.widgetMax.pack(side="left")
         self.fieldName = fieldName
+        self.description = description
 
     def getWidget(self, widgetType, parent):
         if widgetType == "Entry":
@@ -2796,7 +2803,7 @@ class unregister(tk.Toplevel):
             self.attributes("-topmost", "true")
             self.attributes("-topmost", "false")
             self.title("請選擇資料過濾條件")
-            self.geometry(_default_toplevel_size)
+            self.geometry("665x293")
             # GUI
             self.wdict = {}
             # category
@@ -2839,6 +2846,8 @@ class unregister(tk.Toplevel):
             self.wdict["in_date"] = CompoundField(
                     self, "DateFrame", "日期範圍", "in_date", "normal",
                     opt="minmax")
+            self.wdict["in_date"].widgetMin.clear()
+            self.wdict["in_date"].widgetMax.clear()
             self.wdict["in_date"].label.grid(row=3, column=0, padx=5, pady=5)
             self.wdict["in_date"].widget.grid(row=3, column=1, padx=5, pady=5,
                                               columnspan=3, sticky="w")
@@ -2846,6 +2855,8 @@ class unregister(tk.Toplevel):
             self.wdict["key_date"] = CompoundField(
                     self, "DateFrame", "建帳日期", "key_date", "normal",
                     opt="minmax")
+            self.wdict["key_date"].widgetMin.clear()
+            self.wdict["key_date"].widgetMax.clear()
             self.wdict["key_date"].label.grid(row=4, column=0, padx=5, pady=5)
             self.wdict["key_date"].widget.grid(
                     row=4, column=1, padx=5, pady=5, columnspan=3, sticky="w")
@@ -2882,13 +2893,84 @@ class unregister(tk.Toplevel):
                     self, text="確定", style="selectFilter.TButton",
                     command=self.onSubmitClick)
             self.btn_submit.grid(row=7, column=3, padx=5, pady=5)
+            # init form
+            self.initForm()
+            # focus
+            self.grab_set()
+
+        def initForm(self):
+            # set all textVariables to ""
+            for k, v in self.wdict.items():
+                if v.widgetType == "Dateframe":
+                    try:
+                        if v.opt == "minmax":
+                            v.widgetMin.clear()
+                            v.widgetMax.clear()
+                    except NameError:
+                        v.widget.clear()
+                else:
+                    v.variable.set("")
+            # fetch cache for view
+            for k, v in self.wdict.items():
+                self.fetchCache(v)
+            # bind combobox select to update cache
+            self.wdict["category"].widget.bind(
+                    "<<ComboboxSelected>>", self.onCategorySelected)
+
+        def onCategorySelected(self, state):
+            self.fetchCache(self.wdict["subcategory"])
+
+        def fetchCache(self, cf):
+            # input: compoundfield
+            connect,cursor = _getConnection(_default_database)
+            sqlstr = ("")
+            if cf.fieldName == "category":
+                # update from hvhnonc_subcategory
+                sqlstr = ("select description "
+                          "from hvhnonc_category;")
+                cursor.execute(sqlstr)
+                rows = cursor.fetchall()
+                catagories = []
+                for row in rows:
+                    catagories.append(row[0])
+                cf.widget.config(values=catagories)
+            elif cf.fieldName == "subcategory":
+                # update from hvhnonc_subcategory
+                sqlstr = ("select description "
+                          "from hvhnonc_subcategory "
+                          "where parent_ID=("
+                          "select ID "
+                          "from hvhnonc_category "
+                          "where description=?);")
+                param = (self.wdict["category"].variable.get(), )
+                cursor.execute(sqlstr, param)
+                rows = cursor.fetchall()
+                subcatagories = []
+                for row in rows:
+                    subcatagories.append(row[0])
+                cf.widget.config(values=subcatagories)
+            elif cf.widgetType == "Combobox":
+                # update from hvhnonc_out_cache
+                sqlstr = ("select change_value "
+                          "from hvhnonc_out_cache "
+                          "where this_ID='0' and "
+                          "this_value='none' and "
+                          "change_ID=("
+                              "select ID "
+                              "from hvhnonc_fields "
+                              "where description=?)")
+                param = (cf.description, )
+                cursor.execute(sqlstr, param)
+                rows = cursor.fetchall()
+                cf.widget.config(values=rows)
+                pass
 
         def quitMe(self):
             self.destroy()
 
         def onSubmitClick(self):
             tk.messagebox.showinfo(
-                "安安", "Unregister.selectFilter.onSubmitClick", parent=self)
+                "test", "Unregister.selectFilter.onSubmitClick", parent=self)
 
     def getAllRecords(self, tablename):
         connect, cursor = _getConnection(_default_database)
@@ -2954,10 +3036,7 @@ def main():
     root = tk.Tk()
     # The combobox style for root, also seen in Index().__init__()
     root.option_add('*TCombobox*Listbox.font', _default_font)
-    myCompField = CompoundField(root, "Combobox", "測試", "test", "normal")
-    myCompField.widget.config(values=("",))
-    myCompField.label.pack(side="left")
-    myCompField.widget.pack(side="left")
+    unregister.selectFilter(root)
     root.mainloop()
     root.quit()
 

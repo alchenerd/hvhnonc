@@ -11,7 +11,7 @@ Created on Tue Oct  2 11:08:53 2018
 import tkinter as tk
 
 import init
-import noncgui as gui
+from noncgui import noncgui as gui
 
 
 def main():

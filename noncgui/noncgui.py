@@ -17,7 +17,8 @@ _welcome_image = "kaiba.gif"
 _default_toplevel_size = "665x411"
 _default_font = (None, 15)
 _default_button_font = (None, 15)
-_default_database = "HVHNONC.db"
+_default_database = "HVHNONC.db" # enable this if entry from HVHNONC.pyw
+#_default_database = "../HVHNONC.db" # enable this if entry from noncgui.py
 
 # TODO: <alchenerd@gmail.com>
 # Refactor the whole thing using the CompoundField class
@@ -72,11 +73,13 @@ class DateFrame(tk.Frame):
         self.y.set(str(y))
         self.m.set(str(m))
         self.d.set(str(d))
+        self.updateDate()
 
     def clear(self):
         self.y.set("")
         self.m.set("")
         self.d.set("")
+        self.variable.set("")
 
     def updateDate(self, event = None):
         d = (self.y.get(), self.m.get(), self.d.get())
@@ -94,28 +97,32 @@ class CompoundField():
         self.widget = None
         self.variable = tk.StringVar()
         self.enabledState = enabledState.lower()
-        self.widget = self.getWidget(widgetType, parent)
+        self.widget = self.getWidget(widgetType, parent, self.variable)
         if "opt" in kwargs and kwargs["opt"] == "minmax":
             self.opt = "minmax"
             self.widget = tk.Frame(parent)
-            self.widgetMin = self.getWidget(widgetType, self.widget)
+            self.variableMin = tk.StringVar()
+            self.variableMax = tk.StringVar()
+            self.widgetMin = self.getWidget(widgetType, self.widget,
+                                            self.variableMin)
             self.tilde = tk.Label(self.widget, text="~", font=_default_font)
-            self.widgetMax = self.getWidget(widgetType, self.widget)
+            self.widgetMax = self.getWidget(widgetType, self.widget,
+                                            self.variableMax)
             self.widgetMin.pack(side="left")
             self.tilde.pack(side="left")
             self.widgetMax.pack(side="left")
         self.fieldName = fieldName
         self.description = description
 
-    def getWidget(self, widgetType, parent):
+    def getWidget(self, widgetType, parent, variable):
         if widgetType == "Entry":
-            return tk.Entry(parent, textvariable=self.variable,
+            return tk.Entry(parent, textvariable=variable,
                                    font=_default_font, width=20)
         if widgetType == "Combobox":
-            return ttk.Combobox(parent, textvariable=self.variable,
+            return ttk.Combobox(parent, textvariable=variable,
                                        font=_default_font, width=20)
         if widgetType == "DateFrame":
-            return DateFrame(parent, self.variable)
+            return DateFrame(parent, variable)
 
 class Index(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
@@ -2507,7 +2514,6 @@ class unregister(tk.Toplevel):
                 self.lastUnregisterDateD.set(outDate[2])
                 # get sum
                 self.amountUnregistered.set(str(data[2]))
-                # TODO: <alchenerd@gmail.com> finish lower section
                 # these are the same as the lastest date
                 self.unregisterDateY.set(self.lastUnregisterDateY.get())
                 self.unregisterDateM.set(self.lastUnregisterDateM.get())
@@ -2969,8 +2975,131 @@ class unregister(tk.Toplevel):
             self.destroy()
 
         def onSubmitClick(self):
-            tk.messagebox.showinfo(
-                "test", "Unregister.selectFilter.onSubmitClick", parent=self)
+            # select from hvhnonc_in and hvhnonc_out
+            # open a tree toplevel showing the filtered results
+            # copy paste from LookupResult
+            self.LookupResult(self)
+
+        class LookupResult(tk.Toplevel):
+            # basically it's a search result toplevel
+            def __init__(self, parent, *args, **kwargs):
+                # treeview styles
+                style = ttk.Style()
+                style.configure("Treeview", font=_default_font)
+                style.configure("Treeview.Heading", font=_default_font)
+                #init
+                tk.Toplevel.__init__(self, parent, *args, **kwargs)
+                self.parent = parent
+                self.attributes("-topmost", "true")
+                self.attributes("-topmost", "false")
+                self.title("篩選結果")
+                self.geometry("1200x600")
+                self.resizable(False, False)
+                # make a tree view
+                sb = tk.Scrollbar(self)
+                self.tv = ttk.Treeview(
+                        self, yscrollcommand=sb.set,
+                        columns=('1', '2', '3', '4', '5', '6'),
+                        show="headings")
+                self.tv['displaycolumns'] = ('2','3','4','5','6')
+                self.tv.heading('1',text='ID')
+                self.tv.heading('2',text='日期')
+                self.tv.heading('3',text='品名')
+                self.tv.heading('4',text='存置位置')
+                self.tv.heading('5',text='保管人')
+                self.tv.heading('6',text='備註')
+                sb.config(command=self.tv.yview)
+                # fetch the data
+                connect,cursor = _getConnection(_default_database)
+                #connect.set_trace_callback(print)
+                params = []
+                q_in = ("select ID, in_date as date, name, "
+                              "place as place, keeper, remark "
+                              "from hvhnonc_in ")
+                q_out = ("select in_ID as ID, out_date as date, name, "
+                              "storage as place, '' as keeper, remark "
+                              "from hvhnonc_out ")
+                q_union = "union all "
+                q_footer = "order by in_date desc;"
+                q_where = "where ("
+                for key, cf in parent.wdict.items():
+                    # minmax
+                    if hasattr(cf, "opt") and cf.opt == "minmax":
+                        # in date range
+                        if cf.widgetType == "Dateframe":
+                            if (cf.widgetMin.variable.get() == "" and
+                                cf.widgetMax.variable.get() == ""):
+                                continue
+                            tempMin = "1911-01-01"
+                            tempMax = "date('now')"
+                            if cf.widgetMin.variable.get() != "":
+                                tempMin = cf.widgetMin.variable.get()
+                            if cf.widgetMax.variable.get() != "":
+                                tempMax = cf.widgetMax.variable.get()
+                            q_where += ("(strftime('%Y-%m-%d', {}) "
+                                       "between ? and ?) and ".format(key))
+                            params.append(tempMin)
+                            params.append(tempMax)
+                        # in price range
+                        elif cf.widgetType == "Entry":
+                            tMin = cf.variableMin.get()
+                            tMax = cf.variableMax.get()
+                            if (tMin != "" and tMax != ""):
+                                q_where += ("({0} >= ? and "
+                                           "{0} <= ?) and ").format(key)
+                                params.append(tMin)
+                                params.append(tMax)
+                            elif (tMin != "" and tMax == ""):
+                                q_where += ("{0} >= ? and ".format(key))
+                                params.append(tMin)
+                            elif (tMin == "" and tMax != ""):
+                                q_where += ("{0} <= ? and ".format(key))
+                                params.append(tMax)
+                            else:
+                                pass
+                    elif (cf.variable.get() != ""):
+                        q_where += ("{} like ? and ".format(key))
+                        params.append("%{}%".format(cf.variable.get()))
+                    elif cf.widgetType in ("Combobox", "Entry"):
+                        pass
+                    else:
+                        messagebox.showerror(
+                                "err",
+                                "unknown widget {0}:{1} in wdict".format(
+                                        key, cf.widgetType),
+                                parent=self)
+                # where(1) if no input
+                q_where += "1) "
+                q_in_full = q_in + q_where
+                q_where = q_where.replace("in_date", "out_date")
+                q_where = q_where.replace("place", "storage")
+                q_out_full = q_out + q_where
+                params = params + params
+                cursor.execute(
+                        q_in_full + q_union + q_out_full + q_footer,
+                        params)
+                data = cursor.fetchall()
+                self.title("篩選結果: 共{}筆".format(len(data)))
+                for d in data:
+                    self.tv.insert("", "end", values=d)
+                sb.pack(side="right", fill="y")
+                self.tv.pack(fill="both", expand=1)
+                # listen to double click
+                self.tv.bind("<Double-1>", self.onDoubleClick)
+                # grab focus
+                self.grab_set()
+                # listen to self close event. if so, close parent
+                self.protocol("WM_DELETE_WINDOW", self.abortLookup)
+
+            def onDoubleClick(self, event):
+                item = self.tv.identify('item',event.x,event.y)
+                #print("you clicked on", self.tv.item(item, "values")[0])
+                self.parent.parent.updateByState(
+                        self.tv.item(item, "values")[0])
+                self.parent.destroy()
+
+            def abortLookup(self):
+                self.parent.destroy()
 
     def getAllRecords(self, tablename):
         connect, cursor = _getConnection(_default_database)

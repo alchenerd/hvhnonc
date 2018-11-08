@@ -17,8 +17,9 @@ _welcome_image = "kaiba.gif"
 _default_toplevel_size = "665x411"
 _default_font = (None, 15)
 _default_button_font = (None, 15)
-_default_database = "HVHNONC.db" # enable this if entry from HVHNONC.pyw
-#_default_database = "../HVHNONC.db" # enable this if entry from noncgui.py
+_default_database = "HVHNONC.db"
+if __name__ == "__main__":
+    _default_database = "../HVHNONC.db"
 
 # TODO: <alchenerd@gmail.com>
 # Refactor the whole thing using the CompoundField class
@@ -2793,14 +2794,16 @@ class unregister(tk.Toplevel):
         tk.messagebox.showinfo("測試", "onButtonDeleteClick", parent=self)
 
     def onButtonFormClick(self):
-        tk.messagebox.showinfo("測試", "onButtonFormClick", parent=self)
+        # basically the onButtonSelectClick but only look for hchnonc_out
+        self.selectFilter(self, source="out")
 
     def onButtonSelectClick(self):
         # open a select filter toplevel
-        self.selectFilter(self)
+        self.selectFilter(self, source="both")
 
     class selectFilter(tk.Toplevel):
-        def __init__(self, parent, *args, **kwargs):
+        def __init__(self, parent, source: str = "both", *args, **kwargs):
+            self.whereToLook = source
             s = ttk.Style()
             s.configure('selectFilter.TButton', font=_default_button_font)
             # init
@@ -3074,10 +3077,20 @@ class unregister(tk.Toplevel):
                 q_where = q_where.replace("in_date", "out_date")
                 q_where = q_where.replace("place", "storage")
                 q_out_full = q_out + q_where
-                params = params + params
-                cursor.execute(
-                        q_in_full + q_union + q_out_full + q_footer,
-                        params)
+                if parent.whereToLook == "both":
+                    params = params + params
+                    cursor.execute(
+                            q_in_full + q_union + q_out_full + q_footer,
+                            params)
+                elif parent.whereToLook == "in":
+                    cursor.execute(
+                            q_in_full + q_footer,
+                            params)
+                elif parent.whereToLook == "out":
+                    cursor.execute(
+                            q_out_full +
+                            q_footer.replace("in_date", "out_date"),
+                            params)
                 data = cursor.fetchall()
                 self.title("篩選結果: 共{}筆".format(len(data)))
                 for d in data:
@@ -3165,7 +3178,8 @@ def main():
     root = tk.Tk()
     # The combobox style for root, also seen in Index().__init__()
     root.option_add('*TCombobox*Listbox.font', _default_font)
-    unregister.selectFilter(root)
+    test = unregister.selectFilter(root, source="out")
+    test.protocol("WM_DELETE_WINDOW", lambda: test.parent.destroy())
     root.mainloop()
     root.quit()
 

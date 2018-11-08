@@ -3077,6 +3077,7 @@ class unregister(tk.Toplevel):
                 q_where = q_where.replace("in_date", "out_date")
                 q_where = q_where.replace("place", "storage")
                 q_out_full = q_out + q_where
+<<<<<<< HEAD
                 if parent.whereToLook == "both":
                     params = params + params
                     cursor.execute(
@@ -3091,6 +3092,12 @@ class unregister(tk.Toplevel):
                             q_out_full +
                             q_footer.replace("in_date", "out_date"),
                             params)
+=======
+                params = params + params
+                cursor.execute(
+                        q_in_full + q_union + q_out_full + q_footer,
+                        params)
+>>>>>>> 3cf0592fb508870a1777d60afd752a7497789bb3
                 data = cursor.fetchall()
                 self.title("篩選結果: 共{}筆".format(len(data)))
                 for d in data:

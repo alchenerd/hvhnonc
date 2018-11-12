@@ -12,6 +12,8 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 from __init__ import __version__
+from noncgui.maintenance import Maintenance
+from noncgui.printnonc import PrintNonc
 
 _welcome_image = "kaiba.gif"
 _default_toplevel_size = "665x411"
@@ -175,10 +177,10 @@ class Index(tk.Frame):
         unregister(self)
 
     def printPressed(self):
-        printNonc(self)
+        PrintNonc(self)
 
     def maintenancePressed(self):
-        maintenance(self)
+        Maintenance(self)
 
     def quitHVHODBMS(self):
         self.parent.destroy()
@@ -3237,63 +3239,11 @@ class unregister(tk.Toplevel):
         return cursor.fetchall()
 
 
-class printNonc(tk.Toplevel):
-    def __init__(self, parent, *args, **kwargs):
-        s = ttk.Style()
-        s.configure('printNonc.TButton', font=_default_button_font)
-        tk.Toplevel.__init__(self, parent, *args, **kwargs)
-        self.parent = parent
-        self.attributes("-topmost", "true")
-        self.attributes("-topmost", "false")
-        self.title("列印")
-        self.geometry(_default_toplevel_size)
-        self.resizable(False, False)
-        # gui
-        self.l = tk.Label(self, text="列印畫面", font=_default_font)
-        self.l.pack()
-        # buttons
-        self.btn_quit = ttk.Button(self, text='返回',
-                                   style="printNonc.TButton",
-                                   command=self.quitMe)
-        self.btn_quit.pack()
-        # focus
-        self.grab_set()
-
-    def quitMe(self):
-        self.destroy()
-
-
-class maintenance(tk.Toplevel):
-    def __init__(self, parent, *args, **kwargs):
-        s = ttk.Style()
-        s.configure('maintenance.TButton', font=_default_button_font)
-        tk.Toplevel.__init__(self, parent, *args, **kwargs)
-        self.parent = parent
-        self.attributes("-topmost", "true")
-        self.attributes("-topmost", "false")
-        self.title("維護")
-        self.geometry(_default_toplevel_size)
-        self.resizable(False, False)
-        # gui
-        self.l = tk.Label(self, text="維護畫面", font=_default_font)
-        self.l.pack()
-        # buttons
-        self.btn_quit = ttk.Button(self, text='返回',
-                                   style="maintenance.TButton",
-                                   command=self.quitMe)
-        self.btn_quit.pack()
-        # focus
-        self.grab_set()
-
-    def quitMe(self):
-        self.destroy()
-
-
 def main():
     root = tk.Tk()
     # The combobox style for root, also seen in Index().__init__()
     root.option_add('*TCombobox*Listbox.font', _default_font)
-    test = unregister(root)
+    test = PrintNonc(root)
     test.protocol("WM_DELETE_WINDOW", lambda: test.parent.destroy())
     root.mainloop()
     root.quit()

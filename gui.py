@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Oct 16 11:13:25 2018
+Created on Tue Nov 13 09:08:05 2018
+
 @author: alchenerd (alchenerd@gmail.com)
-The module where I put tkinter frames, toplevels, and their functions
 """
 
 import datetime as dt
@@ -12,16 +12,12 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 
 from __init__ import __version__
-from noncgui.maintenance import Maintenance
-from noncgui.printnonc import PrintNonc
 
 _welcome_image = "kaiba.gif"
-_default_toplevel_size = "665x411"
+_default_toplevel_size = "679x411"
 _default_font = (None, 15)
 _default_button_font = (None, 15)
 _default_database = "HVHNONC.db"
-if __name__ == "__main__":
-    _default_database = "../HVHNONC.db"
 
 # TODO: <alchenerd@gmail.com>
 # Refactor the whole thing using the CompoundField class
@@ -29,35 +25,41 @@ if __name__ == "__main__":
 # ...someday.
 
 
-def _getConnection(databaseName):
-    connect = sqlite3.connect(_default_database)
+def _getConnection(databaseName: str = _default_database):
+    connect = sqlite3.connect(databaseName)
     cursor = connect.cursor()
     return connect, cursor
 
 
+# A frame that consists of 3 comboboxes: Year of Republic era, month, day
 class DateFrame(tk.Frame):
-    def __init__(self, parent: tk.BaseWidget = None,
-                 variable: tk.StringVar = None):
+    def __init__(
+            self,
+            parent: tk.BaseWidget = None,
+            variable: tk.StringVar = None
+            ):
         tk.Frame.__init__(self, parent)
         self.variable = variable
         self.y = tk.StringVar()
         self.m = tk.StringVar()
         self.d = tk.StringVar()
-        self.cb_y = ttk.Combobox(self, width=3, textvariable=self.y,
-                                 font=_default_font)
-        self.cb_m = ttk.Combobox(self, width=2, textvariable=self.m,
-                                 font=_default_font)
-        self.cb_d = ttk.Combobox(self, width=2, textvariable=self.d,
-                                 font=_default_font)
+        self.cb_y = ttk.Combobox(
+                self, width=3, textvariable=self.y, font=_default_font)
+        self.cb_m = ttk.Combobox(
+                self, width=2, textvariable=self.m, font=_default_font)
+        self.cb_d = ttk.Combobox(
+                self, width=2, textvariable=self.d, font=_default_font)
         self.l_y = tk.Label(self, text="年", font=_default_font)
         self.l_m = tk.Label(self, text="月", font=_default_font)
         self.l_d = tk.Label(self, text="日", font=_default_font)
+        # form: "{}年{}月{}日"
         self.cb_y.pack(side="left")
         self.l_y.pack(side="left")
         self.cb_m.pack(side="left")
         self.l_m.pack(side="left")
         self.cb_d.pack(side="left")
         self.l_d.pack(side="left")
+        # Conversion to the Year of Republic era, ascended
         years = list(reversed(range(1, dt.datetime.now().year - 1911 + 1)))
         self.cb_y.config(values=years)
         months = list(range(1, 12 + 1))
@@ -65,10 +67,11 @@ class DateFrame(tk.Frame):
         days = list(range(1, 31 + 1))
         self.cb_d.config(values=days)
         self.setAsToday()
-        self.updateDate()
-        self.cb_y.bind("<<ComboboxSelected>>", self.updateDate)
-        self.cb_m.bind("<<ComboboxSelected>>", self.updateDate)
-        self.cb_d.bind("<<ComboboxSelected>>", self.updateDate)
+        # updateVar(): modify the inner string variable
+        self.updateVar()
+        self.cb_y.bind("<<ComboboxSelected>>", self.updateVar)
+        self.cb_m.bind("<<ComboboxSelected>>", self.updateVar)
+        self.cb_d.bind("<<ComboboxSelected>>", self.updateVar)
 
     def setAsToday(self):
         y = dt.datetime.now().year - 1911
@@ -77,7 +80,7 @@ class DateFrame(tk.Frame):
         self.y.set(str(y))
         self.m.set(str(m))
         self.d.set(str(d))
-        self.updateDate()
+        self.updateVar()
 
     def clear(self):
         self.y.set("")
@@ -85,50 +88,68 @@ class DateFrame(tk.Frame):
         self.d.set("")
         self.variable.set("")
 
-    def updateDate(self, event=None):
+    def updateVar(self, event=None):
         d = (self.y.get(), self.m.get(), self.d.get())
         self.variable.set("-".join(d))
 
-
+# The smallest unit in a form, consists a label and a tkinter widget
+# optional: range=True lets CompoundField contains two widgets:
+#           widgetMin and widgetMax
 class CompoundField():
-    def __init__(self, parent: tk.BaseWidget = None, widgetType: str = None,
-                 description: str = "標籤", fieldName: str = None,
-                 enabledState: str = None, **kwargs):
+    def __init__(
+            self,
+            parent: tk.BaseWidget = None,
+            widgetType: str = None,
+            description: str = "標籤",
+            fieldName: str = None,
+            enabledState: str = None, **kwargs
+            ):
         self.parent = parent
         self.label = tk.Label(parent, text=description + "：",
                               font=_default_font)
-        self.widgetType = widgetType.title()
-        self.widget = None
-        self.variable = tk.StringVar()
-        self.enabledState = enabledState.lower()
-        self.widget = self.getWidget(widgetType, parent, self.variable)
-        if "opt" in kwargs and kwargs["opt"] == "minmax":
-            self.opt = "minmax"
-            self.widget = tk.Frame(parent)
-            self.variableMin = tk.StringVar()
-            self.variableMax = tk.StringVar()
-            self.widgetMin = self.getWidget(widgetType, self.widget,
-                                            self.variableMin)
-            self.tilde = tk.Label(self.widget, text="~", font=_default_font)
-            self.widgetMax = self.getWidget(widgetType, self.widget,
-                                            self.variableMax)
-            self.widgetMin.pack(side="left")
-            self.tilde.pack(side="left")
-            self.widgetMax.pack(side="left")
+        if widgetType is not None:
+            self.widgetType = widgetType.lower()
+        if enabledState is not None:
+            self.enabledState = enabledState.lower()
         self.fieldName = fieldName
         self.description = description
+        # if kwargs["range"] is true
+        if kwargs.get("span"):
+            self.widget = tk.Frame(parent)
+            self.variable = {}
+            self.variable["min"] = tk.StringVar()
+            self.variable["max"] = tk.StringVar()
+            self.widget.min = self.createWidget(
+                    widgetType, self.widget, self.variable["min"])
+            self.widget.tilde = tk.Label(
+                    self.widget, text="~", font=_default_font)
+            self.widget.max = self.createWidget(
+                    widgetType, self.widget, self.variable["max"])
+            self.widget.min.pack(side="left")
+            self.widget.tilde.pack(side="left")
+            self.widget.max.pack(side="left")
+        else:
+            self.variable = tk.StringVar()
+            self.widget = self.createWidget(widgetType, parent, self.variable)
 
-    def getWidget(self, widgetType, parent, variable):
-        if widgetType == "Entry":
+    def createWidget(
+            self,
+            widgetType: str = None,
+            parent: tk.BaseWidget = None,
+            variable: tk.StringVar = None):
+        if widgetType is None:
+            return
+        if widgetType == "entry":
             return tk.Entry(parent, textvariable=variable,
                             font=_default_font, width=20)
-        if widgetType == "Combobox":
+        if widgetType == "combobox":
             return ttk.Combobox(parent, textvariable=variable,
                                 font=_default_font, width=20)
-        if widgetType == "DateFrame":
+        if widgetType == "dateframe":
             return DateFrame(parent, variable)
 
 
+# The entry point of the whole gui module when imported
 class Index(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
@@ -137,9 +158,9 @@ class Index(tk.Frame):
         parent.title("非消耗品管理系統 (v" + __version__ + ")")
         parent.focus_force()
         parent.resizable(False, False)
-        # listbox font style
+        parent.option_add("*Font", _default_font)
+        parent.option_add("*Label.Font", _default_font)
         parent.option_add('*TCombobox*Listbox.font', _default_font)
-        # an image
         photo = tk.PhotoImage(file=_welcome_image)
         self.label_welcome = tk.Label(image=photo)
         self.label_welcome.image = photo
@@ -171,7 +192,7 @@ class Index(tk.Frame):
         Login(self)
 
     def registerPressed(self):
-        register(self)
+        Register(self)
 
     def unregisterPressed(self):
         unregister(self)
@@ -186,6 +207,7 @@ class Index(tk.Frame):
         self.parent.destroy()
 
 
+# The login form using sha256 as hash
 class Login(tk.Toplevel):
     def __init__(self, parent, *args, **kwargs):
         tk.Toplevel.__init__(self, parent, *args, **kwargs)
@@ -195,34 +217,42 @@ class Login(tk.Toplevel):
         self.title("登入")
         self.geometry("250x115")
         self.resizable(False, False)
-        # user info
-        self.label_username = tk.Label(self, text="帳號:",
-                                       font=_default_font)
-        self.label_password = tk.Label(self, text="密碼:",
-                                       font=_default_font)
-        self.label_username.place(x=4, y=10)
-        self.label_password.place(x=4, y=40)
-        self.var_username = tk.StringVar()
-        self.var_username.set("administrator")
-        self.var_password = tk.StringVar()
-        self.var_password.set("veteranshome")
-        self.entry_username = tk.Entry(
-            self, textvariable=self.var_username, font=_default_font)
-        self.entry_password = tk.Entry(
-            self, textvariable=self.var_password,
-            font=_default_font, show="*")
-        self.entry_username.place(x=58, y=13)
-        self.entry_password.place(x=58, y=43)
+        # User info
+        self.compFields = {}
+        self.compFields["username"] = CompoundField(
+                parent=self,
+                widgetType="entry",
+                description="帳號",
+                fieldName="username")
+        self.compFields["password"] = CompoundField(
+                parent=self,
+                widgetType="entry",
+                description="密碼",
+                fieldName="password")
+        self.compFields["password"].widget.config(show='*')
+        # Temporary username and password
+        self.compFields["username"].variable.set("administrator")
+        self.compFields["password"].variable.set("veteranshome")
+        self.compFields["username"].label.place(x=0, y=11)
+        self.compFields["password"].label.place(x=0, y=41)
+        self.compFields["username"].widget.place(x=63, y=13)
+        self.compFields["password"].widget.place(x=63, y=43)
         # buttons
         s = ttk.Style()
         s.configure('login.TButton', font=_default_button_font)
         self.btn_login = ttk.Button(
-            self, text='登入', style="login.TButton",
-            command=self.validate)
+                self,
+                text='登入',
+                style="login.TButton",
+                command=self.validate
+                )
         self.btn_login.place(x=6, y=75)
         self.btn_quit = ttk.Button(
-            self, text='離開', style="login.TButton",
-            command=self.abortLogin)
+                self,
+                text='離開',
+                style="login.TButton",
+                command=self.abortLogin
+                )
         self.btn_quit.place(x=134, y=75)
         self.bind("<Return>", self.catchReturn)
         # focus and listen
@@ -238,20 +268,19 @@ class Login(tk.Toplevel):
     def validate(self):
         # check for valid username and password
         # restriction: printable ASCII char[20]
-        username = self.var_username.get()
-        password = self.var_password.get()
+        username = self.compFields["username"].variable.get()
+        password = self.compFields["password"].variable.get()
         if self.isValid(username, password):
-            # database stuff
             connect, cursor = _getConnection(_default_database)
-            sqlstr = ("select * from hvhnonc_users where username='" +
-                      self.var_username.get() + "';")
-            # print(sqlstr)
-            cursor.execute(sqlstr)
+            sqlstr = ("select * "
+                      "from hvhnonc_users "
+                      "where username=? "
+                      "limit 1;")
+            cursor.execute(sqlstr, (username,))
             row = cursor.fetchone()
             connect.close()
             # row = [(ID, username, hash_SHA256, salt)]
-            # print(row)
-            if row == None:
+            if row is None:
                 messagebox.showerror(
                     "錯誤", "不正確的帳號或密碼", parent=self)
                 return
@@ -282,7 +311,7 @@ class Login(tk.Toplevel):
             return False
 
 
-class register(tk.Toplevel):
+class Register(tk.Toplevel):
     def __init__(self, parent, *args, **kwargs):
         self.state = "none"
         self.book = self.getAllRecords()
@@ -300,234 +329,241 @@ class register(tk.Toplevel):
         self.geometry(_default_toplevel_size)
         self.resizable(False, False)
         # register form GUI
+        self.compFields = {}
         # category
-        self.lb_cat = tk.Label(self, text="物品大項: ",
-                               font=_default_font)
-        self.lb_cat.grid(row=0, column=0, padx=5, pady=5)
-        self.category = tk.StringVar()
-        self.cb_cat = ttk.Combobox(
-            self, width=20, textvariable=self.category,
-            font=_default_font, state="readonly")
-        self.cb_cat.grid(row=0, column=1, padx=5, pady=5)
+        self.compFields["category"] = CompoundField(
+                parent=self,
+                widgetType="combobox",
+                description="物品大項",
+                fieldname="category",
+                enabledState="readonly")
+        self.compFields["category"].label.grid(
+                row=0, column=0, padx=5, pady=5)
+        self.compFields["category"].widget.grid(
+                row=0, column=1, padx=5, pady=5)
         # subcategory
-        self.lb_subcat = tk.Label(self, text="物品細目: ",
-                                  font=_default_font)
-        self.lb_subcat.grid(row=0, column=2, padx=5, pady=5)
-        self.subcategory = tk.StringVar()
-        self.cb_subcat = ttk.Combobox(
-            self, width=20, textvariable=self.subcategory,
-            font=_default_font, state="readonly")
-        self.cb_subcat.grid(row=0, column=3, padx=5, pady=5)
+        self.compFields["subcategory"] = CompoundField(
+                parent=self,
+                widgetType="combobox",
+                description="物品細目",
+                fieldname="subcategory",
+                enabledState="readonly")
+        self.compFields["subcategory"].label.grid(
+                row=0, column=2, padx=5, pady=5)
+        self.compFields["subcategory"].widget.grid(
+                row=0, column=3, padx=5, pady=5)
         # name
-        self.lb_name = tk.Label(self, text="物品名稱: ",
-                                font=_default_font)
-        self.lb_name.grid(row=1, column=0, padx=5, pady=5)
-        self.name = tk.StringVar()
-        self.cb_name = ttk.Combobox(
-            self, width=20, textvariable=self.name,
-            font=_default_font)
-        self.cb_name.grid(row=1, column=1, padx=5, pady=5)
+        self.compFields["name"] = CompoundField(
+                parent=self,
+                widgetType="combobox",
+                description="物品名稱",
+                fieldname="name",
+                enabledState="normal")
+        self.compFields["name"].label.grid(
+                row=1, column=0, padx=5, pady=5)
+        self.compFields["name"].widget.grid(
+                row=1, column=1, padx=5, pady=5)
         # unit
-        self.lb_unit = tk.Label(
-            self, text="單位: ", font=_default_font)
-        self.lb_unit.grid(row=1, column=2, padx=5, pady=5)
-        self.unit = tk.StringVar()
-        self.cb_unit = ttk.Combobox(
-            self, width=20, textvariable=self.unit,
-            font=_default_font)
-        self.cb_unit.grid(row=1, column=3, padx=5, pady=5)
+        self.compFields["unit"] = CompoundField(
+                parent=self,
+                widgetType="combobox",
+                description="單位",
+                fieldname="unit",
+                enabledState="normal")
+        self.compFields["unit"].label.grid(
+                row=1, column=2, padx=5, pady=5)
+        self.compFields["unit"].widget.grid(
+                row=1, column=3, padx=5, pady=5)
         # brand
-        self.lb_brand = tk.Label(self, text="品牌: ",
-                                 font=_default_font)
-        self.lb_brand.grid(row=2, column=0, padx=5, pady=5)
-        self.brand = tk.StringVar()
-        self.cb_brand = ttk.Combobox(self, width=20,
-                                     textvariable=self.brand,
-                                     font=_default_font)
-        self.cb_brand.grid(row=2, column=1, padx=5, pady=5)
+        self.compFields["brand"] = CompoundField(
+                parent=self,
+                widgetType="combobox",
+                description="品牌",
+                fieldname="brand",
+                enabledState="normal")
+        self.compFields["brand"].label.grid(
+                row=2, column=0, padx=5, pady=5)
+        self.compFields["brand"].widget.grid(
+                row=2, column=1, padx=5, pady=5)
         # spec
-        self.lb_spec = tk.Label(self, text="規格: ",
-                                font=_default_font)
-        self.lb_spec.grid(row=2, column=2, padx=5, pady=5)
-        self.spec = tk.StringVar()
-        self.cb_spec = ttk.Combobox(self, width=20,
-                                    textvariable=self.spec,
-                                    font=_default_font)
-        self.cb_spec.grid(row=2, column=3, padx=5, pady=5)
-        # serial
+        self.compFields["spec"] = CompoundField(
+                parent=self,
+                widgetType="combobox",
+                description="規格",
+                fieldname="spec",
+                enabledState="normal")
+        self.compFields["spec"].label.grid(
+                row=2, column=2, padx=5, pady=5)
+        self.compFields["spec"].widget.grid(
+                row=2, column=3, padx=5, pady=5)
+        # serial frame
         self.f_serial = tk.Frame(self)
-        self.lb_objID = tk.Label(
-            self.f_serial, text="物品編號: ", font=_default_font)
-        self.lb_objID.pack(side='left', padx=10)
-        self.objID = tk.StringVar()
-        self.ent_objID = tk.Entry(
-            self.f_serial, width=18, textvariable=self.objID,
-            font=_default_font, state="disabled")
-        self.ent_objID.pack(side='left', padx=10)
-        self.lb_serial = tk.Label(
-            self.f_serial, text="流水號: ", font=_default_font)
-        self.lb_serial.pack(side='left', padx=10)
-        self.serial = tk.StringVar()
-        self.ent_serial = tk.Entry(
-            self.f_serial, width=5, textvariable=self.serial,
-            font=_default_font, state="disabled")
-        self.ent_serial.pack(side='left', padx=10)
+        # objID
+        self.compFields["objID"] = CompoundField(
+                parent=self.f_serial,
+                widgetType="entry",
+                description="物品編號",
+                fieldname="objID",
+                enabledState="disabled")
+        self.compFields["objID"].widget.config(state="disabled")
+        self.compFields["objID"].label.pack(side='left', padx=10)
+        self.compFields["objID"].widget.pack(side='left', padx=10)
+        # serial
+        self.compFields["serial"] = CompoundField(
+                parent=self.f_serial,
+                widgetType="entry",
+                description="流水號",
+                fieldname="serial",
+                enabledState="disabled")
+        self.compFields["serial"].widget.config(width=5)
+        self.compFields["serial"].widget.config(state="disabled")
+        self.compFields["serial"].label.pack(side='left', padx=10)
+        self.compFields["serial"].widget.pack(side='left', padx=10)
+        # Button to look up all serial numbers
         self.btn_lookupSerial = ttk.Button(
             self.f_serial, text="流水號總覽",
             style="register.TButton", command=self.lookupSerial)
         self.btn_lookupSerial.pack(side='left', padx=10)
-        self.f_serial.grid(row=3, column=0, columnspan=4,
-                           padx=5, pady=5)
-        # in date
-        self.lb_in_date = tk.Label(
-            self, text="購置日期: ", font=_default_font)
-        self.lb_in_date.grid(row=4, column=0, padx=5, pady=5)
-        self.f_in_date = tk.Frame(self)
-        self.in_date_yy = tk.StringVar()
-        self.cb_in_date_yy = ttk.Combobox(
-            self.f_in_date, width=3, textvariable=self.in_date_yy,
-            font=_default_font)
-        self.cb_in_date_yy.pack(side='left')
-        self.lb_in_date_yy = tk.Label(self.f_in_date, text="年",
-                                      font=_default_font)
-        self.lb_in_date_yy.pack(side='left')
-        self.in_date_mm = tk.StringVar()
-        self.cb_in_date_mm = ttk.Combobox(
-            self.f_in_date, width=2, textvariable=self.in_date_mm,
-            font=_default_font)
-        self.cb_in_date_mm.pack(side='left')
-        self.lb_in_date_mm = tk.Label(self.f_in_date, text="月",
-                                      font=_default_font)
-        self.lb_in_date_mm.pack(side='left')
-        self.in_date_dd = tk.StringVar()
-        self.cb_in_date_dd = ttk.Combobox(
-            self.f_in_date, width=2, textvariable=self.in_date_dd,
-            font=_default_font)
-        self.cb_in_date_dd.pack(side='left')
-        self.lb_in_date_dd = tk.Label(self.f_in_date, text="日",
-                                      font=_default_font)
-        self.lb_in_date_dd.pack(side='left')
-        self.f_in_date.grid(row=4, column=1, padx=5, pady=5)
-        # key date
-        self.lb_key_date = tk.Label(self, text="建帳日期: ",
-                                    font=_default_font)
-        self.lb_key_date.grid(row=4, column=2, padx=5, pady=5)
-        self.f_key_date = tk.Frame(self)
-        self.key_date_yy = tk.StringVar()
-        self.cb_key_date_yy = ttk.Combobox(
-            self.f_key_date, width=3,
-            textvariable=self.key_date_yy, font=_default_font)
-        self.cb_key_date_yy.pack(side='left')
-        self.lb_key_date_yy = tk.Label(self.f_key_date, text="年",
-                                       font=_default_font)
-        self.lb_key_date_yy.pack(side='left')
-        self.key_date_mm = tk.StringVar()
-        self.cb_key_date_mm = ttk.Combobox(
-            self.f_key_date, width=2,
-            textvariable=self.key_date_mm, font=_default_font)
-        self.cb_key_date_mm.pack(side='left')
-        self.lb_key_date_mm = tk.Label(self.f_key_date, text="月",
-                                       font=_default_font)
-        self.lb_key_date_mm.pack(side='left')
-        self.key_date_dd = tk.StringVar()
-        self.cb_key_date_dd = ttk.Combobox(
-            self.f_key_date, width=2,
-            textvariable=self.key_date_dd, font=_default_font)
-        self.cb_key_date_dd.pack(side='left')
-        self.lb_key_date_dd = tk.Label(self.f_key_date, text="日",
-                                       font=_default_font)
-        self.lb_key_date_dd.pack(side='left')
-        self.f_key_date.grid(row=4, column=3, padx=5, pady=5)
+        self.f_serial.grid(
+                row=3, column=0, columnspan=4, padx=5, pady=5)
+        # buy_date
+        self.compFields["buy_date"] = CompoundField(
+                parent=self,
+                widgetType="dateframe",
+                description="購置日期",
+                fieldname="in_date",
+                enabledState="readonly")
+        self.compFields["buy_date"].label.grid(
+                row=4, column=0, padx=5, pady=5)
+        self.compFields["buy_date"].widget.grid(
+                row=4, column=1, padx=5, pady=5)
+        # key date (new name acquire_date)
+        self.compFields["acquire_date"] = CompoundField(
+                parent=self,
+                widgetType="dateframe",
+                description="取得日期",
+                fieldname="acquire_date",
+                enabledState="readonly")
+        self.compFields["acquire_date"].label.grid(
+                row=4, column=2, padx=5, pady=5)
+        self.compFields["acquire_date"].widget.grid(
+                row=4, column=3, padx=5, pady=5)
         # source, price, amount are in the same frame
-        self.f_sourcePriceAmount = tk.Frame(self)
-        self.lb_source = tk.Label(
-            self.f_sourcePriceAmount, text="來源: ",
-            font=_default_font)
-        self.lb_source.pack(side='left', padx=10)
-        self.source = tk.StringVar()
-        self.cb_source = ttk.Combobox(
-            self.f_sourcePriceAmount, width=8,
-            textvariable=self.source, font=_default_font,
-            state="readonly")
-        self.cb_source.pack(side='left', padx=10)
-        self.lb_price = tk.Label(self.f_sourcePriceAmount,
-                                 text="價格: ", font=_default_font)
-        self.lb_price.pack(side='left', padx=10)
-        self.price = tk.StringVar()
-        self.ent_price = tk.Entry(
-            self.f_sourcePriceAmount, width=8,
-            textvariable=self.price, font=_default_font)
-        self.ent_price.pack(side='left', padx=10)
-        self.lb_amount = tk.Label(self.f_sourcePriceAmount,
-                                  text="數量: ", font=_default_font)
-        self.lb_amount.pack(side='left', padx=10)
-        self.amount = tk.StringVar()
-        self.cb_amount = tk.Entry(
-            self.f_sourcePriceAmount, width=8,
-            textvariable=self.amount, font=_default_font)
-        self.cb_amount.pack(side='left', padx=10)
-        self.f_sourcePriceAmount.grid(row=5, column=0, columnspan=4,
-                                      padx=5, pady=5)
+        self.f_SPA = tk.Frame(self)
+        # source
+        self.compFields["source"] = CompoundField(
+                parent=self.f_SPA,
+                widgetType="combobox",
+                description="來源",
+                fieldname="source",
+                enabledState="normal")
+        self.compFields["source"].widget.config(width=8)
+        self.compFields["source"].label.pack(side='left', padx=10)
+        self.compFields["source"].widget.pack(side='left', padx=10)
+        # price
+        self.compFields["price"] = CompoundField(
+                parent=self.f_SPA,
+                widgetType="entry",
+                description="單價",
+                fieldname="price",
+                enabledState="normal")
+        self.compFields["price"].widget.config(width=8)
+        self.compFields["price"].label.pack(side='left', padx=10)
+        self.compFields["price"].widget.pack(side='left', padx=10)
+        # amount
+        self.compFields["amount"] = CompoundField(
+                parent=self.f_SPA,
+                widgetType="entry",
+                description="數量",
+                fieldname="amount",
+                enabledState="normal")
+        self.compFields["amount"].widget.config(width=8)
+        self.compFields["amount"].label.pack(side='left', padx=10)
+        self.compFields["amount"].widget.pack(side='left', padx=10)
+        self.f_SPA.grid(row=5, column=0, columnspan=4, padx=5, pady=5)
         # place
-        self.lb_place = tk.Label(self, text="存置地點: ",
-                                 font=_default_font)
-        self.lb_place.grid(row=6, column=0, padx=5, pady=5)
-        self.place = tk.StringVar()
-        self.cb_place = ttk.Combobox(
-            self, width=20, textvariable=self.place,
-            font=_default_font)
-        self.cb_place.grid(row=6, column=1, padx=5, pady=5)
-        # lifespan(in years)
-        self.lb_keep_year = tk.Label(self, text="保管年限: ",
-                                     font=_default_font)
-        self.lb_keep_year.grid(row=6, column=2, padx=5, pady=5)
-        self.keep_year = tk.StringVar()
-        self.f_keep_year = tk.Frame(self)
-        self.ent_keep_year = tk.Entry(
-            self.f_keep_year, width=15,
-            textvariable=self.keep_year, font=_default_font)
-        self.ent_keep_year.pack(side="left")
-        self.lb_keep_year_yy = tk.Label(self.f_keep_year, text="年",
-                                        font=_default_font)
-        self.lb_keep_year_yy.pack(side="left")
-        self.f_keep_year.grid(row=6, column=3, padx=5, pady=5)
+        self.compFields["place"] = CompoundField(
+                parent=self,
+                widgetType="combobox",
+                description="存置地點",
+                fieldname="place",
+                enabledState="normal")
+        self.compFields["place"].label.grid(row=6, column=0, padx=5, pady=5)
+        self.compFields["place"].widget.grid(row=6, column=1, padx=5, pady=5)
+        # keep_year
+        self.compFields["keep_year"] = CompoundField(
+                parent=self,
+                # set as none to prevent widget creation
+                widgetType=None,
+                description="保管年限",
+                fieldname="keep_year",
+                enabledState="normal")
+        # this widget is a special case(entry with a label)
+        # thus the widget is defined here
+        self.compFields["keep_year"].widgetType = "entry"
+        # using an additional base frame,
+        # we can still point .widget to tk.Entry
+        self.compFields["keep_year"].baseFrame = tk.Frame(self)
+        self.compFields["keep_year"].widget = tk.Entry(
+                self.compFields["keep_year"].baseFrame,
+                textvariable=self.compFields["keep_year"].variable,
+                font=_default_font)
+        # additional label
+        self.compFields["keep_year"].l_y = tk.Label(
+                self.compFields["keep_year"].baseFrame,
+                text="年",
+                font=_default_font)
+        self.compFields["keep_year"].widget.pack(side="left")
+        self.compFields["keep_year"].l_y.pack(side="left")
+        self.compFields["keep_year"].label.grid(
+                row=6, column=2, padx=5, pady=5)
+        self.compFields["keep_year"].baseFrame.grid(
+                row=6, column=3, padx=5, pady=5)
         # keeper department
-        self.lb_keep_dept = tk.Label(self, text="保管單位: ",
-                                     font=_default_font)
-        self.lb_keep_dept.grid(row=7, column=0, padx=5, pady=5)
-        self.keep_dept = tk.StringVar()
-        self.cb_keep_dept = ttk.Combobox(
-            self, width=20, textvariable=self.keep_dept,
-            font=_default_font)
-        self.cb_keep_dept.grid(row=7, column=1, padx=5, pady=5)
+        self.compFields["keep_dept"] = CompoundField(
+                parent=self,
+                widgetType="combobox",
+                description="保管單位",
+                fieldname="keep_dept",
+                enabledState="normal")
+        self.compFields["keep_dept"].label.grid(
+                row=7, column=0, padx=5, pady=5)
+        self.compFields["keep_dept"].widget.grid(
+                row=7, column=1, padx=5, pady=5)
         # use department
-        self.lb_use_dept = tk.Label(self, text="使用單位: ",
-                                    font=_default_font)
-        self.lb_use_dept.grid(row=7, column=2, padx=5, pady=5)
-        self.use_dept = tk.StringVar()
-        self.cb_use_dept = ttk.Combobox(
-            self, width=20, textvariable=self.use_dept,
-            font=_default_font)
-        self.cb_use_dept.grid(row=7, column=3, padx=5, pady=5)
+        self.compFields["use_dept"] = CompoundField(
+                parent=self,
+                widgetType="combobox",
+                description="使用單位",
+                fieldname="use_dept",
+                enabledState="normal")
+        self.compFields["use_dept"].label.grid(
+                row=7, column=2, padx=5, pady=5)
+        self.compFields["use_dept"].widget.grid(
+                row=7, column=3, padx=5, pady=5)
         # keeper(person)
-        self.lb_keeper = tk.Label(self, text="保管人: ",
-                                  font=_default_font)
-        self.lb_keeper.grid(row=8, column=0, padx=5, pady=5)
-        self.keeper = tk.StringVar()
-        self.cb_keeper = ttk.Combobox(
-            self, width=20, textvariable=self.keeper,
-            font=_default_font)
-        self.cb_keeper.grid(row=8, column=1, padx=5, pady=5)
+        self.compFields["keeper"] = CompoundField(
+                parent=self,
+                widgetType="combobox",
+                description="保管人",
+                fieldname="keeper",
+                enabledState="normal")
+        self.compFields["keeper"].label.grid(
+                row=8, column=0, padx=5, pady=5)
+        self.compFields["keeper"].widget.grid(
+                row=8, column=1, padx=5, pady=5)
         # remarks
-        self.lb_remark = tk.Label(self, text="備註事項: ",
-                                  font=_default_font)
-        self.lb_remark.grid(row=9, column=0, padx=5, pady=5)
-        self.remark = tk.StringVar()
-        self.cb_remark = ttk.Combobox(
-            self, width=32, textvariable=self.remark,
-            font=_default_font)
-        self.cb_remark.grid(row=9, column=1, columnspan=2,
-                            padx=5, pady=5)
+        self.compFields["remark"] = CompoundField(
+                parent=self,
+                widgetType="combobox",
+                description="備註事項",
+                fieldname="remark",
+                enabledState="normal")
+        self.compFields["remark"].widget.config(width=33)
+        self.compFields["remark"].label.grid(
+                row=9, column=0, padx=5, pady=5)
+        self.compFields["remark"].widget.grid(
+                row=9, column=1, padx=5, pady=5, columnspan=2)
         # buttons for searching
         self.f_bottomright = tk.Frame(self)
         self.btn_search = ttk.Button(
@@ -571,99 +607,126 @@ class register(tk.Toplevel):
         self.f_bottomButtons.grid(row=11, column=0, columnspan=4,
                                   padx=5, pady=5)
         # for updating purposes
-        self.widgetsToDisable = [self.cb_cat, self.cb_subcat,
-                                 self.cb_name, self.cb_unit,
-                                 self.cb_brand, self.cb_spec,
-                                 self.cb_in_date_yy,
-                                 self.cb_in_date_mm,
-                                 self.cb_in_date_dd,
-                                 self.cb_key_date_yy,
-                                 self.cb_key_date_mm,
-                                 self.cb_key_date_dd,
-                                 self.cb_source, self.ent_price,
-                                 self.cb_amount, self.cb_place,
-                                 self.ent_keep_year, self.cb_keep_dept,
-                                 self.cb_use_dept, self.cb_keeper,
-                                 self.cb_remark, ]
-        self.readonlyWidgets = [self.cb_cat, self.cb_subcat,
-                                self.cb_source, ]
+        self.widgetsToDisable = [
+                self.compFields["category"].widget,
+                self.compFields["subcategory"].widget,
+                self.compFields["name"].widget,
+                self.compFields["unit"].widget,
+                self.compFields["brand"].widget,
+                self.compFields["spec"].widget,
+                self.compFields["buy_date"].widget.cb_y,
+                self.compFields["buy_date"].widget.cb_m,
+                self.compFields["buy_date"].widget.cb_d,
+                self.compFields["acquire_date"].widget.cb_y,
+                self.compFields["acquire_date"].widget.cb_m,
+                self.compFields["acquire_date"].widget.cb_d,
+                self.compFields["source"].widget,
+                self.compFields["price"].widget,
+                self.compFields["amount"].widget,
+                self.compFields["place"].widget,
+                self.compFields["keep_year"].widget,
+                self.compFields["keep_dept"].widget,
+                self.compFields["use_dept"].widget,
+                self.compFields["keeper"].widget,
+                self.compFields["remark"].widget,]
+        self.readonlyWidgets = [
+                self.compFields["category"].widget,
+                self.compFields["subcategory"].widget,
+                self.compFields["source"].widget,
+                ]
         # NOTE: 'normal' here means status='normal'
-        self.normalWidgets = [self.cb_name, self.cb_unit,
-                              self.cb_brand, self.cb_spec,
-                              self.cb_in_date_yy,
-                              self.cb_in_date_mm,
-                              self.cb_in_date_dd,
-                              self.cb_key_date_yy,
-                              self.cb_key_date_mm,
-                              self.cb_key_date_dd,
-                              self.ent_price, self.cb_amount,
-                              self.cb_place, self.ent_keep_year,
-                              self.cb_keep_dept, self.cb_use_dept,
-                              self.cb_keeper, self.cb_remark, ]
-        self.textVariables = [self.objID, self.serial, self.category,
-                              self.subcategory, self.name, self.brand,
-                              self.spec, self.unit,
-                              self.in_date_yy,
-                              self.in_date_mm,
-                              self.in_date_dd,
-                              self.key_date_yy,
-                              self.key_date_mm,
-                              self.key_date_dd,
-                              self.price, self.amount, self.place,
-                              self.keep_year, self.source,
-                              self.keep_dept, self.use_dept,
-                              self.keeper, self.remark, ]
+        self.normalWidgets = [
+                self.compFields["name"].widget,
+                self.compFields["unit"].widget,
+                self.compFields["brand"].widget,
+                self.compFields["spec"].widget,
+                self.compFields["buy_date"].widget.cb_y,
+                self.compFields["buy_date"].widget.cb_m,
+                self.compFields["buy_date"].widget.cb_d,
+                self.compFields["acquire_date"].widget.cb_y,
+                self.compFields["acquire_date"].widget.cb_m,
+                self.compFields["acquire_date"].widget.cb_d,
+                self.compFields["price"].widget,
+                self.compFields["amount"].widget,
+                self.compFields["place"].widget,
+                self.compFields["keep_year"].widget,
+                self.compFields["keep_dept"].widget,
+                self.compFields["use_dept"].widget,
+                self.compFields["keeper"].widget,
+                self.compFields["remark"].widget,]
+        self.textVariables = [
+                self.compFields["objID"].variable,
+                self.compFields["serial"].variable,
+                self.compFields["category"].variable,
+                self.compFields["subcategory"].variable,
+                self.compFields["name"].variable,
+                self.compFields["brand"].variable,
+                self.compFields["spec"].variable,
+                self.compFields["unit"].variable,
+                self.compFields["buy_date"].widget.y,
+                self.compFields["buy_date"].widget.m,
+                self.compFields["buy_date"].widget.d,
+                self.compFields["acquire_date"].widget.y,
+                self.compFields["acquire_date"].widget.m,
+                self.compFields["acquire_date"].widget.d,
+                self.compFields["source"].variable,
+                self.compFields["price"].variable,
+                self.compFields["amount"].variable,
+                self.compFields["place"].variable,
+                self.compFields["keep_year"].variable,
+                self.compFields["keep_dept"].variable,
+                self.compFields["use_dept"].variable,
+                self.compFields["keeper"].variable,
+                self.compFields["remark"].variable,]
         # dictionary for frequently used widgets
         self.widgetDict = {
-            "物品大項": self.cb_cat,
-            "物品細目": self.cb_subcat,
-            "物品名稱": self.cb_name,
-            "單位": self.cb_unit,
-            "品牌": self.cb_brand,
-            "規格": self.cb_spec,
-            "物品編號": self.ent_objID,
-            "流水號": self.ent_serial,
-            "購置日期_年": self.cb_in_date_yy,
-            "購置日期_月": self.cb_in_date_mm,
-            "購置日期_日": self.cb_in_date_dd,
-            "建帳日期_年": self.cb_key_date_yy,
-            "建帳日期_月": self.cb_key_date_mm,
-            "建帳日期_日": self.cb_key_date_dd,
-            "來源": self.cb_source,
-            "價格": self.ent_price,
-            "數量": self.cb_amount,
-            "存置地點": self.cb_place,
-            "保管年限": self.ent_keep_year,
-            "保管單位": self.cb_keep_dept,
-            "使用單位": self.cb_use_dept,
-            "保管人": self.cb_keeper,
-            "備註事項": self.cb_remark,
-        }
+            "物品大項": self.compFields["category"].widget,
+            "物品細目": self.compFields["subcategory"].widget,
+            "物品名稱": self.compFields["name"].widget,
+            "單位": self.compFields["unit"].widget,
+            "品牌": self.compFields["brand"].widget,
+            "規格": self.compFields["spec"].widget,
+            "物品編號": self.compFields["objID"].widget,
+            "流水號": self.compFields["serial"].widget,
+            "購置日期_年": self.compFields["buy_date"].widget.cb_y,
+            "購置日期_月": self.compFields["buy_date"].widget.cb_m,
+            "購置日期_日": self.compFields["buy_date"].widget.cb_d,
+            "建帳日期_年": self.compFields["acquire_date"].widget.cb_y,
+            "建帳日期_月": self.compFields["acquire_date"].widget.cb_m,
+            "建帳日期_日": self.compFields["acquire_date"].widget.cb_d,
+            "來源": self.compFields["source"].widget,
+            "價格": self.compFields["price"].widget,
+            "數量": self.compFields["amount"].widget,
+            "存置地點": self.compFields["place"].widget,
+            "保管年限": self.compFields["keep_year"].widget,
+            "保管單位": self.compFields["keep_dept"].widget,
+            "使用單位": self.compFields["use_dept"].widget,
+            "保管人": self.compFields["keeper"].widget,
+            "備註事項": self.compFields["remark"].widget,}
         self.strvarDict = {
-            "物品大項": self.category,
-            "物品細目": self.subcategory,
-            "物品名稱": self.name,
-            "單位": self.unit,
-            "品牌": self.brand,
-            "規格": self.spec,
-            "物品編號": self.objID,
-            "流水號": self.serial,
-            "購置日期_年": self.in_date_yy,
-            "購置日期_月": self.in_date_mm,
-            "購置日期_日": self.in_date_dd,
-            "建帳日期_年": self.key_date_yy,
-            "建帳日期_月": self.key_date_mm,
-            "建帳日期_日": self.key_date_dd,
-            "來源": self.source,
-            "價格": self.price,
-            "數量": self.amount,
-            "存置地點": self.place,
-            "保管年限": self.keep_year,
-            "保管單位": self.keep_dept,
-            "使用單位": self.use_dept,
-            "保管人": self.keeper,
-            "備註事項": self.remark,
-        }
+            "物品大項": self.compFields["category"].variable,
+            "物品細目": self.compFields["subcategory"].variable,
+            "物品名稱": self.compFields["name"].variable,
+            "單位": self.compFields["unit"].variable,
+            "品牌": self.compFields["brand"].variable,
+            "規格": self.compFields["spec"].variable,
+            "物品編號": self.compFields["objID"].variable,
+            "流水號": self.compFields["serial"].variable,
+            "購置日期_年": self.compFields["buy_date"].widget.y,
+            "購置日期_月": self.compFields["buy_date"].widget.m,
+            "購置日期_日": self.compFields["buy_date"].widget.d,
+            "建帳日期_年": self.compFields["acquire_date"].widget.y,
+            "建帳日期_月": self.compFields["acquire_date"].widget.m,
+            "建帳日期_日": self.compFields["acquire_date"].widget.d,
+            "來源": self.compFields["source"].variable,
+            "價格": self.compFields["price"].variable,
+            "數量": self.compFields["amount"].variable,
+            "存置地點": self.compFields["place"].variable,
+            "保管年限": self.compFields["keep_year"].variable,
+            "保管單位": self.compFields["keep_dept"].variable,
+            "使用單位": self.compFields["use_dept"].variable,
+            "保管人": self.compFields["keeper"].variable,
+            "備註事項": self.compFields["remark"].variable,}
         self.updateByState(self.state)
         # get the focus in the system
         self.grab_set()
@@ -692,10 +755,8 @@ class register(tk.Toplevel):
                 i.config(state="normal")
             self.initializeAllField()
             self.clearAllFields()
-            self.setAsToday(self.cb_in_date_yy, self.cb_in_date_mm,
-                            self.cb_in_date_dd)
-            self.setAsToday(self.cb_key_date_yy, self.cb_key_date_mm,
-                            self.cb_key_date_dd)
+            self.compFields["buy_date"].widget.setAsToday()
+            self.compFields["acquire_date"].widget.setAsToday()
             return
         else:
             # lookup in book
@@ -742,11 +803,6 @@ class register(tk.Toplevel):
             self.state = "none"
             self.updateByState(self.state)
 
-    def setAsToday(self, yearbox, monthbox, daybox):
-        yearbox.set(dt.datetime.now().year - 1911)
-        monthbox.set(dt.datetime.now().month)
-        daybox.set(dt.datetime.now().day)
-
     def lookupIndexInBook(self, state):
         try:
             int(state)
@@ -768,30 +824,31 @@ class register(tk.Toplevel):
         sqlstr = "select description from hvhnonc_category;"
         cursor.execute(sqlstr)
         catagories = cursor.fetchall()
-        self.cb_cat['values'] = catagories
-        self.cb_cat.bind("<<ComboboxSelected>>",
-                         self.onCategorySelected)
+        self.compFields.get("category").widget.config(values=catagories)
+        self.compFields.get("category").widget.bind(
+                "<<ComboboxSelected>>", self.onCategorySelected)
         # 物品細目
-        self.cb_subcat.bind("<<ComboboxSelected>>",
-                            self.onSubcategorySelected)
+        self.compFields.get("subcategory").widget.bind(
+                "<<ComboboxSelected>>", self.onSubcategorySelected)
         # 物品名稱
-        self.cb_name.bind("<<ComboboxSelected>>", self.onNameSelected)
+        self.compFields.get("name").widget.bind(
+                "<<ComboboxSelected>>", self.onNameSelected)
         # 年
         thisYear = dt.datetime.now().year - 1911
         years = list(reversed(range(1, thisYear + 1)))
-        self.cb_in_date_yy.config(values=years)
-        self.cb_key_date_yy.config(values=years)
+        self.compFields["buy_date"].widget.cb_y.config(values=years)
+        self.compFields["acquire_date"].widget.cb_y.config(values=years)
         # 月
         months = list(range(1, 13))
-        self.cb_in_date_mm.config(values=months)
-        self.cb_key_date_mm.config(values=months)
+        self.compFields["buy_date"].widget.cb_m.config(values=months)
+        self.compFields["acquire_date"].widget.cb_m.config(values=months)
         # 日
         days = list(range(1, 32))
-        self.cb_in_date_dd.config(values=days)
-        self.cb_key_date_dd.config(values=days)
+        self.compFields["buy_date"].widget.cb_d.config(values=days)
+        self.compFields["acquire_date"].widget.cb_d.config(values=days)
         # 來源
         sources = ["購置", "撥用", "贈送"]
-        self.cb_source.config(values=sources)
+        self.compFields["source"].widget.config(values=sources)
         sqlstr = ("""
                     select change_value
                     from hvhnonc_in_cache
@@ -806,23 +863,23 @@ class register(tk.Toplevel):
         # 存置地點
         cursor.execute(sqlstr, ("存置地點", ))
         places = cursor.fetchall()
-        self.cb_place['values'] = places
+        self.compFields["place"].widget.config(values=places)
         # 保管單位
         cursor.execute(sqlstr, ("保管單位", ))
         keep_depts = cursor.fetchall()
-        self.cb_keep_dept['values'] = keep_depts
+        self.compFields["keep_dept"].widget.config(values=keep_depts)
         # 使用單位
         cursor.execute(sqlstr, ("使用單位", ))
         use_depts = cursor.fetchall()
-        self.cb_use_dept['values'] = use_depts
+        self.compFields["use_dept"].widget.config(values=use_depts)
         # 保管人
         cursor.execute(sqlstr, ("保管人", ))
         keepers = cursor.fetchall()
-        self.cb_keeper['values'] = keepers
+        self.compFields["keeper"].widget.config(values=keepers)
         # 備註事項
         cursor.execute(sqlstr, ("備註事項", ))
         remarks = cursor.fetchall()
-        self.cb_remark['values'] = remarks
+        self.compFields["remark"].widget.config(values=remarks)
         connect.close()
 
     def onCategorySelected(self, event):
@@ -836,15 +893,17 @@ class register(tk.Toplevel):
                       from hvhnonc_category
                       where description=?);
                   """)
-        cursor.execute(sqlstr, (self.category.get(),))
+        param = (self.compFields.get("category").variable.get(),)
+        cursor.execute(sqlstr, param)
         subcatagories = cursor.fetchall()
-        self.cb_subcat.config(values=subcatagories)
-
-        if (len(self.cb_subcat['values']) > 0
-                and self.cb_subcat.get() != self.cb_subcat['values'][0]):
-            self.cb_subcat.set(self.cb_subcat['values'][0])
-            self.onSubcategorySelected(None)
         connect.close()
+        self.compFields.get("subcategory").widget.config(values=subcatagories)
+
+        if (len(subcatagories) > 0
+                and self.compFields.get("subcategory").variable.get()
+                    != subcatagories[0]):
+            self.compFields.get("subcategory").widget.set(subcatagories[0])
+            self.onSubcategorySelected(None)
 
     def onSubcategorySelected(self, event):
         # update product name
@@ -862,15 +921,18 @@ class register(tk.Toplevel):
                           from hvhnonc_fields
                           where description=?)
                   );""")
-        params = ("物品細目", self.subcategory.get(), "物品名稱")
+        params = (
+                "物品細目",
+                self.compFields.get("subcategory").variable.get(),
+                "物品名稱")
         cursor.execute(sqlstr, params)
         rows = cursor.fetchall()
-        self.cb_name.config(values=rows)
-        if (len(self.cb_name['values']) > 0
-                and self.cb_name.get() != self.cb_name['values'][0]):
-            self.cb_name.set(self.cb_name['values'][0])
-            self.onNameSelected(None)
         connect.close()
+        self.compFields.get("name").widget.config(values=rows)
+        if (len(rows) > 0
+                and self.compFields["name"].variable.get() != rows[0]):
+            self.compFields.get("name").variable.set(rows[0])
+        self.onNameSelected(None)
 
     def onNameSelected(self, event):
         # update product name
@@ -890,31 +952,34 @@ class register(tk.Toplevel):
                           where description=?))
                   order by rowid desc limit 30;
                   """)
-        params = ["物品名稱", self.name.get(), "", ]
+        params = [
+                "物品名稱",
+                self.compFields.get("name").variable.get(),
+                "", ]
         # 單位
         params[2] = "單位"
         cursor.execute(sqlstr, params)
         units = cursor.fetchall()
-        self.cb_unit.config(values=units)
-        if (len(self.cb_unit['values']) > 0
-                and self.cb_unit.get() != self.cb_unit['values'][0]):
-            self.cb_unit.set(self.cb_unit['values'][0])
+        self.compFields["unit"].widget.config(values=units)
+        if (len(units) > 0
+                and self.compFields["unit"].variable.get() != units[0]):
+            self.compFields["unit"].variable.set(units[0])
         # 品牌
         params[2] = "品牌"
         cursor.execute(sqlstr, params)
         brands = cursor.fetchall()
-        self.cb_brand.config(values=brands)
-        if (len(self.cb_brand['values']) > 0
-                and self.cb_brand.get() != self.cb_brand['values'][0]):
-            self.cb_brand.set(self.cb_brand['values'][0])
+        self.compFields["brand"].widget.config(values=brands)
+        if (len(brands) > 0
+                and self.compFields["brand"].variable.get() != brands[0]):
+            self.compFields["brand"].widget.set(brands[0])
         # 規格
         params[2] = "規格"
         cursor.execute(sqlstr, params)
         specs = cursor.fetchall()
-        self.cb_spec.config(values=specs)
-        if (len(self.cb_spec['values']) > 0
-                and self.cb_spec.get() != self.cb_spec['values'][0]):
-            self.cb_spec.set(self.cb_spec['values'][0])
+        self.compFields["spec"].widget.config(values=specs)
+        if (len(specs) > 0
+                and self.compFields["spec"].variable.get() != specs[0]):
+            self.compFields["spec"].variable.set(specs[0])
         connect.close()
 
     def getFieldIDByName(self, name):
@@ -2799,7 +2864,6 @@ class unregister(tk.Toplevel):
             self.insertAsNew()
 
     def writeOver(self):
-        # TODO: finish here
         # insert SQL
         connect, cursor = _getConnection(_default_database)
         sqlstr = ("update hvhnonc_out "
@@ -2831,7 +2895,6 @@ class unregister(tk.Toplevel):
         pass
 
     def insertAsNew(self):
-        # TODO: finish here
         # insert SQL
         connect, cursor = _getConnection(_default_database)
         sqlstr = (
@@ -3239,11 +3302,63 @@ class unregister(tk.Toplevel):
         return cursor.fetchall()
 
 
+class PrintNonc(tk.Toplevel):
+    def __init__(self, parent, *args, **kwargs):
+        s = ttk.Style()
+        s.configure('printNonc.TButton', font=_default_button_font)
+        tk.Toplevel.__init__(self, parent, *args, **kwargs)
+        self.parent = parent
+        self.attributes("-topmost", "true")
+        self.attributes("-topmost", "false")
+        self.title("列印")
+        self.geometry(_default_toplevel_size)
+        self.resizable(False, False)
+        # gui
+        self.l = tk.Label(self, text="列印畫面", font=_default_font)
+        self.l.pack()
+        # buttons
+        self.btn_quit = ttk.Button(self, text='返回',
+                                   style="printNonc.TButton",
+                                   command=self.quitMe)
+        self.btn_quit.pack()
+        # focus
+        self.grab_set()
+
+    def quitMe(self):
+        self.destroy()
+
+
+class Maintenance(tk.Toplevel):
+    def __init__(self, parent, *args, **kwargs):
+        s = ttk.Style()
+        s.configure('maintenance.TButton', font=_default_button_font)
+        tk.Toplevel.__init__(self, parent, *args, **kwargs)
+        self.parent = parent
+        self.attributes("-topmost", "true")
+        self.attributes("-topmost", "false")
+        self.title("維護")
+        self.geometry(_default_toplevel_size)
+        self.resizable(False, False)
+        # gui
+        self.l = tk.Label(self, text="維護畫面", font=_default_font)
+        self.l.pack()
+        # buttons
+        self.btn_quit = ttk.Button(self, text='返回',
+                                   style="maintenance.TButton",
+                                   command=self.quitMe)
+        self.btn_quit.pack()
+        # focus
+        self.grab_set()
+
+    def quitMe(self):
+        self.destroy()
+
+
 def main():
     root = tk.Tk()
     # The combobox style for root, also seen in Index().__init__()
     root.option_add('*TCombobox*Listbox.font', _default_font)
-    test = PrintNonc(root)
+    test = Register(root)
     test.protocol("WM_DELETE_WINDOW", lambda: test.parent.destroy())
     root.mainloop()
     root.quit()

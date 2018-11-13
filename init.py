@@ -4,13 +4,13 @@ Created on Tue Oct 16 16:44:09 2018
 
 @author: alchenerd (alchenerd@gmail.com)
 
-initialization of the dbms
+Builds a database for furthur use
 """
 
 import sqlite3
 
-def tableInit():
-    executeScriptsFromFile("HVHNONC.db.sql", "HVHNONC.db")
+def buildDatabase(sqlname: str = "HVHNONC.db.sql", dbname: str = "HVHNONC.db"):
+    executeScriptsFromFile(sqlname, dbname)
 
 
 def executeScriptsFromFile(filename, DBname):
@@ -20,20 +20,11 @@ def executeScriptsFromFile(filename, DBname):
     fd = open(filename, 'r', encoding="utf-8")
     sqlFile = fd.read()
     fd.close()
-
-    # all SQL commands (split on ';')
     sqlCommands = sqlFile.split(';')
-
-    # discard 'BEGIN TRANSACTION...'
     sqlCommands.pop(0)
-
-    # Execute every command from the input file
     for command in sqlCommands:
-        # This will skip and report errors
-        # For example, if the tables do not yet exist, this will skip over
-        # the DROP TABLE commands
         try:
             cursor.execute(command)
-        except Exception as inst:
-            print("Command skipped: ", inst)
+        except Exception as e:
+            print("init.py: ", e)
     connect.close()

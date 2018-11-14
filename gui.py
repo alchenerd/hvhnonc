@@ -690,14 +690,12 @@ class Register(tk.Toplevel):
     def onCategorySelected(self, event):
         connect, cursor = _getConnection(_default_database)
         connect.row_factory = lambda cursor, row: row[0]
-        sqlstr = ("""
-                  select description
-                  from hvhnonc_subcategory
-                  where parent_ID=(
-                      select ID
-                      from hvhnonc_category
-                      where description=?);
-                  """)
+        sqlstr = ("select description "
+                  "from hvhnonc_subcategory "
+                  "where parent_ID=("
+                  "select ID "
+                  "from hvhnonc_category "
+                  "where description=?);")
         param = (self.compFields.get("category").variable.get(),)
         cursor.execute(sqlstr, param)
         subcatagories = cursor.fetchall()
@@ -705,98 +703,91 @@ class Register(tk.Toplevel):
         self.compFields.get("subcategory").widget.config(values=subcatagories)
         if (len(subcatagories) > 0 and
                 self.compFields.get("subcategory").variable.get() !=
-                subcatagories[0]):
-            self.compFields.get("subcategory").widget.set(subcatagories[0])
+                subcatagories[0][0]):
+            self.compFields.get("subcategory").widget.set(subcatagories[0][0])
             self.onSubcategorySelected(None)
-
-    # TODO: <alchenerd@gmail.com> Refactor code below
 
     def onSubcategorySelected(self, event):
         # update product name
         connect, cursor = _getConnection(_default_database)
-        sqlstr = ("""select change_value
-                  from hvhnonc_in_cache
-                  where (
-                      this_ID=(
-                          select ID
-                          from hvhnonc_fields
-                          where description=?) and
-                      this_value=? and
-                      change_ID=(
-                          select ID
-                          from hvhnonc_fields
-                          where description=?)
-                  );""")
-        params = (
-            "物品細目",
-            self.compFields.get("subcategory").variable.get(),
-            "物品名稱")
+        connect.row_factory = lambda cursor, row: row[0]
+        sqlstr = ("select change_value "
+                  "from hvhnonc_in_cache "
+                  "where ("
+                  "this_ID=("
+                  "select ID "
+                  "from hvhnonc_fields "
+                  "where description=?) and "
+                  "this_value=? and "
+                  "change_ID=("
+                  "select ID "
+                  "from hvhnonc_fields "
+                  "where description=?));")
+        params = ("物品細目",
+                  self.compFields.get("subcategory").variable.get(),
+                  "物品名稱")
         cursor.execute(sqlstr, params)
         rows = cursor.fetchall()
         connect.close()
         self.compFields.get("name").widget.config(values=rows)
         if (len(rows) > 0 and
-                self.compFields["name"].variable.get() != rows[0]):
-            self.compFields.get("name").variable.set(rows[0])
+                self.compFields["name"].variable.get() != rows[0][0]):
+            self.compFields.get("name").variable.set(rows[0][0])
         self.onNameSelected(None)
 
     def onNameSelected(self, event):
         # update product name
         connect, cursor = _getConnection(_default_database)
-        sqlstr = ("""
-                  select change_value
-                  from hvhnonc_in_cache
-                  where (
-                      this_ID=(
-                          select ID
-                          from hvhnonc_fields
-                          where description=?) and
-                      this_value=? and
-                      change_ID=(
-                          select ID
-                          from hvhnonc_fields
-                          where description=?))
-                  order by rowid desc limit 30;
-                  """)
-        params = [
-            "物品名稱",
-            self.compFields.get("name").variable.get(),
-            "", ]
+        connect.row_factory = lambda cursor, row: row[0]
+        sqlstr = ("select change_value "
+                  "from hvhnonc_in_cache "
+                  "where ("
+                  "this_ID=("
+                  "select ID "
+                  "from hvhnonc_fields "
+                  "where description=?) and "
+                  "this_value=? and "
+                  "change_ID=("
+                  "select ID "
+                  "from hvhnonc_fields "
+                  "where description=?))"
+                  "order by rowid desc limit 30;")
+        params = ["物品名稱", self.compFields.get("name").variable.get(), ""]
         # 單位
         params[2] = "單位"
         cursor.execute(sqlstr, params)
         units = cursor.fetchall()
         self.compFields["unit"].widget.config(values=units)
         if (len(units) > 0 and
-                self.compFields["unit"].variable.get() != units[0]):
-            self.compFields["unit"].variable.set(units[0])
+                self.compFields["unit"].variable.get() != units[0][0]):
+            self.compFields["unit"].variable.set(units[0][0])
         # 品牌
         params[2] = "品牌"
         cursor.execute(sqlstr, params)
         brands = cursor.fetchall()
         self.compFields["brand"].widget.config(values=brands)
         if (len(brands) > 0 and
-                self.compFields["brand"].variable.get() != brands[0]):
-            self.compFields["brand"].widget.set(brands[0])
+                self.compFields["brand"].variable.get() != brands[0][0]):
+            self.compFields["brand"].widget.set(brands[0][0])
         # 規格
         params[2] = "規格"
         cursor.execute(sqlstr, params)
         specs = cursor.fetchall()
         self.compFields["spec"].widget.config(values=specs)
         if (len(specs) > 0 and
-                self.compFields["spec"].variable.get() != specs[0]):
-            self.compFields["spec"].variable.set(specs[0])
+                self.compFields["spec"].variable.get() != specs[0][0]):
+            self.compFields["spec"].variable.set(specs[0][0])
         connect.close()
+
+    # TODO: <alchenerd@gmail.com> Refactor code below
 
     def getFieldIDByName(self, name):
         # connect to db
         connect, cursor = _getConnection(_default_database)
         connect.row_factory = lambda cursor, row: row[0]
-        sqlstr = ("""
-                    select ID
-                    from hvhnonc_fields
-                    where description=?;
-                    """)
+        sqlstr = ("select ID "
+                  "from hvhnonc_fields "
+                  "where description=?;")
         cursor.execute(sqlstr, name)
         hit = cursor.fetchone()
         if hit:

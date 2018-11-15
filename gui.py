@@ -147,6 +147,26 @@ class CompoundField():
             return DateFrame(parent, variable)
 
 
+# returns the field ID from hvhnonc_fields
+def getFieldIDByName(name: str):
+    try:
+        if name in (None, ""):
+            return
+        connect, cursor = _getConnection(_default_database)
+        connect.row_factory = lambda cursor, row: row[0]
+        sqlstr = ("select ID "
+                  "from hvhnonc_fields "
+                  "where description=?;")
+        cursor.execute(sqlstr, (name,))
+        hit = cursor.fetchone()
+        if hit:
+            return hit[0]
+    except Exception as e:
+        print("getFieldIDByName: {}".format(e))
+        messagebox.showerror("錯誤", "執行查詢時出了問題: {}".format(e))
+        return None
+
+
 # The entry point of the whole gui module when imported
 class Index(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
@@ -402,7 +422,7 @@ class Register(tk.Toplevel):
         self.compFields["keep_year"].widgetType = "entry"
         # using an additional base frame,
         # we can still point .widget to tk.Entry
-        # (pack/grid/place the frame, not the entry though)
+        # (remember to pack/grid/place the frame, not the entry though)
         self.compFields["keep_year"].baseFrame = tk.Frame(self)
         self.compFields["keep_year"].widget = tk.Entry(
             self.compFields["keep_year"].baseFrame,
@@ -658,35 +678,33 @@ class Register(tk.Toplevel):
         self.compFields["source"].widget.config(values=sources)
         sqlstr = ("select change_value "
                   "from hvhnonc_in_cache "
-                  "where ("
+                  "where("
                   "this_ID=0 and "
-                  "change_ID=("
-                  "select ID "
-                  "from hvhnonc_fields "
-                  "where description=?))"
+                  "change_ID=?)"
                   "order by rowid desc limit 30;")
         # 存置地點
-        cursor.execute(sqlstr, ("存置地點", ))
+        cursor.execute(sqlstr, (getFieldIDByName("存置地點"), ))
         places = cursor.fetchall()
         self.compFields["place"].widget.config(values=places)
         # 保管單位
-        cursor.execute(sqlstr, ("保管單位", ))
+        cursor.execute(sqlstr, (getFieldIDByName("保管單位"), ))
         keep_depts = cursor.fetchall()
         self.compFields["keep_dept"].widget.config(values=keep_depts)
         # 使用單位
-        cursor.execute(sqlstr, ("使用單位", ))
+        cursor.execute(sqlstr, (getFieldIDByName("使用單位"), ))
         use_depts = cursor.fetchall()
         self.compFields["use_dept"].widget.config(values=use_depts)
         # 保管人
-        cursor.execute(sqlstr, ("保管人", ))
+        cursor.execute(sqlstr, (getFieldIDByName("保管人"), ))
         keepers = cursor.fetchall()
         self.compFields["keeper"].widget.config(values=keepers)
         # 備註事項
-        cursor.execute(sqlstr, ("備註事項", ))
+        cursor.execute(sqlstr, (getFieldIDByName("備註事項"), ))
         remarks = cursor.fetchall()
         self.compFields["remark"].widget.config(values=remarks)
         connect.close()
 
+    # callback functions for when the comboboxes are selected
     def onCategorySelected(self, event):
         connect, cursor = _getConnection(_default_database)
         connect.row_factory = lambda cursor, row: row[0]
@@ -696,15 +714,15 @@ class Register(tk.Toplevel):
                   "select ID "
                   "from hvhnonc_category "
                   "where description=?);")
-        param = (self.compFields.get("category").variable.get(),)
+        param = (self.compFields["category"].variable.get(),)
         cursor.execute(sqlstr, param)
         subcatagories = cursor.fetchall()
         connect.close()
-        self.compFields.get("subcategory").widget.config(values=subcatagories)
+        self.compFields["subcategory"].widget.config(values=subcatagories)
         if (len(subcatagories) > 0 and
-                self.compFields.get("subcategory").variable.get() !=
+                self.compFields["subcategory"].variable.get() !=
                 subcatagories[0][0]):
-            self.compFields.get("subcategory").widget.set(subcatagories[0][0])
+            self.compFields["subcategory"].widget.set(subcatagories[0][0])
             self.onSubcategorySelected(None)
 
     def onSubcategorySelected(self, event):
@@ -713,26 +731,20 @@ class Register(tk.Toplevel):
         connect.row_factory = lambda cursor, row: row[0]
         sqlstr = ("select change_value "
                   "from hvhnonc_in_cache "
-                  "where ("
-                  "this_ID=("
-                  "select ID "
-                  "from hvhnonc_fields "
-                  "where description=?) and "
+                  "where("
+                  "this_ID=? and "
                   "this_value=? and "
-                  "change_ID=("
-                  "select ID "
-                  "from hvhnonc_fields "
-                  "where description=?));")
-        params = ("物品細目",
-                  self.compFields.get("subcategory").variable.get(),
-                  "物品名稱")
+                  "change_ID=?);")
+        params = (getFieldIDByName("物品細目"),
+                  self.compFields["subcategory"].variable.get(),
+                  getFieldIDByName("物品名稱"))
         cursor.execute(sqlstr, params)
         rows = cursor.fetchall()
         connect.close()
-        self.compFields.get("name").widget.config(values=rows)
+        self.compFields["name"].widget.config(values=rows)
         if (len(rows) > 0 and
                 self.compFields["name"].variable.get() != rows[0][0]):
-            self.compFields.get("name").variable.set(rows[0][0])
+            self.compFields["name"].variable.set(rows[0][0])
         self.onNameSelected(None)
 
     def onNameSelected(self, event):
@@ -742,19 +754,14 @@ class Register(tk.Toplevel):
         sqlstr = ("select change_value "
                   "from hvhnonc_in_cache "
                   "where ("
-                  "this_ID=("
-                  "select ID "
-                  "from hvhnonc_fields "
-                  "where description=?) and "
+                  "this_ID=? and "
                   "this_value=? and "
-                  "change_ID=("
-                  "select ID "
-                  "from hvhnonc_fields "
-                  "where description=?))"
+                  "change_ID=?)"
                   "order by rowid desc limit 30;")
-        params = ["物品名稱", self.compFields.get("name").variable.get(), ""]
+        params = [getFieldIDByName("物品名稱"),
+                  self.compFields["name"].variable.get(), ""]
         # 單位
-        params[2] = "單位"
+        params[2] = getFieldIDByName("單位")
         cursor.execute(sqlstr, params)
         units = cursor.fetchall()
         self.compFields["unit"].widget.config(values=units)
@@ -762,7 +769,7 @@ class Register(tk.Toplevel):
                 self.compFields["unit"].variable.get() != units[0][0]):
             self.compFields["unit"].variable.set(units[0][0])
         # 品牌
-        params[2] = "品牌"
+        params[2] = getFieldIDByName("品牌")
         cursor.execute(sqlstr, params)
         brands = cursor.fetchall()
         self.compFields["brand"].widget.config(values=brands)
@@ -770,7 +777,7 @@ class Register(tk.Toplevel):
                 self.compFields["brand"].variable.get() != brands[0][0]):
             self.compFields["brand"].widget.set(brands[0][0])
         # 規格
-        params[2] = "規格"
+        params[2] = getFieldIDByName("規格")
         cursor.execute(sqlstr, params)
         specs = cursor.fetchall()
         self.compFields["spec"].widget.config(values=specs)
@@ -780,19 +787,6 @@ class Register(tk.Toplevel):
         connect.close()
 
     # TODO: <alchenerd@gmail.com> Refactor code below
-
-    def getFieldIDByName(self, name):
-        # connect to db
-        connect, cursor = _getConnection(_default_database)
-        connect.row_factory = lambda cursor, row: row[0]
-        sqlstr = ("select ID "
-                  "from hvhnonc_fields "
-                  "where description=?;")
-        cursor.execute(sqlstr, name)
-        hit = cursor.fetchone()
-        if hit:
-            return hit[0]
-        return None
 
     def lookupSerial(self):
         # open a toplevel
@@ -810,7 +804,6 @@ class Register(tk.Toplevel):
             self.attributes("-topmost", "true")
             self.attributes("-topmost", "false")
             # get serials from db_in
-            # connect to db
             connect, cursor = _getConnection(_default_database)
             sqlstr = "select count(distinct name) from hvhnonc_in;"
             cursor.execute(sqlstr)
@@ -818,14 +811,13 @@ class Register(tk.Toplevel):
             self.title("序號: 共{}筆".format(itemCount[0]))
             self.geometry("640x500")
             # get all objIDs and sqlIDs
-            sqlstr = ("""
-                        select object_ID, name, count(*)
-                        from hvhnonc_in
-                        group by object_ID, name
-                        order by object_ID, serial_ID;
-                        """)
+            sqlstr = ("select object_ID, name, count(*) "
+                      "from hvhnonc_in "
+                      "group by object_ID, name "
+                      "order by object_ID, serial_ID;")
             cursor.execute(sqlstr)
             data = cursor.fetchall()
+            connect.close()
             # make a tree view
             sb = tk.Scrollbar(self)
             tv = ttk.Treeview(self, yscrollcommand=sb.set,
@@ -833,14 +825,13 @@ class Register(tk.Toplevel):
             tv.heading('1', text='編號')
             tv.heading('2', text='品名')
             tv.heading('3', text='數量')
-
             tv.column('3', anchor="e")
             sb.config(command=tv.yview)
             for d in data:
                 tv.insert("", "end", values=d)
             sb.pack(side="right", fill="y")
             tv.pack(fill="both", expand=1)
-            connect.close()
+            # get focus
             self.grab_set()
 
     def search(self):
@@ -871,16 +862,14 @@ class Register(tk.Toplevel):
             connect.row_factory = lambda cursor, row: row[0]
             sqlstr = ("select change_value "
                       "from hvhnonc_in_cache "
-                      "where change_ID = ("
-                      "select ID from hvhnonc_fields "
-                      "where description = '檢索') "
+                      "where change_ID=? "
                       "order by rowid desc limit 30;")
-            cursor.execute(sqlstr)
+            cursor.execute(sqlstr, (getFieldIDByName("檢索"),))
             rows = cursor.fetchall()
             history = []
             for row in rows:
                 history.append(row[0])
-            print(history)
+            # print(history)
             self.cb_searchbar.config(values=history)
             self.cb_searchbar.grid(row=0, column=1)
             # buttons
@@ -907,15 +896,11 @@ class Register(tk.Toplevel):
         def onSubmitClick(self):
             # update search cache
             connect, cursor = _getConnection(_default_database)
-            sqlstr = (
-                "replace into hvhnonc_in_cache(this_ID, this_value, "
-                "change_ID, change_value) "
-                "values(0, 'none', ("
-                "select ID "
-                "from hvhnonc_fields "
-                "where description = '檢索'), "
-                "?);")
-            cursor.execute(sqlstr, (self.parent.query.get(), ))
+            sqlstr = ("replace into hvhnonc_in_cache("
+                      "this_ID, this_value, change_ID, change_value) "
+                      "values(0, 'none', ?, ?);")
+            params = (getFieldIDByName("檢索"), self.parent.query.get())
+            cursor.execute(sqlstr, params)
             connect.commit()
             # open a result toplevel
             self.SearchResultWindow(self.parent)
@@ -989,20 +974,29 @@ class Register(tk.Toplevel):
         # Update cache table
         # So next time when thisName is fed,
         # autocomplete thatName
-        if self.strvarDict[thatName] is not "":
-            params = [thisName, "none",
-                      thatName, self.strvarDict[thatName].get(), ]
-            if thisName not in ("無", ):
-                params[1] = self.strvarDict[thisName].get()
-            try:
-                cursor.execute(sqlstr, params)
-                connect.commit()
-            except Exception as e:
-                print("Exception in updateCache: %s" % e)
-                tk.messagebox.showerror("錯誤 updateCache", str(e),
-                                        parent=self)
+
+        # get the value from thisName
+        if thisName not in ("無",):
+            thisVal = self.compFields[thisName].variable.get()
+        else:
+            thisVal = "none"
+        # get the value from thatName
+        thatVal = self.compFields[thatName].variable.get()
+        if thatVal.strip() in (None, ""):
+            raise LookupError
+        # construct parameters
+        params = [getFieldIDByName(thisName), thisVal,
+                  getFieldIDByName(thatName), thatVal]
+        try:
+            cursor.execute(sqlstr, params)
+            connect.commit()
+        except Exception as e:
+            print("Exception in updateCache: %s" % e)
+            tk.messagebox.showerror("錯誤 updateCache", str(e),
+                                    parent=self)
 
     def updateAllCache(self, sqlstr):
+        # the getFieldIDByName is called inside updateCache
         self.updateCache(sqlstr, "物品細目", "物品名稱")
         self.updateCache(sqlstr, "物品名稱", "單位")
         self.updateCache(sqlstr, "物品名稱", "品牌")
@@ -1103,18 +1097,10 @@ class Register(tk.Toplevel):
                 print("Exception in saveThis: %s" % e)
                 tk.messagebox.showerror("錯誤4", str(e), parent=self)
             # update cache table
-            sqlstr = ("""
-                        insert or ignore into
-                         hvhnonc_in_cache(this_ID, this_value,
-                                          change_ID, change_value)
-                         values(
-                            (select ID from hvhnonc_fields
-                                 where description = ?),
-                             ?,
-                            (select ID from hvhnonc_fields
-                                 where description = ?),
-                             ?)
-                        """)
+            sqlstr = ("insert or ignore into "
+                      "hvhnonc_in_cache("
+                      "this_ID, this_value, change_ID, change_value) "
+                      "values(?, ?, ?, ?);")
             self.updateAllCache(sqlstr)
             # update book
             self.book = self.getAllRecords()
@@ -1163,13 +1149,7 @@ class Register(tk.Toplevel):
                 sqlstr = ("insert or ignore into "
                           "hvhnonc_in_cache(this_ID, this_value, "
                           "change_ID, change_value) "
-                          "values("
-                          "(select ID from hvhnonc_fields "
-                          "where description = ?), "
-                          "?, "
-                          "(select ID from hvhnonc_fields "
-                          "where description = ?), "
-                          "?)")
+                          "values(? ? ? ?);")
                 self.updateAllCache(sqlstr)
                 # update book
                 self.book = self.getAllRecords()
@@ -1213,15 +1193,8 @@ class Register(tk.Toplevel):
                 sqlstr = ("insert or ignore into "
                           "hvhnonc_in_cache(this_ID, this_value, "
                           "change_ID, change_value) "
-                          "values("
-                          "(select ID from hvhnonc_fields "
-                          "where description = ?), "
-                          "?, "
-                          "(select ID from hvhnonc_fields "
-                          "where description = ?), "
-                          "?);")
+                          "values(? ? ? ?);")
                 self.updateAllCache(sqlstr)
-                # update book
                 self.book = self.getAllRecords()
                 connect.close()
                 self.state = "none"
@@ -1568,24 +1541,22 @@ class Register(tk.Toplevel):
                                     self.cb_key_date_dd_max)
             # template
             sqlstr = ("select change_value from hvhnonc_in_cache "
-                      "where this_ID = 0 and change_ID = ("
-                      "select ID from hvhnonc_fields "
-                      "where description=?)"
+                      "where this_ID=0 and change_ID=?"
                       "order by rowid desc limit 30;")
             # 保管單位
-            cursor.execute(sqlstr, ("保管單位", ))
+            cursor.execute(sqlstr, (getFieldIDByName("保管單位"), ))
             keep_dept = cursor.fetchall()
             self.cb_keep_dept['values'] = keep_dept
             # 存置地點
-            cursor.execute(sqlstr, ("存置地點", ))
+            cursor.execute(sqlstr, (getFieldIDByName("存置地點"), ))
             places = cursor.fetchall()
             self.cb_place['values'] = places
             # 使用單位
-            cursor.execute(sqlstr, ("使用單位", ))
+            cursor.execute(sqlstr, (getFieldIDByName("使用單位"), ))
             use_dept = cursor.fetchall()
             self.cb_use_dept['values'] = use_dept
             # 保管人
-            cursor.execute(sqlstr, ("保管人", ))
+            cursor.execute(sqlstr, (getFieldIDByName("保管人"), ))
             keepers = cursor.fetchall()
             self.cb_keeper['values'] = keepers
             connect.close()
@@ -2387,14 +2358,14 @@ class unregister(tk.Toplevel):
                 # get unregistered amount and its total
                 sqlstr = ("select amount,  sum(amount) "
                           "from  hvhnonc_out "
-                          "where in_ID = ?"
+                          "where in_ID=?"
                           "order by out_date desc;")
                 cursor.execute(sqlstr, (self.state, ))
                 (lastAmount, TotalOutAmount) = cursor.fetchone()
                 TotalOutAmount = int(TotalOutAmount)
                 sqlstr = ("select amount "
                           "from  hvhnonc_in "
-                          "where ID = ?;")
+                          "where ID=?;")
                 cursor.execute(sqlstr, (self.state, ))
                 TotalInAmount = int(cursor.fetchone()[0])
                 # unregisterAmount is the last amount
@@ -2403,7 +2374,7 @@ class unregister(tk.Toplevel):
                 self.unregisterRemain.set(str(TotalInAmount - TotalOutAmount))
                 sqlstr = ("select reason,  post_treatment, remark "
                           "from  hvhnonc_out "
-                          "where in_ID = ?"
+                          "where in_ID=?"
                           "order by out_date desc limit 1;")
                 cursor.execute(sqlstr, (self.state, ))
                 data = cursor.fetchone()
@@ -2446,22 +2417,16 @@ class unregister(tk.Toplevel):
         connect, cursor = _getConnection(_default_database)
         sqlstr = ("select change_value "
                   "from hvhnonc_out_cache "
-                  "where this_ID=("
-                  "select ID from "
-                  "hvhnonc_fields "
-                  "where description=?) "
-                  "and change_ID=("
-                  "select ID from "
-                  "hvhnonc_fields "
-                  "where description=?)"
+                  "where this_ID=? "
+                  "and change_ID=?"
                   "order by rowid desc limit 30;")
-        cursor.execute(sqlstr, ("無", "除帳原因"))
+        cursor.execute(sqlstr, ("無", getFieldIDByName("除帳原因")))
         rows = cursor.fetchall()
         self.cb_reason.config(values=rows)
-        cursor.execute(sqlstr, ("無", "繳存地點"))
+        cursor.execute(sqlstr, ("無", getFieldIDByName("繳存地點")))
         rows = cursor.fetchall()
         self.cb_postTreatment.config(values=rows)
-        cursor.execute(sqlstr, ("無", "除帳備註"))
+        cursor.execute(sqlstr, ("無", getFieldIDByName("除帳備註")))
         rows = cursor.fetchall()
         self.cb_unregisterRemark.config(values=rows)
         connect.close()
@@ -2520,11 +2485,9 @@ class unregister(tk.Toplevel):
             connect.row_factory = lambda cursor, row: row[0]
             sqlstr = ("select change_value "
                       "from hvhnonc_out_cache "
-                      "where change_ID = ("
-                      "select ID from hvhnonc_fields "
-                      "where description = '檢索') "
+                      "where change_ID=? "
                       "order by rowid desc limit 30;")
-            cursor.execute(sqlstr)
+            cursor.execute(sqlstr, getFieldIDByName("檢索"))
             rows = cursor.fetchall()
             history = []
             for row in rows:
@@ -2558,12 +2521,9 @@ class unregister(tk.Toplevel):
             sqlstr = (
                 "replace into hvhnonc_out_cache(this_ID, this_value, "
                 "change_ID, change_value) "
-                "values(0, 'none', ("
-                "select ID "
-                "from hvhnonc_fields "
-                "where description = '檢索'), "
-                "?);")
-            cursor.execute(sqlstr, (self.parent.query.get(), ))
+                "values(0, 'none', ?, ?);")
+            params = (getFieldIDByName("檢索"), self.parent.query.get())
+            cursor.execute(sqlstr, params)
             connect.commit()
             # open a result toplevel
             self.SearchResultWindow(self.parent)

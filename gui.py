@@ -322,8 +322,8 @@ class Login(tk.Toplevel):
                 "錯誤", "帳號與密碼須為20字以內的英數字", parent=self)
 
     def isValid(self, username, password):
-        if (username.isalnum() and len(username) <= 20
-                and password.isalnum() and len(password) <= 20):
+        if (username.isalnum() and len(username) <= 20 and
+                password.isalnum() and len(password) <= 20):
             return True
         else:
             return False
@@ -571,8 +571,8 @@ class Register(tk.Toplevel):
         self.state = state
         if state == "none":
             for i, v in self.compFields.items():
-                if (isinstance(v.widget, tk.Entry) or
-                        isinstance(v.widget, ttk.Combobox)):
+                if (isinstance(v.widget, tk.Entry)
+                        or isinstance(v.widget, ttk.Combobox)):
                     v.widget.config(state="disabled")
                 if isinstance(v.widget, DateFrame):
                     v.widget.cb_y.config(state="disabled")
@@ -584,8 +584,8 @@ class Register(tk.Toplevel):
             self.initializeAllField()
             self.clearAllFields()
             for i, v in self.compFields.items():
-                if (isinstance(v.widget, tk.Entry) or
-                        isinstance(v.widget, ttk.Combobox)):
+                if (isinstance(v.widget, tk.Entry)
+                        or isinstance(v.widget, ttk.Combobox)):
                     v.widget.config(state=v.enabledState)
                 if isinstance(v.widget, DateFrame):
                     v.widget.cb_y.config(state=v.enabledState)
@@ -602,8 +602,8 @@ class Register(tk.Toplevel):
                 self.updateByState("none")
             if self.index in range(0, len(self.book)):
                 for i, v in self.compFields.items():
-                    if (isinstance(v.widget, tk.Entry) or
-                            isinstance(v.widget, ttk.Combobox)):
+                    if (isinstance(v.widget, tk.Entry)
+                            or isinstance(v.widget, ttk.Combobox)):
                         v.widget.config(state=v.enabledState)
                     if isinstance(v.widget, DateFrame):
                         v.widget.cb_y.config(state=v.enabledState)
@@ -651,8 +651,8 @@ class Register(tk.Toplevel):
     # set every field to empty
     def clearAllFields(self):
         for i, v in self.compFields.items():
-            if (isinstance(v.widget, tk.Entry) or
-                    isinstance(v.widget, ttk.Combobox)):
+            if (isinstance(v.widget, tk.Entry)
+                    or isinstance(v.widget, ttk.Combobox)):
                 v.variable.set("")
             if isinstance(v.widget, DateFrame):
                 v.widget.y.set("")
@@ -719,9 +719,9 @@ class Register(tk.Toplevel):
         subcatagories = cursor.fetchall()
         connect.close()
         self.compFields["subcategory"].widget.config(values=subcatagories)
-        if (len(subcatagories) > 0 and
-                self.compFields["subcategory"].variable.get() !=
-                subcatagories[0][0]):
+        if (len(subcatagories) > 0
+                and self.compFields["subcategory"].variable.get()
+                != subcatagories[0][0]):
             self.compFields["subcategory"].widget.set(subcatagories[0][0])
             self.onSubcategorySelected(None)
 
@@ -742,8 +742,8 @@ class Register(tk.Toplevel):
         rows = cursor.fetchall()
         connect.close()
         self.compFields["name"].widget.config(values=rows)
-        if (len(rows) > 0 and
-                self.compFields["name"].variable.get() != rows[0][0]):
+        if (len(rows) > 0
+                and self.compFields["name"].variable.get() != rows[0][0]):
             self.compFields["name"].variable.set(rows[0][0])
         self.onNameSelected(None)
 
@@ -765,28 +765,26 @@ class Register(tk.Toplevel):
         cursor.execute(sqlstr, params)
         units = cursor.fetchall()
         self.compFields["unit"].widget.config(values=units)
-        if (len(units) > 0 and
-                self.compFields["unit"].variable.get() != units[0][0]):
+        if (len(units) > 0
+                and self.compFields["unit"].variable.get() != units[0][0]):
             self.compFields["unit"].variable.set(units[0][0])
         # 品牌
         params[2] = getFieldIDByName("品牌")
         cursor.execute(sqlstr, params)
         brands = cursor.fetchall()
         self.compFields["brand"].widget.config(values=brands)
-        if (len(brands) > 0 and
-                self.compFields["brand"].variable.get() != brands[0][0]):
+        if (len(brands) > 0
+                and self.compFields["brand"].variable.get() != brands[0][0]):
             self.compFields["brand"].widget.set(brands[0][0])
         # 規格
         params[2] = getFieldIDByName("規格")
         cursor.execute(sqlstr, params)
         specs = cursor.fetchall()
         self.compFields["spec"].widget.config(values=specs)
-        if (len(specs) > 0 and
-                self.compFields["spec"].variable.get() != specs[0][0]):
+        if (len(specs) > 0
+                and self.compFields["spec"].variable.get() != specs[0][0]):
             self.compFields["spec"].variable.set(specs[0][0])
         connect.close()
-
-    # TODO: <alchenerd@gmail.com> Refactor code below
 
     def lookupSerial(self):
         # open a toplevel
@@ -844,6 +842,7 @@ class Register(tk.Toplevel):
             s.configure('search.TButton', font=_default_button_font)
             tk.Toplevel.__init__(self, parent, *args, **kwargs)
             self.parent = parent
+            # pop to topmost but don't get in the way
             self.attributes("-topmost", "true")
             self.attributes("-topmost", "false")
             self.title("檢索")
@@ -883,8 +882,9 @@ class Register(tk.Toplevel):
                 command=self.onSubmitClick)
             self.btn_submit.pack(side="left")
             self.f_buttons.grid(row=1, column=1, sticky="se")
-            # listen to return
+            # listen to return key press
             self.bind("<Return>", self.catchReturn)
+            # get focus
             self.grab_set()
 
         def catchReturn(self, event):
@@ -969,6 +969,7 @@ class Register(tk.Toplevel):
                 self.parent.updateByState(self.parent.state)
                 self.destroy()
 
+    # TODO: <alchenerd@gmail.com> refactor code below
     def updateCache(self, sqlstr, thisName, thatName):
         connect, cursor = _getConnection(_default_database)
         # Update cache table
@@ -1008,9 +1009,9 @@ class Register(tk.Toplevel):
         self.updateCache(sqlstr, "無", "備註事項")
 
     def saveThis(self):
-        if (self.category.get() is "" or
-            self.subcategory.get() is "" or
-                self.name.get() is ""):
+        if (self.category.get() is ""
+            or self.subcategory.get() is ""
+                or self.name.get() is ""):
             tk.messagebox.showerror("錯誤", "有欄位未填", parent=self)
             return
         connect, cursor = _getConnection(_default_database)
@@ -1585,9 +1586,9 @@ class Register(tk.Toplevel):
             self.cb_subcategory.config(values=subcatagories)
             self.cb_subcategory.bind(
                 "<<ComboboxSelected>>", self.onSubcategorySelected)
-            if (len(self.cb_subcategory['values']) > 0 and
-                    self.cb_subcategory.get() !=
-                    self.cb_subcategory['values'][0]):
+            if (len(self.cb_subcategory['values']) > 0
+                    and self.cb_subcategory.get()
+                    != self.cb_subcategory['values'][0]):
                 self.cb_subcategory.set(
                     self.cb_subcategory['values'][0])
             self.onSubcategorySelected(None)
@@ -1611,8 +1612,8 @@ class Register(tk.Toplevel):
             connect.close()
             # print(cachehits)
             self.cb_name.config(values=cachehits)
-            if (len(self.cb_name['values']) > 0 and
-                    self.cb_name.get() != self.cb_name['values'][0]):
+            if (len(self.cb_name['values']) > 0
+                    and self.cb_name.get() != self.cb_name['values'][0]):
                 self.cb_name.set(self.cb_name['values'][0])
             self.onNameSelected(None)
 
@@ -1634,8 +1635,8 @@ class Register(tk.Toplevel):
             cursor.execute(sqlstr, params)
             brands = cursor.fetchall()
             self.cb_brand.config(values=brands)
-            if (len(self.cb_brand['values']) > 0 and
-                    self.cb_brand.get() != self.cb_brand['values'][0]):
+            if (len(self.cb_brand['values']) > 0
+                    and self.cb_brand.get() != self.cb_brand['values'][0]):
                 self.cb_brand.set(self.cb_brand['values'][0])
             # 規格
             params = (str(self.getFieldIDByName('物品名稱')),
@@ -1644,8 +1645,8 @@ class Register(tk.Toplevel):
             cursor.execute(sqlstr, params)
             specs = cursor.fetchall()
             self.cb_spec.config(values=specs)
-            if (len(self.cb_spec['values']) > 0 and
-                    self.cb_spec.get() != self.cb_spec['values'][0]):
+            if (len(self.cb_spec['values']) > 0
+                    and self.cb_spec.get() != self.cb_spec['values'][0]):
                 self.cb_spec.set(self.cb_spec['values'][0])
             connect.close()
 
@@ -1747,33 +1748,33 @@ class Register(tk.Toplevel):
                     else:
                         sqlstr += "1) and "
                 # statement forging for between dates
-                if (parent.date_yy_min.get() or
-                        parent.date_yy_max.get()):
+                if (parent.date_yy_min.get()
+                        or parent.date_yy_max.get()):
                     if parent.date_yy_min.get():
                         str_date_min = (
-                            ""
-                            + str(int(parent.date_yy_min.get())
-                                + 1911)
-                            + "-"
-                            + (parent.date_mm_min.get()
-                               if parent.date_mm_min.get() else "01")
-                                + "-"
-                            + (parent.date_dd_min.get()
-                             if parent.date_dd_min.get() else "01")
+                            "" +
+                            str(int(parent.date_yy_min.get()) +
+                                1911) +
+                            "-" +
+                            (parent.date_mm_min.get()
+                               if parent.date_mm_min.get() else "01") +
+                                "-" +
+                            (parent.date_dd_min.get()
+                               if parent.date_dd_min.get() else "01")
                         )
                     else:
                         str_date_min = "'1911-01-01'"
                     if parent.date_yy_max.get():
                         str_date_max = (
-                            ""
-                            + str(int(parent.date_yy_max.get())
-                                + 1911)
-                            + "-"
-                            + (parent.date_mm_max.get()
-                               if parent.date_mm_max.get() else "12")
-                                + "-"
-                            + (parent.date_dd_max.get()
-                             if parent.date_dd_max.get() else "31")
+                            "" +
+                            str(int(parent.date_yy_max.get()) +
+                                1911) +
+                            "-" +
+                            (parent.date_mm_max.get()
+                               if parent.date_mm_max.get() else "12") +
+                                "-" +
+                            (parent.date_dd_max.get()
+                               if parent.date_dd_max.get() else "31")
                         )
                     else:
                         str_date_max = "date('now')"
@@ -1782,37 +1783,37 @@ class Register(tk.Toplevel):
                     params.append(str_date_min)
                     params.append(str_date_max)
                 # do the same for key_date
-                if (parent.key_date_yy_min.get() or
-                        parent.key_date_yy_max.get()):
+                if (parent.key_date_yy_min.get()
+                        or parent.key_date_yy_max.get()):
                     if parent.key_date_yy_min.get():
                         str_key_date_min = (
-                            ""
-                            + str(int(parent.key_date_yy_min.get())
-                                  + 1911)
-                            + "-"
-                            + (parent.key_date_mm_min.get()
-                             if parent.key_date_mm_min.get() \
-                               else "01")
-                                + "-"
-                                + (parent.key_date_dd_min.get()
-                                 if parent.key_date_dd_min.get() \
-                                 else "01")
+                            "" +
+                            str(int(parent.key_date_yy_min.get()) +
+                                  1911) +
+                            "-" +
+                            (parent.key_date_mm_min.get()
+                               if parent.key_date_mm_min.get() \
+                               else "01") +
+                                "-" +
+                                (parent.key_date_dd_min.get()
+                                   if parent.key_date_dd_min.get() \
+                                   else "01")
                         )
                     else:
                         str_key_date_min = "'1911-01-01'"
                     if parent.key_date_yy_max.get():
                         str_key_date_max = (
-                            ""
-                            + str(int(parent.key_date_yy_max.get())
-                                  + 1911)
-                            + "-"
-                            + (parent.key_date_mm_max.get()
-                             if parent.key_date_mm_max.get() \
-                               else "12")
-                                + "-"
-                                + (parent.key_date_dd_max.get()
-                                 if parent.key_date_dd_max.get() \
-                                 else "31")
+                            "" +
+                            str(int(parent.key_date_yy_max.get()) +
+                                  1911) +
+                            "-" +
+                            (parent.key_date_mm_max.get()
+                               if parent.key_date_mm_max.get() \
+                               else "12") +
+                                "-" +
+                                (parent.key_date_dd_max.get()
+                                   if parent.key_date_dd_max.get() \
+                                   else "31")
                         )
                     else:
                         str_key_date_max = "date('now')"
@@ -2965,8 +2966,8 @@ class unregister(tk.Toplevel):
                     if hasattr(cf, "opt") and cf.opt == "minmax":
                         # in date range
                         if cf.widgetType == "Dateframe":
-                            if (cf.widgetMin.variable.get() == "" and
-                                    cf.widgetMax.variable.get() == ""):
+                            if (cf.widgetMin.variable.get() == ""
+                                    and cf.widgetMax.variable.get() == ""):
                                 continue
                             tempMin = "1911-01-01"
                             tempMax = "date('now')"
@@ -3023,8 +3024,8 @@ class unregister(tk.Toplevel):
                         params)
                 elif parent.whereToLook == "out":
                     cursor.execute(
-                        q_out_full +
-                        q_footer.replace("in_date", "out_date"),
+                        q_out_full
+                        + q_footer.replace("in_date", "out_date"),
                         params)
                 data = cursor.fetchall()
                 self.title("篩選結果: 共{}筆".format(len(data)))

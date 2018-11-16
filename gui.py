@@ -1552,7 +1552,6 @@ class Register(tk.Toplevel):
             # open a result toplevel
             self.LookupResult(self)
 
-        # TODO: <alchenerd@gmail.com> FIX THIS MESS
         class LookupResult(tk.Toplevel):
             # basically it's a search result toplevel
             def __init__(self, parent, *args, **kwargs):
@@ -1560,7 +1559,7 @@ class Register(tk.Toplevel):
                 style = ttk.Style()
                 style.configure("Treeview", font=_default_font)
                 style.configure("Treeview.Heading", font=_default_font)
-                # init
+                # initialization
                 tk.Toplevel.__init__(self, parent, *args, **kwargs)
                 self.parent = parent
                 self.attributes("-topmost", "true")
@@ -1568,6 +1567,8 @@ class Register(tk.Toplevel):
                 self.title("篩選結果")
                 self.geometry("1200x600")
                 self.resizable(False, False)
+                # retrieve the dictionary
+                compFields = parent.compFields
                 # make a tree view
                 sb = tk.Scrollbar(self)
                 self.tv = ttk.Treeview(
@@ -1590,46 +1591,58 @@ class Register(tk.Toplevel):
                           "place, keeper, remark "
                           "from hvhnonc_in "
                           "where (")
-                if parent.category.get():
+                if compFields.get("category").variable.get():
                     sqlstr += ("category like ? and ")
-                    params.append("%{}%".format(parent.category.get()))
-                if parent.subcategory.get():
+                    params.append("%{}%".format(
+                            compFields.get("category").variable.get()))
+                if compFields.get("subcategory").variable.get():
                     sqlstr += ("subcategory like ? and ")
                     params.append("%{}%".format(
-                        parent.subcategory.get()))
-                if parent.name.get():
+                            compFields.get("subcategory").variable.get()))
+                if compFields.get("name").variable.get():
                     sqlstr += ("name like ? and ")
-                    params.append("%{}%".format(parent.name.get()))
-                if parent.brand.get():
+                    params.append("%{}%".format(
+                            compFields.get("name").variable.get()))
+                if compFields.get("brand").variable.get():
                     sqlstr += ("brand like ? and ")
-                    params.append("%{}%".format(parent.brand.get()))
-                if parent.spec.get():
+                    params.append("%{}%".format(
+                            compFields.get("brand").variable.get()))
+                if compFields.get("spec").variable.get():
                     sqlstr += ("spec like ? and ")
-                    params.append("%{}%".format(parent.spec.get()))
-                if parent.place.get():
+                    params.append("%{}%".format(
+                            compFields.get("spec").variable.get()))
+                if compFields.get("place").variable.get():
                     sqlstr += ("place like ? and ")
-                    params.append("%{}%".format(parent.place.get()))
-                if parent.keep_dept.get():
+                    params.append("%{}%".format(
+                            compFields.get("place").variable.get()))
+                if compFields.get["keep_dept"].variable.get():
                     sqlstr += ("keep_department like ? and ")
-                    params.append("%{}%".format(parent.keep_dept.get()))
-                if parent.use_dept.get():
+                    params.append("%{}%".format(
+                            compFields.get["keep_dept"].variable.get()))
+                if compFields.get["use_dept"].variable.get():
                     sqlstr += ("use_department like ? and ")
-                    params.append("%{}%".format(parent.use_dept.get()))
-                if parent.keeper.get():
+                    params.append("%{}%".format(
+                            compFields.get["use_dept"].variable.get()))
+                if compFields.get["keeper"].variable.get():
                     sqlstr += ("keeper like ? and ")
-                    params.append("%{}%".format(parent.keeper.get()))
-                if (parent.price_min.get() or parent.price_max.get()):
-                    if parent.price_min.get():
+                    params.append("%{}%".format(
+                            compFields.get["keeper"].variable.get()))
+                if (compFields.get["price"].variable.min.get() or
+                        compFields.get["price"].variable.max.get()):
+                    if compFields.get["price"].variable.min.get():
                         sqlstr += "(price >= ? and "
-                        params.append(parent.price_min.get())
+                        params.append(
+                                compFields.get["price"].variable.min.get())
                     else:
                         sqlstr += "("
-                    if parent.price_max.get():
+                    if compFields.get["price"].variable.max.get():
                         sqlstr += "price <= ?) and "
-                        params.append(parent.price_max.get())
+                        params.append(
+                                compFields.get["price"].variable.max.get())
                     else:
                         sqlstr += "1) and "
                 # statement forging for between dates
+                # TODO: <alchenerd@gmail.com> FIX THIS MESS
                 if (parent.date_yy_min.get()
                         or parent.date_yy_max.get()):
                     if parent.date_yy_min.get():

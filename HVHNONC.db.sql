@@ -1,25 +1,17 @@
 ﻿BEGIN TRANSACTION;
 
 CREATE TABLE IF NOT EXISTS `hvhnonc_places` (
-
 	`ID`	INTEGER,
-
 	`description`	TEXT NOT NULL UNIQUE,
-
 	PRIMARY KEY(`ID`)
 );
 
 
 CREATE TABLE IF NOT EXISTS `hvhnonc_users` (
-
 	`ID`	INTEGER,
-
 	`username`	TEXT NOT NULL UNIQUE,
-
 	`hash_SHA256`	TEXT NOT NULL,
-
 	`salt`	TEXT NOT NULL,
-
 	PRIMARY KEY(`ID`)
 );
 
@@ -29,164 +21,110 @@ VALUES (1,'administrator','a5d4b16f5d9374c2570a8d970fcad6b427c0c77364696dfadb91e
 
 
 CREATE TABLE IF NOT EXISTS `hvhnonc_unit` (
-
 	`ID`	INTEGER,
-
 	`description`	TEXT NOT NULL UNIQUE,
-
 	PRIMARY KEY(`ID`)
 );
 
 
 CREATE TABLE IF NOT EXISTS `hvhnonc_subcategory` (
-
 	`parent_ID`	INTEGER,
-
 	`ID`	INTEGER,
-
 	`description`	INTEGER NOT NULL UNIQUE,
-
 	FOREIGN KEY(`parent_ID`) REFERENCES `hvhnonc_category`(`ID`) on update cascade on delete set null,
-
 	PRIMARY KEY(`parent_ID`,`ID`)
 );
 
 
 CREATE TABLE IF NOT EXISTS `hvhnonc_out` (
-
 	`ID`	INTEGER,
-
 	`in_ID`	INTEGER,
 	`object_ID`	TEXT,
-
 	`serial_ID`	TEXT,
-
 	`category`	TEXT NOT NULL,
-
 	`subcategory`	TEXT NOT NULL,
-
 	`name`	TEXT NOT NULL,
-
 	`brand`	TEXT,
-
 	`spec`	TEXT,
-
 	`unit`	TEXT NOT NULL DEFAULT '個',
-
 	`out_date`	TEXT NOT NULL,
-
 	`price`	INTEGER NOT NULL,
-
 	`amount`	INTEGER NOT NULL CHECK(amount > 0),
-
 	`storage`	TEXT,
-
 	`reason`	TEXT,
-
 	`post_treatment`	TEXT,
-
 	`remark`	TEXT,
-
 	PRIMARY KEY(`ID`),
 	FOREIGN KEY(`in_ID`) REFERENCES `hvhnonc_in`(`ID`) on delete set null,
 	FOREIGN KEY(`category`) REFERENCES `hvhnonc_category`(`description`) on update cascade on delete set null,
-	FOREIGN KEY(`subcategory`) REFERENCES `hvhnonc_subcategory`(`description`) on update cascade on delete set null );
+	FOREIGN KEY(`subcategory`) REFERENCES `hvhnonc_subcategory`(`description`) on update cascade on delete set null
+);
 
 CREATE TABLE IF NOT EXISTS `hvhnonc_in` (
-
 	`ID`	INTEGER,
-
 	`object_ID`	TEXT NOT NULL,
-
 	`serial_ID`	TEXT NOT NULL,
-
 	`category`	TEXT NOT NULL,
-
 	`subcategory`	TEXT NOT NULL,
-
 	`name`	TEXT NOT NULL,
-
 	`brand`	TEXT,
-
 	`spec`	TEXT,
-
 	`unit`	TEXT NOT NULL DEFAULT '個',
-
-	`in_date`	TEXT NOT NULL,
-
-	`key_date`	TEXT NOT NULL,
-
+	`purchase_date`	TEXT NOT NULL,
+	`acquire_date`	TEXT NOT NULL,
 	`price`	INTEGER NOT NULL,
-
 	`amount`	INTEGER CHECK(amount > 0),
-
 	`place`	TEXT NOT NULL,
-
 	`keep_year`	INTEGER NOT NULL,
-
 	`source`	TEXT DEFAULT '購置' CHECK(source in ( '購置' , '撥用' , '贈送' )),
-
 	`keep_department`	TEXT NOT NULL,
-
 	`use_department`	TEXT,
-
 	`keeper`	TEXT,
-
 	`remark`	TEXT,
-
 	PRIMARY KEY(`ID`),
 	FOREIGN KEY(`category`) REFERENCES `hvhnonc_category`(`description`) on update cascade on delete set null,
-	FOREIGN KEY(`subcategory`) REFERENCES `hvhnonc_subcategory`(`description`) on update cascade on delete set null );
+	FOREIGN KEY(`subcategory`) REFERENCES `hvhnonc_subcategory`(`description`) on update cascade on delete set null
+);
 
 CREATE TABLE IF NOT EXISTS `hvhnonc_department` (
-
 	`ID`	INTEGER,
-
 	`description`	TEXT NOT NULL UNIQUE,
-
 	PRIMARY KEY(`ID`)
 );
 
 
 CREATE TABLE IF NOT EXISTS `hvhnonc_category` (
-
 	`ID`	INTEGER,
-
 	`description`	TEXT NOT NULL UNIQUE,
-
 	PRIMARY KEY(`ID`)
 );
 
 
 CREATE TABLE IF NOT EXISTS `hvhnonc_in_cache` (
-
 	`this_ID`	INTEGER NOT NULL DEFAULT 0,
 	`this_value`	TEXT NOT NULL DEFAULT 'none',
 	`change_ID`	INTEGER NOT NULL,
 	`change_value`	TEXT NOT NULL, 
 	PRIMARY KEY(`this_ID`, `this_value`, `change_ID`, `change_value`),
-	FOREIGN KEY(`this_ID`) REFERENCES `hvhnonc_fields`(`ID`) on update cascade on delete cascade );
+	FOREIGN KEY(`this_ID`) REFERENCES `hvhnonc_fields`(`ID`) on update cascade on delete cascade
+);
 
 
 CREATE TABLE IF NOT EXISTS `hvhnonc_out_cache` (
-
 	`this_ID`	INTEGER NOT NULL DEFAULT 0,
 	`this_value`	TEXT NOT NULL DEFAULT 'none',
 	`change_ID`	INTEGER NOT NULL,
 	`change_value`	TEXT NOT NULL,
 	PRIMARY KEY(`this_ID`, `this_value`, `change_ID`, `change_value`), 
-	FOREIGN KEY(`this_ID`) REFERENCES `hvhnonc_fields`(`ID`) on update cascade on delete cascade );
+	FOREIGN KEY(`this_ID`) REFERENCES `hvhnonc_fields`(`ID`) on update cascade on delete cascade
+);
 
 
 CREATE TABLE IF NOT EXISTS `hvhnonc_fields` (
-
 	`ID`	INTEGER,
-
 	`description`	TEXT NOT NULL UNIQUE,
-
 	PRIMARY KEY(`ID`)
 );
-
 
 INSERT OR IGNORE INTO `hvhnonc_category` VALUES (1, '事務用具');
 INSERT OR IGNORE INTO `hvhnonc_category` VALUES (2, '衛生用具');

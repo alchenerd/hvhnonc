@@ -95,11 +95,12 @@ class CompoundField():
 #           widgetMin and widgetMax
     def __init__(
             self,
-            parent: tk.BaseWidget = None,
-            widgetType: str = None,
+            parent: tk.BaseWidget,
+            widgetType: str,
+            fieldName: str,
+            enabledState: str = None,
             description: str = "標籤",
-            fieldName: str = None,
-            enabledState: str = None, **kwargs
+            **kwargs
     ):
         self.parent = parent
         self.label = tk.Label(parent, text=description + "：",
@@ -356,32 +357,32 @@ class Register(tk.Toplevel):
         self.compFields = {}
         self.compFields["category"] = CompoundField(
             parent=self, widgetType="combobox", description="物品大項",
-            fieldname="category", enabledState="readonly")
+            fieldName="category", enabledState="readonly")
         self.compFields["subcategory"] = CompoundField(
             parent=self, widgetType="combobox", description="物品細目",
-            fieldname="subcategory", enabledState="readonly")
+            fieldName="subcategory", enabledState="readonly")
         self.compFields["name"] = CompoundField(
             parent=self, widgetType="combobox", description="物品名稱",
-            fieldname="name", enabledState="normal")
+            fieldName="name", enabledState="normal")
         self.compFields["unit"] = CompoundField(
             parent=self, widgetType="combobox", description="單位",
-            fieldname="unit", enabledState="normal")
+            fieldName="unit", enabledState="normal")
         self.compFields["brand"] = CompoundField(
             parent=self, widgetType="combobox", description="品牌",
-            fieldname="brand", enabledState="normal")
+            fieldName="brand", enabledState="normal")
         self.compFields["spec"] = CompoundField(
             parent=self, widgetType="combobox", description="規格",
-            fieldname="spec", enabledState="normal")
+            fieldName="spec", enabledState="normal")
         self.compFields["objID"] = CompoundField(
             parent=self, widgetType="entry",
-            description="物品編號", fieldname="objID",
+            description="物品編號", fieldName="objID",
             enabledState="disabled")
         self.compFields["objID"].widget.config(state="disabled")
         # serial frame
         self.f_serial = tk.Frame(self)
         self.compFields["serial"] = CompoundField(
             parent=self.f_serial, widgetType="entry", description="流水號",
-            fieldname="serial", enabledState="disabled")
+            fieldName="serial", enabledState="disabled")
         self.compFields["serial"].widget.config(width=5)
         self.compFields["serial"].widget.config(state="disabled")
         self.btn_lookupSerial = ttk.Button(
@@ -390,31 +391,31 @@ class Register(tk.Toplevel):
         # compound fields
         self.compFields["purchase_date"] = CompoundField(
             parent=self, widgetType="dateframe", description="購置日期",
-            fieldname="in_date", enabledState="readonly")
+            fieldName="purchase_date", enabledState="readonly")
         self.compFields["acquire_date"] = CompoundField(
             parent=self, widgetType="dateframe", description="取得日期",
-            fieldname="acquire_date", enabledState="readonly")
+            fieldName="acquire_date", enabledState="readonly")
         # source, price, amount are in the same frame
         self.f_SPA = tk.Frame(self)
         self.compFields["source"] = CompoundField(
             parent=self.f_SPA, widgetType="combobox", description="來源",
-            fieldname="source", enabledState="normal")
+            fieldName="source", enabledState="normal")
         self.compFields["source"].widget.config(width=8)
         self.compFields["price"] = CompoundField(
             parent=self.f_SPA, widgetType="entry", description="單價",
-            fieldname="price", enabledState="normal")
+            fieldName="price", enabledState="normal")
         self.compFields["price"].widget.config(width=8)
         self.compFields["amount"] = CompoundField(
             parent=self.f_SPA, widgetType="entry", description="數量",
-            fieldname="amount", enabledState="normal")
+            fieldName="amount", enabledState="normal")
         self.compFields["amount"].widget.config(width=8)
         self.compFields["place"] = CompoundField(
             parent=self, widgetType="combobox", description="存置地點",
-            fieldname="place", enabledState="normal")
+            fieldName="place", enabledState="normal")
         self.compFields["keep_year"] = CompoundField(
             parent=self,
             widgetType=None,  # set as none to prevent widget creation
-            description="保管年限", fieldname="keep_year",
+            description="保管年限", fieldName="keep_year",
             enabledState="normal")
         # keep_year widget is a special case(entry with a label)
         # therefore it is defined here
@@ -434,16 +435,16 @@ class Register(tk.Toplevel):
         # compound field
         self.compFields["keep_dept"] = CompoundField(
             parent=self, widgetType="combobox", description="保管單位",
-            fieldname="keep_dept", enabledState="normal")
+            fieldName="keep_dept", enabledState="normal")
         self.compFields["use_dept"] = CompoundField(
             parent=self, widgetType="combobox", description="使用單位",
-            fieldname="use_dept", enabledState="normal")
+            fieldName="use_dept", enabledState="normal")
         self.compFields["keeper"] = CompoundField(
             parent=self, widgetType="combobox", description="保管人",
-            fieldname="keeper", enabledState="normal")
+            fieldName="keeper", enabledState="normal")
         self.compFields["remark"] = CompoundField(
             parent=self, widgetType="combobox", description="備註事項",
-            fieldname="remark", enabledState="normal")
+            fieldName="remark", enabledState="normal")
         self.compFields["remark"].widget.config(width=33)
         # bottom right corner
         self.f_bottomright = tk.Frame(self)
@@ -919,21 +920,23 @@ class Register(tk.Toplevel):
                 sb = tk.Scrollbar(self)
                 self.tv = ttk.Treeview(
                     self, yscrollcommand=sb.set,
-                    columns=('1', '2', '3', '4', '5', '6'),
+                    columns=('1', '2', '3', '4', '5', '6', '7'),
                     show="headings")
-                self.tv['displaycolumns'] = ('2', '3', '4', '5', '6')
+                self.tv['displaycolumns'] = ('2', '3', '4', '5', '6', '7')
                 self.tv.heading('1', text='ID')
                 self.tv.heading('2', text='購置日期')
-                self.tv.heading('3', text='品名')
-                self.tv.heading('4', text='存置位置')
-                self.tv.heading('5', text='保管人')
-                self.tv.heading('6', text='備註')
+                self.tv.heading('3', text='取得日期')
+                self.tv.heading('4', text='品名')
+                self.tv.heading('5', text='存置位置')
+                self.tv.heading('6', text='保管人')
+                self.tv.heading('7', text='備註')
                 sb.config(command=self.tv.yview)
                 # Get data
                 connect, cursor = _getConnection(_default_database)
                 phrase = str(parent.query.get())
                 sqlstr = (
-                    "select ID, in_date, name, place, keeper, remark "
+                    "select ID, purchase_date, acquire_date, name, place, "
+                           "keeper, remark "
                     "from hvhnonc_in "
                     "where("
                     "category like :q or "
@@ -946,7 +949,7 @@ class Register(tk.Toplevel):
                     "use_department like :q or "
                     "keeper like :q or "
                     "remark like :q) "
-                    "order by in_date desc;")
+                    "order by acquire_date desc;")
                 cursor.execute(sqlstr, {'q': "%{}%".format(phrase)})
                 data = cursor.fetchall()
                 for d in data:
@@ -967,19 +970,30 @@ class Register(tk.Toplevel):
 
     def updateCache(self, sqlstr, thisName, thatName):
         connect, cursor = _getConnection(_default_database)
+        #connect.set_trace_callback(print)
         # Update cache table
         # So next time when thisName is fed,
         # autocomplete thatName
 
         # get the value from thisName
-        if thisName not in ("無",):
-            thisVal = self.compFields[thisName].variable.get()
+        if thisName not in ('無',):
+            thisCF = None
+            for k, cf in self.compFields.items():
+                if cf.description == thisName:
+                    thisCF = cf
+                    break
+            thisVal = thisCF.variable.get()
         else:
             thisVal = "none"
         # get the value from thatName
-        thatVal = self.compFields[thatName].variable.get()
+        thatCF = None
+        for k, cf in self.compFields.items():
+            if cf.description == thatName:
+                thatCF = cf
+                break
+        thatVal = thatCF.variable.get()
         if thatVal.strip() in (None, ""):
-            raise LookupError
+            return
         # construct parameters
         params = [getFieldIDByName(thisName), thisVal,
                   getFieldIDByName(thatName), thatVal]
@@ -1005,13 +1019,75 @@ class Register(tk.Toplevel):
 
     # Callback of button('本筆存入')
     def saveThis(self):
-        if (self.category.get() is ""
-            or self.subcategory.get() is ""
-                or self.name.get() is ""):
-            tk.messagebox.showerror("錯誤", "有欄位未填", parent=self)
-            return
         connect, cursor = _getConnection(_default_database)
-        # connect.set_trace_callback(print)
+        connect.set_trace_callback(print)
+        # check for valid values:
+        # category: not null
+        if not self.compFields["category"].variable.get():
+            messagebox.showerror("錯誤", "物品大項未填", parent=self)
+            return
+        # subcategory: not null
+        if not self.compFields["subcategory"].variable.get():
+            messagebox.showerror("錯誤", "物品細目未填", parent=self)
+            return
+        # name: not null
+        if not self.compFields["name"].variable.get():
+            messagebox.showerror("錯誤", "物品名稱未填", parent=self)
+            return
+        # purchase_date: not null
+        if not self.compFields["purchase_date"].variable.get():
+            messagebox.showerror("錯誤", "購置日期未填或未填滿", parent=self)
+            return
+        # acquire_date: not null
+        if not self.compFields["acquire_date"].variable.get():
+            messagebox.showerror("錯誤", "取得日期未填或未填滿", parent=self)
+            return
+        # price: int not null
+        if not self.compFields["price"].variable.get():
+            messagebox.showerror("錯誤", "單價未填", parent=self)
+            return
+        try:
+            int(self.compFields["price"].variable.get())
+        except ValueError:
+            messagebox.showerror("錯誤", "單價只能為數字", parent=self)
+            return
+        # amount: int not null >0
+        if not self.compFields["amount"].variable.get():
+            messagebox.showerror("錯誤", "數量未填", parent=self)
+            return
+        try:
+            if int(self.compFields["amount"].variable.get()) <= 0:
+                    messagebox.showerror("錯誤", "數量僅能為正數", parent=self)
+                    return
+        except ValueError:
+            messagebox.showerror("錯誤", "數量只能為數字", parent=self)
+            return
+        # place: not null
+        if not self.compFields["place"].variable.get():
+            messagebox.showerror("錯誤", "存置地點未填", parent=self)
+            return
+        # keep_year: int not null >0
+        if not self.compFields["keep_year"].variable.get():
+            messagebox.showerror("錯誤", "保管年限未填", parent=self)
+            return
+        try:
+            if int(self.compFields["keep_year"].variable.get()) <= 0:
+                    messagebox.showerror("錯誤", "保管年限僅能為正數",
+                                         parent=self)
+                    return
+        except ValueError:
+            messagebox.showerror("錯誤", "保管年限只能為數字", parent=self)
+            return
+        # source: in ("購置", "贈送", "撥用")
+        if self.compFields["source"].variable.get() not in (
+                "購置", "贈送", "撥用"):
+            messagebox.showerror("錯誤", "來源只能為'購置', '贈送', '撥用'",
+                                 parent=self)
+            return
+        # keep_dept: not null
+        if not self.compFields["keep_dept"].variable.get():
+            messagebox.showerror("錯誤", "保管單位未填", parent=self)
+            return
         # object_ID, serial_ID
         # objID is '6-(ID_cat)-(ID_subcat)'
         sqlstr = ("select parent_ID, ID "
@@ -1021,7 +1097,9 @@ class Register(tk.Toplevel):
                   "from hvhnonc_category "
                   "where description=?) "
                   "and description=?;")
-        params = (self.category.get(), self.subcategory.get())
+        category = self.compFields["category"].variable.get()
+        subcategory = self.compFields["subcategory"].variable.get()
+        params = (category, subcategory)
         try:
             cursor.execute(sqlstr, params)
             row = cursor.fetchone()
@@ -1035,7 +1113,8 @@ class Register(tk.Toplevel):
         sqlstr = ("select serial_ID "
                   "from hvhnonc_in "
                   "where object_ID=? and name=?;")
-        params = (objID, self.name.get())
+        name = self.compFields["name"].variable.get()
+        params = (objID, name)
         try:
             cursor.execute(sqlstr, params)
         except Exception as e:
@@ -1056,35 +1135,40 @@ class Register(tk.Toplevel):
         else:
             serialID = str(row[0])
         # date string preparation
-        tmp_in_date = "-".join(
-            (str(int(self.in_date_yy.get()) + 1911),
-             str("{:02}".format(int(self.in_date_mm.get()))),
-             str("{:02}".format(int(self.in_date_dd.get()))), ))
-        tmp_key_date = "-".join(
-            (str(int(self.key_date_yy.get()) + 1911),
-             str("{:02}".format(int(self.key_date_mm.get()))),
-             str("{:02}".format(int(self.key_date_dd.get()))), ))
+        purchase_date = self.compFields["purchase_date"].variable.get()
+        year = int(purchase_date.split("-")[0])
+        if year < 1911:
+            purchase_date = purchase_date.replace(str(year), str(year + 1911))
+        acquire_date = self.compFields["acquire_date"].variable.get()
+        year = int(acquire_date.split("-")[0])
+        if year < 1911:
+            acquire_date = acquire_date.replace(str(year), str(year + 1911))
         # insert new row
         if self.state in ("new",):
             # insertion statement
             sqlstr = ("insert into hvhnonc_in("
                       "object_ID, serial_ID, category, subcategory, "
-                      "name, brand, spec, unit, in_date, key_date, "
+                      "name, brand, spec, unit, purchase_date, acquire_date, "
                       "price, amount, place, keep_year, source, "
                       "keep_department, use_department, keeper, "
                       "remark) "
-                      "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
-                      "?, ?, ?, ?, ?, ?);")
+                      "values({});")
             params = (str(objID), str(serialID),
-                      self.category.get(), self.subcategory.get(),
-                      self.name.get(), self.brand.get(),
-                      self.spec.get(), self.unit.get(),
-                      str(tmp_in_date), str(tmp_key_date),
-                      self.price.get(), self.amount.get(),
-                      self.place.get(), self.keep_year.get(),
-                      self.source.get(), self.keep_dept.get(),
-                      self.use_dept.get(), self.keeper.get(),
-                      self.remark.get(), )
+                      category, subcategory, name,
+                      self.compFields["brand"].variable.get(),
+                      self.compFields["spec"].variable.get(),
+                      self.compFields["unit"].variable.get(),
+                      purchase_date, acquire_date,
+                      self.compFields["price"].variable.get(),
+                      self.compFields["amount"].variable.get(),
+                      self.compFields["place"].variable.get(),
+                      self.compFields["keep_year"].variable.get(),
+                      self.compFields["source"].variable.get(),
+                      self.compFields["keep_dept"].variable.get(),
+                      self.compFields["use_dept"].variable.get(),
+                      self.compFields["keeper"].variable.get(),
+                      self.compFields["remark"].variable.get())
+            sqlstr = sqlstr.format("?, " * (len(params) - 1) + "?")
             try:
                 cursor.execute(sqlstr, params)
                 connect.commit()
@@ -1101,9 +1185,7 @@ class Register(tk.Toplevel):
             self.updateAllCache(sqlstr)
             # update book
             self.book = self.getAllRecords()
-            connect.close()
-            self.state = "none"
-            self.updateByState(self.state)
+            self.updateByState("none")
         elif self.lookupIndexInBook(self.state) is not None:
             # if collide ask new or replace
             isWriteover = tk.messagebox.askyesnocancel(
@@ -1116,23 +1198,28 @@ class Register(tk.Toplevel):
                           "ID, object_ID, serial_ID, "
                           "category, subcategory, "
                           "name, brand, spec, unit, "
-                          "in_date, key_date, "
+                          "purchase_date, acquire_date, "
                           "price, amount, place, "
                           "keep_year, source, "
                           "keep_department, use_department, "
                           "keeper, remark) "
-                          "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
-                          "?, ?, ?, ?, ?, ?, ?, ?);")
+                          "values({});")
                 params = (self.state, str(objID), str(serialID),
-                          self.category.get(), self.subcategory.get(),
-                          self.name.get(), self.brand.get(),
-                          self.spec.get(), self.unit.get(),
-                          str(tmp_in_date), str(tmp_key_date),
-                          self.price.get(), self.amount.get(),
-                          self.place.get(), self.keep_year.get(),
-                          self.source.get(), self.keep_dept.get(),
-                          self.use_dept.get(), self.keeper.get(),
-                          self.remark.get(), )
+                          category, subcategory, name,
+                          self.compFields["brand"].variable.get(),
+                          self.compFields["spec"].variable.get(),
+                          self.compFields["unit"].variable.get(),
+                          purchase_date, acquire_date,
+                          self.compFields["price"].variable.get(),
+                          self.compFields["amount"].variable.get(),
+                          self.compFields["place"].variable.get(),
+                          self.compFields["keep_year"].variable.get(),
+                          self.compFields["source"].variable.get(),
+                          self.compFields["keep_dept"].variable.get(),
+                          self.compFields["use_dept"].variable.get(),
+                          self.compFields["keeper"].variable.get(),
+                          self.compFields["remark"].variable.get())
+                sqlstr = sqlstr.format("?, " * (len(params) - 1) + "?")
                 try:
                     cursor.execute(sqlstr, params)
                     connect.commit()
@@ -1146,36 +1233,39 @@ class Register(tk.Toplevel):
                 sqlstr = ("insert or ignore into "
                           "hvhnonc_in_cache(this_ID, this_value, "
                           "change_ID, change_value) "
-                          "values(? ? ? ?);")
+                          "values(?, ?, ?, ?);")
                 self.updateAllCache(sqlstr)
                 # update book
                 self.book = self.getAllRecords()
-                connect.close()
-                self.state = "none"
-                self.updateByState(self.state)
+                self.updateByState("none")
             elif isWriteover is False:
                 # insert new row
                 sqlstr = ("insert into hvhnonc_in("
                           "object_ID, serial_ID, "
                           "category, subcategory, "
                           "name, brand, spec, unit, "
-                          "in_date, key_date, "
+                          "purchase_date, acquire_date, "
                           "price, amount, place, "
                           "keep_year, source, "
                           "keep_department, use_department, "
                           "keeper, remark) "
-                          "values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
-                          "?, ?, ?, ?, ?, ?, ?);")
+                          "values({});")
                 params = (str(objID), str(serialID),
-                          self.category.get(), self.subcategory.get(),
-                          self.name.get(), self.brand.get(),
-                          self.spec.get(), self.unit.get(),
-                          str(tmp_in_date), str(tmp_key_date),
-                          self.price.get(), self.amount.get(),
-                          self.place.get(), self.keep_year.get(),
-                          self.source.get(), self.keep_dept.get(),
-                          self.use_dept.get(), self.keeper.get(),
-                          self.remark.get(),)
+                          category, subcategory, name,
+                          self.compFields["brand"].variable.get(),
+                          self.compFields["spec"].variable.get(),
+                          self.compFields["unit"].variable.get(),
+                          purchase_date, acquire_date,
+                          self.compFields["price"].variable.get(),
+                          self.compFields["amount"].variable.get(),
+                          self.compFields["place"].variable.get(),
+                          self.compFields["keep_year"].variable.get(),
+                          self.compFields["source"].variable.get(),
+                          self.compFields["keep_dept"].variable.get(),
+                          self.compFields["use_dept"].variable.get(),
+                          self.compFields["keeper"].variable.get(),
+                          self.compFields["remark"].variable.get())
+                sqlstr = sqlstr.format("?, " * (len(params) - 1) + "?")
                 try:
                     cursor.execute(sqlstr, params)
                     connect.commit()
@@ -1190,13 +1280,13 @@ class Register(tk.Toplevel):
                 sqlstr = ("insert or ignore into "
                           "hvhnonc_in_cache(this_ID, this_value, "
                           "change_ID, change_value) "
-                          "values(? ? ? ?);")
+                          "values(?, ?, ?, ?);")
                 self.updateAllCache(sqlstr)
                 self.book = self.getAllRecords()
-                connect.close()
                 self.state = "none"
                 self.updateByState(self.state)
             # do nothing if cancel is pressed
+        connect.close()
 
     # Callback of button('下一筆')
     def fetchNext(self):
@@ -1229,13 +1319,16 @@ class Register(tk.Toplevel):
 
     # Callback of button('刪除本筆')
     def deleteThis(self):
+        name = self.compFields.get("name").variable.get()
+        confirmDelete = messagebox.askokcancel(
+                "確定刪除?", "你確定要刪除這筆資料嗎?\n名稱:{}".format(name))
+        if not confirmDelete:
+            return
         # deletes the row if it's in the book
         # print("deleteThis")
         if self.state in ("new", "none", ):
-            tk.messagebox.showerror("錯誤", "不是資料庫內的資料",
-                                    parent=self)
-            self.state = "none"
-            self.updateByState(self.state)
+            tk.messagebox.showerror("錯誤", "不是資料庫內的資料", parent=self)
+            self.updateByState("none")
             return
         connect, cursor = _getConnection(_default_database)
         sqlstr = "delete from hvhnonc_in where ID=?;"
@@ -1244,18 +1337,15 @@ class Register(tk.Toplevel):
             cursor.execute(sqlstr, param)
             connect.commit()
             tk.messagebox.showinfo("刪除成功",
-                                   "已刪除一筆ID為{}的資料".format(self.state),
+                                   "已刪除一筆ID:{}, 名稱:{}的資料".format(
+                                           self.state, name),
                                    parent=self)
             # update the book
             self.book = self.getAllRecords()
         except sqlite3.Error as e:
             tk.messagebox.showerror("錯誤", "沒有這筆資料", parent=self)
             print(e.args[0])
-        except Exception as e:
-            tk.messagebox.showerror("錯誤", "未知的錯誤", parent=self)
-            print(e)
-        self.state = "none"
-        self.updateByState(self.state)
+        self.updateByState("none")
 
     # Callback of button('表單')
     def lookupForm(self):
@@ -1263,7 +1353,6 @@ class Register(tk.Toplevel):
         # opens a new toplevel for filtering
         self.FilterWindow(self)
 
-    # COMBAK: <alchenerd@gmail.com> code createWidgets and createView
     class FilterWindow(tk.Toplevel):
         def __init__(self, parent, *args, **kwargs):
             tk.Toplevel.__init__(self, parent, *args, **kwargs)
@@ -1285,53 +1374,53 @@ class Register(tk.Toplevel):
             self.compFields = {}
             self.compFields["category"] = CompoundField(
                     parent=self, widgetType="combobox",
-                    description="物品大項", fieldname="category",
+                    description="物品大項", fieldName="category",
                     enabledState="readonly")
             self.compFields["subcategory"] = CompoundField(
                     parent=self, widgetType="combobox",
-                    description="物品細目", fieldname="subcategory",
+                    description="物品細目", fieldName="subcategory",
                     enabledState="readonly")
             self.compFields["name"] = CompoundField(
                     parent=self, widgetType="combobox",
-                    description="物品名稱", fieldname="name",
+                    description="物品名稱", fieldName="name",
                     enabledState="normal")
             self.compFields["brand"] = CompoundField(
                     parent=self, widgetType="combobox",
-                    description="品牌", fieldname="brand",
+                    description="品牌", fieldName="brand",
                     enabledState="normal")
             self.compFields["spec"] = CompoundField(
                     parent=self, widgetType="combobox",
-                    description="規格", fieldname="spec",
+                    description="規格", fieldName="spec",
                     enabledState="normal")
             self.compFields["price"] = CompoundField(
                     parent=self, widgetType="entry",
-                    description="單價", fieldname="price",
+                    description="單價", fieldName="price",
                     enabledState="normal", span=True)
             self.compFields["price"].widget.min.config(width=5)
             self.compFields["price"].widget.max.config(width=5)
             self.compFields["purchase_date"] = CompoundField(
                     parent=self, widgetType="dateframe",
-                    description="購置日期", fieldname="purchase_date",
+                    description="購置日期", fieldName="purchase_date",
                     enabledState="readonly", span=True)
             self.compFields["acquire_date"] = CompoundField(
                     parent=self, widgetType="dateframe",
-                    description="取得日期", fieldname="acquire_date",
+                    description="取得日期", fieldName="acquire_date",
                     enabledState="readonly", span=True)
             self.compFields["keep_dept"] = CompoundField(
                     parent=self, widgetType="combobox",
-                    description="保管單位", fieldname="keep_dept",
+                    description="保管單位", fieldName="keep_department",
                     enabledState="normal")
             self.compFields["place"] = CompoundField(
                     parent=self, widgetType="combobox",
-                    description="存置地點", fieldname="place",
+                    description="存置地點", fieldName="place",
                     enabledState="normal")
             self.compFields["use_dept"] = CompoundField(
                     parent=self, widgetType="combobox",
-                    description="使用單位", fieldname="use_dept",
+                    description="使用單位", fieldName="use_department",
                     enabledState="normal")
             self.compFields["keeper"] = CompoundField(
                     parent=self, widgetType="combobox",
-                    description="保管人", fieldname="keeper",
+                    description="保管人", fieldName="keeper",
                     enabledState="normal")
             # bottom navigate bar
             self.f_bottomButtons = tk.Frame(self)
@@ -1550,7 +1639,58 @@ class Register(tk.Toplevel):
 
         def submit(self):
             # open a result toplevel
+            sqlstr = ("insert or ignore into "
+                      "hvhnonc_in_cache("
+                      "this_ID, this_value, change_ID, change_value) "
+                      "values(?, ?, ?, ?);")
+            self.updateAllCache(sqlstr)
             self.LookupResult(self)
+
+        def updateAllCache(self, sqlstr):
+            # the getFieldIDByName is called inside updateCache
+            self.updateCache(sqlstr, "物品細目", "物品名稱")
+            self.updateCache(sqlstr, "物品名稱", "品牌")
+            self.updateCache(sqlstr, "物品名稱", "規格")
+            self.updateCache(sqlstr, "無", "保管單位")
+            self.updateCache(sqlstr, "無", "使用單位")
+            self.updateCache(sqlstr, "無", "存置地點")
+            self.updateCache(sqlstr, "無", "保管人")
+
+            # Update cache table
+            # So next time when thisName is fed,
+            # autocomplete thatName
+        def updateCache(self, sqlstr, thisName, thatName):
+            connect, cursor = _getConnection(_default_database)
+            #connect.set_trace_callback(print)
+            # get the value from thisName
+            if thisName not in ('無',):
+                thisCF = None
+                for k, cf in self.compFields.items():
+                    if cf.description == thisName:
+                        thisCF = cf
+                        break
+                thisVal = thisCF.variable.get()
+            else:
+                thisVal = "none"
+            # get the value from thatName
+            thatCF = None
+            for k, cf in self.compFields.items():
+                if cf.description == thatName:
+                    thatCF = cf
+                    break
+            thatVal = thatCF.variable.get()
+            if thatVal.strip() in (None, ""):
+                return
+            # construct parameters
+            params = [getFieldIDByName(thisName), thisVal,
+                      getFieldIDByName(thatName), thatVal]
+            try:
+                cursor.execute(sqlstr, params)
+                connect.commit()
+            except Exception as e:
+                print("Exception in updateCache: %s" % e)
+                tk.messagebox.showerror("錯誤 updateCache", str(e),
+                                        parent=self)
 
         class LookupResult(tk.Toplevel):
             # basically it's a search result toplevel
@@ -1566,159 +1706,89 @@ class Register(tk.Toplevel):
                 self.attributes("-topmost", "false")
                 self.title("篩選結果")
                 self.geometry("1200x600")
-                self.resizable(False, False)
+                self.resizable(True, True)
                 # retrieve the dictionary
                 compFields = parent.compFields
                 # make a tree view
                 sb = tk.Scrollbar(self)
                 self.tv = ttk.Treeview(
                     self, yscrollcommand=sb.set,
-                    columns=('1', '2', '3', '4', '5', '6'),
+                    columns=('1', '2', '3', '4', '5', '6', '7'),
                     show="headings")
-                self.tv['displaycolumns'] = ('2', '3', '4', '5', '6')
+                self.tv['displaycolumns'] = ('2', '3', '4', '5', '6', '7')
                 self.tv.heading('1', text='ID')
                 self.tv.heading('2', text='購置日期')
-                self.tv.heading('3', text='品名')
-                self.tv.heading('4', text='存置位置')
-                self.tv.heading('5', text='保管人')
-                self.tv.heading('6', text='備註')
+                self.tv.heading('3', text='取得日期')
+                self.tv.heading('4', text='品名')
+                self.tv.heading('5', text='存置位置')
+                self.tv.heading('6', text='保管人')
+                self.tv.heading('7', text='備註')
                 sb.config(command=self.tv.yview)
                 # fetch the data
                 connect, cursor = _getConnection(_default_database)
-                # connect.set_trace_callback(print)
+                #connect.set_trace_callback(print)
                 params = []
-                sqlstr = ("select ID, in_date, name, "
-                          "place, keeper, remark "
+                sqlstr = ("select ID, purchase_date, acquire_date, name, "
+                                 "place, keeper, remark "
                           "from hvhnonc_in "
                           "where (")
-                if compFields.get("category").variable.get():
-                    sqlstr += ("category like ? and ")
-                    params.append("%{}%".format(
-                            compFields.get("category").variable.get()))
-                if compFields.get("subcategory").variable.get():
-                    sqlstr += ("subcategory like ? and ")
-                    params.append("%{}%".format(
-                            compFields.get("subcategory").variable.get()))
-                if compFields.get("name").variable.get():
-                    sqlstr += ("name like ? and ")
-                    params.append("%{}%".format(
-                            compFields.get("name").variable.get()))
-                if compFields.get("brand").variable.get():
-                    sqlstr += ("brand like ? and ")
-                    params.append("%{}%".format(
-                            compFields.get("brand").variable.get()))
-                if compFields.get("spec").variable.get():
-                    sqlstr += ("spec like ? and ")
-                    params.append("%{}%".format(
-                            compFields.get("spec").variable.get()))
-                if compFields.get("place").variable.get():
-                    sqlstr += ("place like ? and ")
-                    params.append("%{}%".format(
-                            compFields.get("place").variable.get()))
-                if compFields.get["keep_dept"].variable.get():
-                    sqlstr += ("keep_department like ? and ")
-                    params.append("%{}%".format(
-                            compFields.get["keep_dept"].variable.get()))
-                if compFields.get["use_dept"].variable.get():
-                    sqlstr += ("use_department like ? and ")
-                    params.append("%{}%".format(
-                            compFields.get["use_dept"].variable.get()))
-                if compFields.get["keeper"].variable.get():
-                    sqlstr += ("keeper like ? and ")
-                    params.append("%{}%".format(
-                            compFields.get["keeper"].variable.get()))
-                if (compFields.get["price"].variable.min.get() or
-                        compFields.get["price"].variable.max.get()):
-                    if compFields.get["price"].variable.min.get():
-                        sqlstr += "(price >= ? and "
-                        params.append(
-                                compFields.get["price"].variable.min.get())
-                    else:
-                        sqlstr += "("
-                    if compFields.get["price"].variable.max.get():
-                        sqlstr += "price <= ?) and "
-                        params.append(
-                                compFields.get["price"].variable.max.get())
-                    else:
-                        sqlstr += "1) and "
-                # statement forging for between dates
-                # TODO: <alchenerd@gmail.com> FIX THIS MESS
-                if (parent.date_yy_min.get()
-                        or parent.date_yy_max.get()):
-                    if parent.date_yy_min.get():
-                        str_date_min = (
-                            "" +
-                            str(int(parent.date_yy_min.get()) +
-                                1911) +
-                            "-" +
-                            (parent.date_mm_min.get()
-                               if parent.date_mm_min.get() else "01") +
-                                "-" +
-                            (parent.date_dd_min.get()
-                               if parent.date_dd_min.get() else "01")
-                        )
-                    else:
-                        str_date_min = "'1911-01-01'"
-                    if parent.date_yy_max.get():
-                        str_date_max = (
-                            "" +
-                            str(int(parent.date_yy_max.get()) +
-                                1911) +
-                            "-" +
-                            (parent.date_mm_max.get()
-                               if parent.date_mm_max.get() else "12") +
-                                "-" +
-                            (parent.date_dd_max.get()
-                               if parent.date_dd_max.get() else "31")
-                        )
-                    else:
-                        str_date_max = "date('now')"
-                    sqlstr += ("(strftime('%Y-%m-%d', in_date) "
-                               "between ? and ?) and ")
-                    params.append(str_date_min)
-                    params.append(str_date_max)
-                # do the same for key_date
-                if (parent.key_date_yy_min.get()
-                        or parent.key_date_yy_max.get()):
-                    if parent.key_date_yy_min.get():
-                        str_key_date_min = (
-                            "" +
-                            str(int(parent.key_date_yy_min.get()) +
-                                  1911) +
-                            "-" +
-                            (parent.key_date_mm_min.get()
-                               if parent.key_date_mm_min.get() \
-                               else "01") +
-                                "-" +
-                                (parent.key_date_dd_min.get()
-                                   if parent.key_date_dd_min.get() \
-                                   else "01")
-                        )
-                    else:
-                        str_key_date_min = "'1911-01-01'"
-                    if parent.key_date_yy_max.get():
-                        str_key_date_max = (
-                            "" +
-                            str(int(parent.key_date_yy_max.get()) +
-                                  1911) +
-                            "-" +
-                            (parent.key_date_mm_max.get()
-                               if parent.key_date_mm_max.get() \
-                               else "12") +
-                                "-" +
-                                (parent.key_date_dd_max.get()
-                                   if parent.key_date_dd_max.get() \
-                                   else "31")
-                        )
-                    else:
-                        str_key_date_max = "date('now')"
-                    sqlstr += (
-                        "(strftime('%Y-%m-%d', key_date) "
-                        "between ? and ?) and ")
-                    params.append(str_key_date_min)
-                    params.append(str_key_date_max)
+                for key, cf in compFields.items():
+                    try: # Special cases: ranged data
+                      values = {
+                              "min": cf.variable["min"].get(),
+                              "max": cf.variable["max"].get()}
+                      if not (values["min"] or values["max"]):
+                          continue
+                      if "date" in cf.fieldName:
+                          # handle empty date
+                          if values["min"] in ("--", ""):
+                              values["min"] = "1911-01-01"
+                          if values["max"] in ("--", ""):
+                              values["max"] = str(dt.datetime.now().date())
+                          # handle empty month and day
+                          values["min"] = values["min"].replace("--", "-01-")
+                          if values["min"][-1] == "-":
+                              values["min"] += "01"
+                          values["max"] = values["max"].replace("--", "-12-")
+                          if values["max"][-1] == "-":
+                              values["max"] += "31"
+                          # convert republic year to western year
+                          year = int(values["min"].split('-')[0])
+                          if year < 1911:
+                              values["min"] = values["min"].replace(
+                                      str(year), str(year+1911))
+                          year = int(values["max"].split('-')[0])
+                          if year < 1911:
+                              values["max"] = values["max"].replace(
+                                      str(year), str(year+1911))
+                          # sql
+                          sqlstr += ("(strftime('%Y-%m-%d', {}) "
+                                     "between ? and ?) and ".format(
+                                     cf.fieldName))
+                          params.append(values["min"])
+                          params.append(values["max"])
+                      if "price" in cf.fieldName:
+                          if (values["min"] and values["max"]):
+                              sqlstr += ("({0} >= ? and "
+                                         "{0} <= ?) and ".format(
+                                         cf.fieldName))
+                              params.append(values["min"], values["max"])
+                          elif values["min"]:
+                              sqlstr += "({} >= ?) and ".format(cf.fieldName)
+                              params.append(values["min"])
+                          elif values["max"]:
+                              sqlstr += "({} <= ?) and ".format(cf.fieldName)
+                              params.append(values["max"])
+                          pass
+                    except TypeError:
+                      value = cf.variable.get()
+                      if not value:
+                          continue
+                      sqlstr += "{} like ? and ".format(cf.fieldName)
+                      params.append("%{}%".format(value))
                 # where(1) if no input
-                sqlstr += "1) order by in_date desc;"
+                sqlstr += "1) order by acquire_date desc;"
+                print(sqlstr)
                 cursor.execute(sqlstr, params)
                 data = cursor.fetchall()
                 self.title("篩選結果: 共{}筆".format(len(data)))
@@ -2458,7 +2528,7 @@ class unregister(tk.Toplevel):
                 connect, cursor = _getConnection(_default_database)
                 phrase = str(parent.query.get())
                 sqlstr = (
-                    "select ID, in_date, name, place, keeper, remark "
+                    "select ID, purchase_date, name, place, keeper, remark "
                     "from hvhnonc_in "
                     "where("
                     "category like :q or "
@@ -2471,7 +2541,7 @@ class unregister(tk.Toplevel):
                     "use_department like :q or "
                     "keeper like :q or "
                     "remark like :q) "
-                    "order by in_date desc;")
+                    "order by purchase_date desc;")
                 cursor.execute(sqlstr, {'q': "%{}%".format(phrase)})
                 data = cursor.fetchall()
                 for d in data:
@@ -2682,23 +2752,23 @@ class unregister(tk.Toplevel):
             self.wdict["price"].widgetMax.config(width=10)
             self.wdict["price"].label.grid(row=2, column=2, padx=5, pady=5)
             self.wdict["price"].widget.grid(row=2, column=3, padx=5, pady=5)
-            # in_date
-            self.wdict["in_date"] = CompoundField(
-                self, "DateFrame", "日期範圍", "in_date", "normal",
+            # purchase_date
+            self.wdict["purchase_date"] = CompoundField(
+                self, "DateFrame", "日期範圍", "purchase_date", "normal",
                 opt="minmax")
-            self.wdict["in_date"].widgetMin.clear()
-            self.wdict["in_date"].widgetMax.clear()
-            self.wdict["in_date"].label.grid(row=3, column=0, padx=5, pady=5)
-            self.wdict["in_date"].widget.grid(row=3, column=1, padx=5, pady=5,
+            self.wdict["purchase_date"].widgetMin.clear()
+            self.wdict["purchase_date"].widgetMax.clear()
+            self.wdict["purchase_date"].label.grid(row=3, column=0, padx=5, pady=5)
+            self.wdict["purchase_date"].widget.grid(row=3, column=1, padx=5, pady=5,
                                               columnspan=3, sticky="w")
-            # key_date
-            self.wdict["key_date"] = CompoundField(
-                self, "DateFrame", "建帳日期", "key_date", "normal",
+            # acquire_date
+            self.wdict["acquire_date"] = CompoundField(
+                self, "DateFrame", "建帳日期", "acquire_date", "normal",
                 opt="minmax")
-            self.wdict["key_date"].widgetMin.clear()
-            self.wdict["key_date"].widgetMax.clear()
-            self.wdict["key_date"].label.grid(row=4, column=0, padx=5, pady=5)
-            self.wdict["key_date"].widget.grid(
+            self.wdict["acquire_date"].widgetMin.clear()
+            self.wdict["acquire_date"].widgetMax.clear()
+            self.wdict["acquire_date"].label.grid(row=4, column=0, padx=5, pady=5)
+            self.wdict["acquire_date"].widget.grid(
                 row=4, column=1, padx=5, pady=5, columnspan=3, sticky="w")
             # keep_department
             self.wdict["keep_department"] = CompoundField(
@@ -2847,14 +2917,14 @@ class unregister(tk.Toplevel):
                 connect, cursor = _getConnection(_default_database)
                 # connect.set_trace_callback(print)
                 params = []
-                q_in = ("select ID, in_date as date, name, "
+                q_in = ("select ID, purchase_date as date, name, "
                         "place as place, keeper, remark "
                         "from hvhnonc_in ")
                 q_out = ("select in_ID as ID, out_date as date, name, "
                          "storage as place, '' as keeper, remark "
                          "from hvhnonc_out ")
                 q_union = "union all "
-                q_footer = "order by in_date desc;"
+                q_footer = "order by purchase_date desc;"
                 q_where = "where ("
                 for key, cf in parent.wdict.items():
                     # minmax
@@ -2905,7 +2975,7 @@ class unregister(tk.Toplevel):
                 # where(1) if no input
                 q_where += "1) "
                 q_in_full = q_in + q_where
-                q_where = q_where.replace("in_date", "out_date")
+                q_where = q_where.replace("purchase_date", "out_date")
                 q_where = q_where.replace("place", "storage")
                 q_out_full = q_out + q_where
                 if parent.whereToLook == "both":
@@ -2920,7 +2990,7 @@ class unregister(tk.Toplevel):
                 elif parent.whereToLook == "out":
                     cursor.execute(
                         q_out_full
-                        + q_footer.replace("in_date", "out_date"),
+                        + q_footer.replace("purchase_date", "out_date"),
                         params)
                 data = cursor.fetchall()
                 self.title("篩選結果: 共{}筆".format(len(data)))

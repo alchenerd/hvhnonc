@@ -213,7 +213,7 @@ class Index(tk.Frame):
         Register(self)
 
     def unregisterPressed(self):
-        unregister(self)
+        Unregister(self)
 
     def printPressed(self):
         PrintNonc(self)
@@ -327,6 +327,7 @@ class Login(tk.Toplevel):
             return True
         else:
             return False
+
 
 # The toplevel which contains the register form to fill
 class Register(tk.Toplevel):
@@ -1822,7 +1823,7 @@ class Register(tk.Toplevel):
         self.destroy()
 
 
-class unregister(tk.Toplevel):
+class Unregister(tk.Toplevel):
     def __init__(self, parent, *args, **kwargs):
         # for update purposes
         self.state = "none"
@@ -1838,322 +1839,280 @@ class unregister(tk.Toplevel):
         self.title("除帳")
         self.geometry("665x509")
         self.resizable(False, False)
-        # Four main frame in the GUI
+        # Four main frames in the GUI
         self.f_mainForm = tk.Frame(self)
         self.f_historyForm = tk.Frame(self)
         self.f_unregisterForm = tk.Frame(self)
         self.f_bottomNavigationBar = tk.Frame(self)
+        # A dictionary that records all the comp fields in Register
+        self.compFields = {}
         # main form
         # category(combobox), subcategory(combobox)
-        self.l_category = tk.Label(self.f_mainForm, text="物品大項：",
-                                   font=_default_font)
-        self.category = tk.StringVar()
-        self.cb_category = ttk.Combobox(self.f_mainForm, width=20,
-                                        textvariable=self.category,
-                                        font=_default_font)
-        self.l_category.grid(row=0, column=0, padx=5, pady=5)
-        self.cb_category.grid(row=0, column=1, padx=5, pady=5)
-        self.l_subcategory = tk.Label(self.f_mainForm, text="物品細目：",
-                                      font=_default_font)
-        self.subcategory = tk.StringVar()
-        self.cb_subcategory = ttk.Combobox(self.f_mainForm, width=20,
-                                           textvariable=self.subcategory,
-                                           font=_default_font)
-        self.l_subcategory.grid(row=0, column=2, padx=5, pady=5)
-        self.cb_subcategory.grid(row=0, column=3, padx=5, pady=5)
+        self.compFields["category"] = CompoundField(
+                parent=self.f_mainForm,
+                widgetType="combobox",
+                fieldName="category",
+                enabledState="readonly",
+                description="物品大項")
+        self.compFields["subcategory"] = CompoundField(
+                parent=self.f_mainForm,
+                widgetType="combobox",
+                fieldName="subcategory",
+                enabledState="readonly",
+                description="物品細目")
+        self.compFields["category"].label.grid(row=0, column=0,
+                                               padx=5, pady=5)
+        self.compFields["category"].widget.grid(row=0, column=1,
+                                               padx=5, pady=5)
+        self.compFields["subcategory"].label.grid(row=0, column=2,
+                                                  padx=5, pady=5)
+        self.compFields["subcategory"].widget.grid(row=0, column=3,
+                                                   padx=5, pady=5)
         # name(combobox), unit(combobox)
-        self.l_name = tk.Label(self.f_mainForm, text="物品名稱：",
-                               font=_default_font)
-        self.name = tk.StringVar()
-        self.cb_name = ttk.Combobox(self.f_mainForm, width=20,
-                                    textvariable=self.name,
-                                    font=_default_font)
-        self.l_name.grid(row=1, column=0, padx=5, pady=5)
-        self.cb_name.grid(row=1, column=1, padx=5, pady=5)
-        self.l_unit = tk.Label(self.f_mainForm, text="單位：",
-                               font=_default_font)
-        self.unit = tk.StringVar()
-        self.cb_unit = ttk.Combobox(self.f_mainForm, width=20,
-                                    textvariable=self.unit,
-                                    font=_default_font)
-        self.l_unit.grid(row=1, column=2, padx=5, pady=5)
-        self.cb_unit.grid(row=1, column=3, padx=5, pady=5)
+        self.compFields["name"] = CompoundField(
+                parent=self.f_mainForm,
+                widgetType="combobox",
+                fieldName="name",
+                enabledState="normal",
+                description="物品名稱")
+        self.compFields["unit"] = CompoundField(
+                parent=self.f_mainForm,
+                widgetType="combobox",
+                fieldName="unit",
+                enabledState="normal",
+                description="單位")
+        self.compFields["name"].label.grid(row=1, column=0, padx=5, pady=5)
+        self.compFields["name"].widget.grid(row=1, column=1, padx=5, pady=5)
+        self.compFields["unit"].label.grid(row=1, column=2, padx=5, pady=5)
+        self.compFields["unit"].widget.grid(row=1, column=3, padx=5, pady=5)
         # brand(combobox), spec(combobox)
-        self.l_brand = tk.Label(self.f_mainForm, text="品牌：",
-                                font=_default_font)
-        self.brand = tk.StringVar()
-        self.cb_brand = ttk.Combobox(self.f_mainForm, width=20,
-                                     textvariable=self.brand,
-                                     font=_default_font)
-        self.l_brand.grid(row=2, column=0, padx=5, pady=5)
-        self.cb_brand.grid(row=2, column=1, padx=5, pady=5)
-        self.l_spec = tk.Label(self.f_mainForm, text="規格：",
-                               font=_default_font)
-        self.spec = tk.StringVar()
-        self.cb_spec = ttk.Combobox(self.f_mainForm, width=20,
-                                    textvariable=self.spec,
-                                    font=_default_font)
-        self.l_spec.grid(row=2, column=2, padx=5, pady=5)
-        self.cb_spec.grid(row=2, column=3, padx=5, pady=5)
+        self.compFields["brand"] = CompoundField(
+                parent=self.f_mainForm,
+                widgetType="combobox",
+                fieldName="brand",
+                enabledState="normal",
+                description="品牌")
+        self.compFields["spec"] = CompoundField(
+                parent=self.f_mainForm,
+                widgetType="combobox",
+                fieldName="spec",
+                enabledState="normal",
+                description="規格")
+        self.compFields["brand"].label.grid(row=2, column=0, padx=5, pady=5)
+        self.compFields["brand"].widget.grid(row=2, column=1, padx=5, pady=5)
+        self.compFields["spec"].label.grid(row=2, column=2, padx=5, pady=5)
+        self.compFields["spec"].widget.grid(row=2, column=3, padx=5, pady=5)
         # objID(entry), serial(entry)
-        self.l_objID = tk.Label(self.f_mainForm, text="物品編號：",
-                                font=_default_font)
-        self.objID = tk.StringVar()
-        self.ent_objID = tk.Entry(self.f_mainForm, width=20,
-                                  textvariable=self.objID,
-                                  font=_default_font)
-        self.l_objID.grid(row=3, column=0, padx=5, pady=5)
-        self.ent_objID.grid(row=3, column=1, padx=5, pady=5)
-        self.l_serial = tk.Label(self.f_mainForm, text="流水號：",
-                                 font=_default_font)
-        self.serial = tk.StringVar()
-        self.ent_serial = tk.Entry(self.f_mainForm, width=20,
-                                   textvariable=self.serial,
-                                   font=_default_font)
-        self.l_serial.grid(row=3, column=2, padx=5, pady=5)
-        self.ent_serial.grid(row=3, column=3, padx=5, pady=5)
-        # inDate(cb*3), keepYear(entry)
-        # a dedicated date frame
-        self.f_inDate = tk.Frame(self.f_mainForm)
-        self.l_inDate = tk.Label(self.f_inDate, text="取得日期：",
-                                 font=_default_font)
-        self.inDateY = tk.StringVar()
-        self.inDateM = tk.StringVar()
-        self.inDateD = tk.StringVar()
-        self.cb_inDateY = ttk.Combobox(self.f_inDate, width=3,
-                                       textvariable=self.inDateY,
-                                       font=_default_font)
-        self.l_inDateY = tk.Label(self.f_inDate, text="年",
-                                  font=_default_font)
-        self.cb_inDateM = ttk.Combobox(self.f_inDate, width=2,
-                                       textvariable=self.inDateM,
-                                       font=_default_font)
-        self.l_inDateM = tk.Label(self.f_inDate, text="月",
-                                  font=_default_font)
-        self.cb_inDateD = ttk.Combobox(self.f_inDate, width=2,
-                                       textvariable=self.inDateD,
-                                       font=_default_font)
-        self.l_inDateD = tk.Label(self.f_inDate, text="日",
-                                  font=_default_font)
-        # packing the date
-        self.l_inDate.pack(side="left")
-        self.cb_inDateY.pack(side="left")
-        self.l_inDateY.pack(side="left")
-        self.cb_inDateM.pack(side="left")
-        self.l_inDateM.pack(side="left")
-        self.cb_inDateD.pack(side="left")
-        self.l_inDateD.pack(side="left")
-        # pack date frame into main frame
-        self.f_inDate.grid(row=4, column=0, padx=5, pady=5, columnspan=2)
-        self.l_keepYear = tk.Label(self.f_mainForm, text="保存年限：",
-                                   font=_default_font)
-        self.keepYear = tk.StringVar()
-        self.ent_keepYear = tk.Entry(self.f_mainForm, width=20,
-                                     textvariable=self.keepYear,
-                                     font=_default_font)
-        self.l_keepYear.grid(row=4, column=2, padx=5, pady=5)
-        # entry
-        self.ent_keepYear.grid(row=4, column=3, padx=5, pady=5)
+        self.compFields["objID"] = CompoundField(
+                parent=self.f_mainForm,
+                widgetType="entry",
+                fieldName="object_ID",
+                enabledState="disabled",
+                description="物品編號")
+        self.compFields["serial"] = CompoundField(
+                parent=self.f_mainForm,
+                widgetType="entry",
+                fieldName="serial_ID",
+                enabledState="disabled",
+                description="流水號")
+        self.compFields["objID"].label.grid(row=3, column=0, padx=5, pady=5)
+        self.compFields["objID"].widget.grid(row=3, column=1, padx=5, pady=5)
+        self.compFields["serial"].label.grid(row=3, column=2, padx=5, pady=5)
+        self.compFields["serial"].widget.grid(row=3, column=3, padx=5, pady=5)
+        # acquire_date(dateframe), keepYear(entry)
+        self.compFields["purchase_date"] = CompoundField(
+                parent=self.f_mainForm,
+                widgetType="dateframe",
+                fieldName="purchase_date",
+                enabledState="readonly",
+                description="取得日期")
+        self.compFields["keep_year"] = CompoundField(
+                parent=self.f_mainForm,
+                widgetType="entry",
+                fieldName="keep_year",
+                enabledState="normal",
+                description="保存年限")
+        self.compFields["purchase_date"].label.grid(row=4, column=0,
+                                                    padx=5, pady=5)
+        self.compFields["purchase_date"].widget.grid(row=4, column=1,
+                                                     padx=5, pady=5)
+        self.compFields["keep_year"].label.grid(row=4, column=2,
+                                                padx=5, pady=5)
+        self.compFields["keep_year"].widget.grid(row=4, column=3,
+                                                 padx=5, pady=5)
         # price(entry), amount(entry)
-        self.l_price = tk.Label(self.f_mainForm, text="單價：",
-                                font=_default_font)
-        self.price = tk.StringVar()
-        self.ent_price = tk.Entry(self.f_mainForm, width=20,
-                                  textvariable=self.price,
-                                  font=_default_font)
-        self.l_price.grid(row=5, column=0, padx=5, pady=5)
-        self.ent_price.grid(row=5, column=1, padx=5, pady=5)
-        self.l_amount = tk.Label(self.f_mainForm, text="數量：",
-                                 font=_default_font)
-        self.amount = tk.StringVar()
-        self.ent_amount = tk.Entry(self.f_mainForm, width=20,
-                                   textvariable=self.amount,
-                                   font=_default_font)
-        self.l_amount.grid(row=5, column=2, padx=5, pady=5)
-        self.ent_amount.grid(row=5, column=3, padx=5, pady=5)
+        self.compFields["price"] = CompoundField(
+                parent=self.f_mainForm,
+                widgetType="entry",
+                fieldName="price",
+                enabledState="normal",
+                description="單價")
+        self.compFields["amount"] = CompoundField(
+                parent=self.f_mainForm,
+                widgetType="entry",
+                fieldName="amount",
+                enabledState="normal",
+                description="數量")
+        self.compFields["price"].label.grid(row=5, column=0, padx=5, pady=5)
+        self.compFields["price"].widget.grid(row=5, column=1, padx=5, pady=5)
+        self.compFields["amount"].label.grid(row=5, column=2, padx=5, pady=5)
+        self.compFields["amount"].widget.grid(row=5, column=3, padx=5, pady=5)
         # keepDept(combobox), place(combobox)
-        self.l_keepDept = tk.Label(self.f_mainForm, text="保管單位：",
-                                   font=_default_font)
-        self.keepDept = tk.StringVar()
-        self.cb_keepDept = ttk.Combobox(self.f_mainForm, width=20,
-                                        textvariable=self.keepDept,
-                                        font=_default_font)
-        self.l_keepDept.grid(row=6, column=0, padx=5, pady=5)
-        self.cb_keepDept.grid(row=6, column=1, padx=5, pady=5)
-        self.l_place = tk.Label(self.f_mainForm, text="存置地點：",
-                                font=_default_font)
-        self.place = tk.StringVar()
-        self.cb_place = ttk.Combobox(self.f_mainForm, width=20,
-                                     textvariable=self.place,
-                                     font=_default_font)
-        self.l_place.grid(row=6, column=2, padx=5, pady=5)
-        self.cb_place.grid(row=6, column=3, padx=5, pady=5)
+        self.compFields["keep_dept"] = CompoundField(
+                parent=self.f_mainForm,
+                widgetType="combobox",
+                fieldName="keep_department",
+                enabledState="normal",
+                description="保管單位")
+        self.compFields["place"] = CompoundField(
+                parent=self.f_mainForm,
+                widgetType="combobox",
+                fieldName="place",
+                enabledState="normal",
+                description="存置地點")
+        self.compFields["keep_dept"].label.grid(row=6, column=0,
+                                                padx=5, pady=5)
+        self.compFields["keep_dept"].widget.grid(row=6, column=1,
+                                                 padx=5, pady=5)
+        self.compFields["place"].label.grid(row=6, column=2, padx=5, pady=5)
+        self.compFields["place"].widget.grid(row=6, column=3, padx=5, pady=5)
         # keeper(combobox), useDept(combobox)
-        self.l_keeper = tk.Label(self.f_mainForm, text="保管人：",
-                                 font=_default_font)
-        self.keeper = tk.StringVar()
-        self.cb_keeper = ttk.Combobox(self.f_mainForm, width=20,
-                                      textvariable=self.keeper,
-                                      font=_default_font)
-        self.l_keeper.grid(row=7, column=0, padx=5, pady=5)
-        self.cb_keeper.grid(row=7, column=1, padx=5, pady=5)
-        self.l_useDept = tk.Label(self.f_mainForm, text="使用單位：",
-                                  font=_default_font)
-        self.useDept = tk.StringVar()
-        self.cb_useDept = ttk.Combobox(self.f_mainForm, width=20,
-                                       textvariable=self.useDept,
-                                       font=_default_font)
-        self.l_useDept.grid(row=7, column=2, padx=5, pady=5)
-        self.cb_useDept.grid(row=7, column=3, padx=5, pady=5)
+        self.compFields["keeper"] = CompoundField(
+                parent=self.f_mainForm,
+                widgetType="combobox",
+                fieldName="keeper",
+                enabledState="normal",
+                description="保管人")
+        self.compFields["use_dept"] = CompoundField(
+                parent=self.f_mainForm,
+                widgetType="combobox",
+                fieldName="use_department",
+                enabledState="normal",
+                description="使用單位")
+        self.compFields["keeper"].label.grid(row=7, column=0, padx=5, pady=5)
+        self.compFields["keeper"].widget.grid(row=7, column=1, padx=5, pady=5)
+        self.compFields["use_dept"].label.grid(row=7, column=2,
+                                               padx=5, pady=5)
+        self.compFields["use_dept"].widget.grid(row=7, column=3,
+                                                padx=5, pady=5)
         # remark(entry)
-        self.l_remark = tk.Label(self.f_mainForm, text="備註：",
-                                 font=_default_font)
-        self.remark = tk.StringVar()
-        self.ent_remark = tk.Entry(self.f_mainForm, width=50,
-                                   textvariable=self.remark,
-                                   font=_default_font)
-        self.l_remark.grid(row=8, column=0, padx=5, pady=5)
-        self.ent_remark.grid(row=8, column=1, padx=5, pady=5,
-                             columnspan=3, sticky="w")
+        self.compFields["remark"] = CompoundField(
+                parent=self.f_mainForm,
+                widgetType="entry",
+                fieldName="remark",
+                enabledState="normal",
+                description="備註")
+        self.compFields["remark"].widget.config(width=59)
+        self.compFields["remark"].label.grid(row=8, column=0, padx=5, pady=5)
+        self.compFields["remark"].widget.grid(row=8, column=1, padx=5, pady=5,
+                                              columnspan=3, sticky="w")
         # history form
         # a frame for the date
-        self.f_lastUnregisterDate = tk.Frame(self.f_historyForm)
-        self.l_lastUnregisterDate = tk.Label(self.f_lastUnregisterDate,
-                                             text="上次除帳：",
-                                             font=_default_font)
-        self.lastUnregisterDateY = tk.StringVar()
-        self.lastUnregisterDateM = tk.StringVar()
-        self.lastUnregisterDateD = tk.StringVar()
-        self.cb_lastUnregisterDateY = ttk.Combobox(
-            self.f_lastUnregisterDate, width=3,
-            textvariable=self.lastUnregisterDateY, font=_default_font)
-        self.l_lastUnregisterDateY = tk.Label(self.f_lastUnregisterDate,
-                                              text="年", font=_default_font)
-        self.cb_lastUnregisterDateM = ttk.Combobox(
-            self.f_lastUnregisterDate, width=2,
-            textvariable=self.lastUnregisterDateM, font=_default_font)
-        self.l_lastUnregisterDateM = tk.Label(self.f_lastUnregisterDate,
-                                              text="月", font=_default_font)
-        self.cb_lastUnregisterDateD = ttk.Combobox(
-            self.f_lastUnregisterDate, width=2,
-            textvariable=self.lastUnregisterDateD, font=_default_font)
-        self.l_lastUnregisterDateD = tk.Label(self.f_lastUnregisterDate,
-                                              text="日", font=_default_font)
-        # pack the date
-        self.l_lastUnregisterDate.pack(side="left")
-        self.cb_lastUnregisterDateY.pack(side="left")
-        self.l_lastUnregisterDateY.pack(side="left")
-        self.cb_lastUnregisterDateM.pack(side="left")
-        self.l_lastUnregisterDateM.pack(side="left")
-        self.cb_lastUnregisterDateD.pack(side="left")
-        self.l_lastUnregisterDateD.pack(side="left")
-        # pack the date frame
-        self.f_lastUnregisterDate.pack(side="left", padx=5, pady=5)
+        self.compFields["lastUnregisterDate"] = CompoundField(
+                parent=self.f_historyForm,
+                widgetType="dateframe",
+                fieldName="",
+                enabledState="readonly",
+                description="上次除帳")
+        self.compFields["lastUnregisterDate"].label.pack(
+                side="left", padx=5, pady=5)
+        self.compFields["lastUnregisterDate"].widget.pack(
+                side="left", padx=5, pady=5)
         # count of the unregister times
-        self.l_unregisterCount = tk.Label(self.f_historyForm, text="除帳次數",
-                                          font=_default_font)
-        self.unregisterCount = tk.StringVar()
-        self.ent_unregisterCount = tk.Entry(self.f_historyForm, width=4,
-                                            textvariable=self.unregisterCount,
-                                            font=_default_font)
-        self.l_unregisterCount.pack(side="left", padx=5, pady=5)
-        self.ent_unregisterCount.pack(side="left", padx=5, pady=5)
+        self.compFields["unregisterCount"] = CompoundField(
+                parent=self.f_historyForm,
+                widgetType="entry",
+                fieldName="",
+                enabledState="disabled",
+                description="除帳次數")
+        self.compFields["unregisterCount"].widget.config(width=3)
+        self.compFields["unregisterCount"].label.pack(side="left",
+                                                      padx=5, pady=5)
+        self.compFields["unregisterCount"].widget.pack(side="left",
+                                                       padx=5, pady=5)
         # amount of the unregistered
-        self.l_amountUnregistered = tk.Label(self.f_historyForm,
-                                             text="除帳數量：",
-                                             font=_default_font)
-        self.amountUnregistered = tk.StringVar()
-        self.ent_amountUnregistered = tk.Entry(
-            self.f_historyForm, width=4,
-            textvariable=self.amountUnregistered, font=_default_font)
-        self.l_amountUnregistered.pack(side="left", padx=5, pady=5)
-        self.ent_amountUnregistered.pack(side="left", padx=5, pady=5)
+        self.compFields["amountUnregistered"] = CompoundField(
+                parent=self.f_historyForm,
+                widgetType="entry",
+                fieldName="",
+                enabledState="disabled",
+                description="除帳數量")
+        self.compFields["amountUnregistered"].widget.config(width=3)
+        self.compFields["amountUnregistered"].label.pack(
+                side="left", padx=5, pady=5)
+        self.compFields["amountUnregistered"].widget.pack(
+                side="left", padx=5, pady=5)
         # unregister form self.f_unregisterForm
         # pack the first line into a frame
         self.f_firstLine = tk.Frame(self.f_unregisterForm)
-        # a frame for the date
-        self.f_unregisterDate = tk.Frame(self.f_firstLine)
-        self.l_unregisterDate = tk.Label(self.f_unregisterDate,
-                                         text="除帳日期：",
-                                         font=_default_font)
-        self.unregisterDateY = tk.StringVar()
-        self.unregisterDateM = tk.StringVar()
-        self.unregisterDateD = tk.StringVar()
-        self.cb_unregisterDateY = ttk.Combobox(
-            self.f_unregisterDate, width=3,
-            textvariable=self.unregisterDateY, font=_default_font)
-        self.l_unregisterDateY = tk.Label(self.f_unregisterDate,
-                                          text="年", font=_default_font)
-        self.cb_unregisterDateM = ttk.Combobox(
-            self.f_unregisterDate, width=2,
-            textvariable=self.unregisterDateM, font=_default_font)
-        self.l_unregisterDateM = tk.Label(self.f_unregisterDate,
-                                          text="月", font=_default_font)
-        self.cb_unregisterDateD = ttk.Combobox(
-            self.f_unregisterDate, width=2,
-            textvariable=self.unregisterDateD, font=_default_font)
-        self.l_unregisterDateD = tk.Label(self.f_unregisterDate,
-                                          text="日", font=_default_font)
-        # pack the date
-        self.l_unregisterDate.pack(side="left")
-        self.cb_unregisterDateY.pack(side="left")
-        self.l_unregisterDateY.pack(side="left")
-        self.cb_unregisterDateM.pack(side="left")
-        self.l_unregisterDateM.pack(side="left")
-        self.cb_unregisterDateD.pack(side="left")
-        self.l_unregisterDateD.pack(side="left")
-        # pack the date frame
-        self.f_unregisterDate.pack(side="left", padx=5, pady=5)
+        self.compFields["unregisterDate"] = CompoundField(
+                parent=self.f_firstLine,
+                widgetType="dateframe",
+                fieldName="",
+                enabledState="readonly",
+                description="除帳日期")
+        self.compFields["unregisterDate"].label.pack(side="left",
+                                                     padx=5, pady=5)
+        self.compFields["unregisterDate"].widget.pack(side="left",
+                                                     padx=5, pady=5)
         # count of the unregister
-        self.l_unregisterAmount = tk.Label(self.f_firstLine,
-                                           text="除帳數量", font=_default_font)
-        self.unregisterAmount = tk.StringVar()
-        self.ent_unregisterAmount = tk.Entry(
-            self.f_firstLine, width=4, textvariable=self.unregisterAmount,
-            font=_default_font)
-        self.l_unregisterAmount.pack(side="left", padx=5, pady=5)
-        self.ent_unregisterAmount.pack(side="left", padx=5, pady=5)
+        self.compFields["unregisterAmount"] = CompoundField(
+                parent=self.f_firstLine,
+                widgetType="entry",
+                fieldName="",
+                enabledState="normal",
+                description="除帳數量")
+        self.compFields["unregisterAmount"].widget.config(width=3)
+        self.compFields["unregisterAmount"].label.pack(side="left",
+                                                       padx=5, pady=5)
+        self.compFields["unregisterAmount"].widget.pack(side="left",
+                                                       padx=5, pady=5)
         # amount left
-        self.l_unregisterRemain = tk.Label(
-            self.f_firstLine, text="剩餘數量：", font=_default_font)
-        self.unregisterRemain = tk.StringVar()
-        self.ent_unregisterRemain = tk.Entry(
-            self.f_firstLine, width=4, textvariable=self.unregisterRemain,
-            font=_default_font)
-        self.l_unregisterRemain.pack(side="left", padx=5, pady=5)
-        self.ent_unregisterRemain.pack(side="left", padx=5, pady=5)
+        self.compFields["unregisterRemain"] = CompoundField(
+                parent=self.f_firstLine,
+                widgetType="entry",
+                fieldName="",
+                enabledState="disabled",
+                description="剩餘數量")
+        self.compFields["unregisterRemain"].widget.config(width=3)
+        self.compFields["unregisterRemain"].label.pack(side="left",
+                                                       padx=5, pady=5)
+        self.compFields["unregisterRemain"].widget.pack(side="left",
+                                                        padx=5, pady=5)
         # grid the f_firstLine
         self.f_firstLine.grid(row=0, column=0, columnspan=4)
+        # the unregister form frame
         # reason(combobox), postTreatment(combobox)
-        self.l_reason = tk.Label(self.f_unregisterForm,
-                                 text="除帳原因：",
-                                 font=_default_font)
-        self.reason = tk.StringVar()
-        self.cb_reason = ttk.Combobox(
-            self.f_unregisterForm, width=20,
-            textvariable=self.reason, font=_default_font)
-        self.l_reason.grid(row=1, column=0, padx=5, pady=5)
-        self.cb_reason.grid(row=1, column=1, padx=5, pady=5)
-        self.l_postTreatment = tk.Label(self.f_unregisterForm,
-                                        text="繳存地點：",
-                                        font=_default_font)
-        self.postTreatment = tk.StringVar()
-        self.cb_postTreatment = ttk.Combobox(
-            self.f_unregisterForm, width=20,
-            textvariable=self.postTreatment, font=_default_font)
-        self.l_postTreatment.grid(row=1, column=2, padx=5, pady=5)
-        self.cb_postTreatment.grid(row=1, column=3, padx=5, pady=5)
+        self.compFields["reason"] = CompoundField(
+                parent=self.f_unregisterForm,
+                widgetType="combobox",
+                fieldName="reason",
+                enabledState="normal",
+                description="除帳原因")
+        self.compFields["postTreatment"] = CompoundField(
+                parent=self.f_unregisterForm,
+                widgetType="combobox",
+                fieldName="post_treatment",
+                enabledState="normal",
+                description="繳存地點")
+        self.compFields["reason"].label.grid(row=1, column=0, padx=5, pady=5)
+        self.compFields["reason"].widget.grid(row=1, column=1, padx=5, pady=5)
+        self.compFields["postTreatment"].label.grid(row=1, column=2,
+                                                    padx=5, pady=5)
+        self.compFields["postTreatment"].widget.grid(row=1, column=3,
+                                                     padx=5, pady=5)
         # frame for the last line
         self.f_lastLine = tk.Frame(self.f_unregisterForm)
         # unregisterRemark(combobox)
-        self.l_unregisterRemark = tk.Label(self.f_lastLine, text="備註事項：",
-                                           font=_default_font)
-        self.unregisterRemark = tk.StringVar()
-        self.cb_unregisterRemark = ttk.Combobox(
-            self.f_lastLine, width=30, textvariable=self.unregisterRemark,
-            font=_default_font)
-        self.l_unregisterRemark.pack(side="left", padx=5)
-        self.cb_unregisterRemark.pack(side="left", padx=5)
+        self.compFields["unregisterRemark"] = CompoundField(
+                parent=self.f_lastLine,
+                widgetType="combobox",
+                fieldName="remark",
+                enabledState="normal",
+                description="備註事項")
+        self.compFields["unregisterRemark"].widget.config(width=30)
+        self.compFields["unregisterRemark"].label.pack(side="left", padx=5)
+        self.compFields["unregisterRemark"].widget.pack(side="left", padx=5)
         # buttons
         self.btn_search = ttk.Button(
             self.f_lastLine, text='檢索', style="unregister.TButton",
@@ -2203,9 +2162,11 @@ class unregister(tk.Toplevel):
         self.seperator3.pack(fill=tk.X)
         self.f_bottomNavigationBar.pack()
         # initialize the form
-        self.updateByState("none")
+        # TODO: This is going to be messy
+        #self.updateByState("none")
         # focus
         self.grab_set()
+        # get to the topmost but don't get in the way
         self.attributes("-topmost", "true")
         self.attributes("-topmost", "false")
 
@@ -2898,7 +2859,6 @@ class unregister(tk.Toplevel):
                 self.attributes("-topmost", "false")
                 self.title("篩選結果")
                 self.geometry("1200x600")
-                self.resizable(False, False)
                 # make a tree view
                 sb = tk.Scrollbar(self)
                 self.tv = ttk.Treeview(
@@ -3079,7 +3039,7 @@ def main():
     root = tk.Tk()
     # The combobox style for root, also seen in Index().__init__()
     root.option_add('*TCombobox*Listbox.font', _default_font)
-    test = Register(root)
+    test = Unregister(root)
     test.protocol("WM_DELETE_WINDOW", lambda: test.parent.destroy())
     root.mainloop()
     root.quit()

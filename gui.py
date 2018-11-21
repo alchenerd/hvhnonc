@@ -2011,8 +2011,8 @@ class Unregister(tk.Toplevel):
         self.compFields["lastUnregisterDate"] = CompoundField(
                 parent=self.f_historyForm,
                 widgetType="dateframe",
-                fieldName="",
-                enabledState="readonly",
+                fieldName="out_date",
+                enabledState="normal",
                 description="上次除帳")
         self.compFields["lastUnregisterDate"].label.pack(
                 side="left", padx=5, pady=5)
@@ -2048,8 +2048,8 @@ class Unregister(tk.Toplevel):
         self.compFields["unregisterDate"] = CompoundField(
                 parent=self.f_firstLine,
                 widgetType="dateframe",
-                fieldName="",
-                enabledState="readonly",
+                fieldName="out_date",
+                enabledState="normal",
                 description="除帳日期")
         self.compFields["unregisterDate"].label.pack(side="left",
                                                      padx=5, pady=5)
@@ -2162,8 +2162,7 @@ class Unregister(tk.Toplevel):
         self.seperator3.pack(fill=tk.X)
         self.f_bottomNavigationBar.pack()
         # initialize the form
-        # TODO: This is going to be messy
-        #self.updateByState("none")
+        self.updateByState("none")
         # focus
         self.grab_set()
         # get to the topmost but don't get in the way
@@ -2174,47 +2173,19 @@ class Unregister(tk.Toplevel):
         self.state = state
         if state == "none":
             # set all widgets as disabled
-            widgets = (self.cb_category, self.cb_subcategory, self.cb_name,
-                       self.cb_unit, self.cb_brand, self.cb_spec,
-                       self.ent_objID, self.ent_serial,
-                       self.cb_inDateY,
-                       self.cb_inDateM,
-                       self.cb_inDateD,
-                       self.ent_keepYear, self.ent_price, self.ent_amount,
-                       self.cb_keepDept, self.cb_place, self.cb_keeper,
-                       self.cb_useDept, self.ent_remark,
-                       self.cb_lastUnregisterDateY,
-                       self.cb_lastUnregisterDateM,
-                       self.cb_lastUnregisterDateD,
-                       self.ent_unregisterCount, self.ent_amountUnregistered,
-                       self.cb_unregisterDateY,
-                       self.cb_unregisterDateM,
-                       self.cb_unregisterDateD,
-                       self.ent_unregisterAmount, self.ent_unregisterRemain,
-                       self.cb_reason, self.cb_postTreatment,
-                       self.cb_unregisterRemark, )
-            for widget in widgets:
-                widget.config(state="disabled")
+            for key, cf in self.compFields.items():
+                if "date" in key.lower():
+                    cf.widget.cb_y.config(state="disabled")
+                    cf.widget.cb_m.config(state="disabled")
+                    cf.widget.cb_d.config(state="disabled")
+                else:
+                    cf.widget.config(state="disabled")
             # clear them
-            textVariables = (self.category, self.subcategory, self.name,
-                             self.unit, self.brand, self.spec, self.objID,
-                             self.serial,
-                             self.inDateY, self.inDateM, self.inDateD,
-                             self.keepYear, self.price, self.amount,
-                             self.keepDept, self.place, self.keeper,
-                             self.useDept, self.remark,
-                             self.lastUnregisterDateY,
-                             self.lastUnregisterDateM,
-                             self.lastUnregisterDateD,
-                             self.unregisterCount, self.amountUnregistered,
-                             self.unregisterDateY,
-                             self.unregisterDateM,
-                             self.unregisterDateD,
-                             self.unregisterAmount, self.unregisterRemain,
-                             self.reason, self.postTreatment,
-                             self.unregisterRemark, )
-            for var in textVariables:
-                var.set("")
+            for key, cf in self.compFields.items():
+                if "date" in key.lower():
+                    cf.widget.clear()
+                else:
+                    cf.variable.set("")
         else:
             # expect an int ID
             try:
@@ -2233,33 +2204,35 @@ class Unregister(tk.Toplevel):
                 return
             # print inBook values to the widgets
             row = self.inBook[inIndex]
-            self.category.set(row[3])
-            self.subcategory.set(row[4])
-            self.name.set(row[5])
-            self.unit.set(row[8])
-            self.brand.set(row[6])
-            self.spec.set(row[7])
-            self.objID.set(row[1])
-            self.serial.set(row[2])
+            self.compFields["category"].variable.set(row[3])
+            self.compFields["subcategory"].variable.set(row[4])
+            self.compFields["name"].variable.set(row[5])
+            self.compFields["unit"].variable.set(row[8])
+            self.compFields["brand"].variable.set(row[6])
+            self.compFields["spec"].variable.set(row[7])
+            self.compFields["objID"].variable.set(row[1])
+            self.compFields["serial"].variable.set(row[2])
             indate = row[9].split("-")
-            self.inDateY.set(str(int(indate[0]) - 1911))
-            self.inDateM.set(indate[1])
-            self.inDateD.set(indate[2])
-            self.keepYear.set(row[14])
-            self.price.set(row[11])
-            self.amount.set(row[12])
-            self.keepDept.set(row[16])
-            self.place.set(row[13])
-            self.keeper.set(row[18])
-            self.useDept.set(row[17])
-            self.remark.set(row[19])
+            self.compFields["purchase_date"].widget.y.set(
+                    str(int(indate[0]) - 1911))
+            self.compFields["purchase_date"].widget.m.set(indate[1])
+            self.compFields["purchase_date"].widget.d.set(indate[2])
+            self.compFields["purchase_date"].widget.updateVar()
+            self.compFields["keep_year"].variable.set(row[14])
+            self.compFields["price"].variable.set(row[11])
+            self.compFields["amount"].variable.set(row[12])
+            self.compFields["keep_dept"].variable.set(row[16])
+            self.compFields["place"].variable.set(row[13])
+            self.compFields["keeper"].variable.set(row[18])
+            self.compFields["use_dept"].variable.set(row[17])
+            self.compFields["remark"].variable.set(row[19])
             # initialization
             self.initForm()
             outIndex = self.lookupIndexInBook(state, self.outBook)
             # if not in outbook print 0s
             if outIndex == None:
-                self.unregisterCount.set("0")
-                self.amountUnregistered.set("0")
+                self.compFields["unregisterCount"].variable.set("0")
+                self.compFields["amountUnregistered"].variable.set("0")
             # if in outBook, fetch the latest row and count of that ID
             else:
                 # upper section
@@ -2270,20 +2243,27 @@ class Unregister(tk.Toplevel):
                 cursor.execute(sqlstr, (self.state, ))
                 data = cursor.fetchone()
                 # get count
-                self.unregisterCount.set(str(data[0]))
+                self.compFields["unregisterCount"].variable.set(str(data[0]))
                 # get date
                 outDate = data[1].split("-")
-                self.lastUnregisterDateY.set(str(int(outDate[0]) - 1911))
-                self.lastUnregisterDateM.set(outDate[1])
-                self.lastUnregisterDateD.set(outDate[2])
+                self.compFields["lastUnregisterDate"].widget.y.set(
+                        str(int(outDate[0]) - 1911))
+                self.compFields["lastUnregisterDate"].widget.m.set(outDate[1])
+                self.compFields["lastUnregisterDate"].widget.d.set(outDate[2])
+                self.compFields["lastUnregisterDate"].widget.updateVar()
                 # get sum
-                self.amountUnregistered.set(str(data[2]))
+                self.compFields["amountUnregistered"].variable.set(
+                        str(data[2]))
                 # these are the same as the lastest date
-                self.unregisterDateY.set(self.lastUnregisterDateY.get())
-                self.unregisterDateM.set(self.lastUnregisterDateM.get())
-                self.unregisterDateD.set(self.lastUnregisterDateD.get())
+                self.compFields["unregisterDate"].widget.y.set(
+                        self.compFields["lastUnregisterDate"].widget.y.get())
+                self.compFields["unregisterDate"].widget.m.set(
+                        self.compFields["lastUnregisterDate"].widget.m.get())
+                self.compFields["unregisterDate"].widget.d.set(
+                        self.compFields["lastUnregisterDate"].widget.d.get())
+                self.compFields["unregisterDate"].widget.updateVar()
                 # get unregistered amount and its total
-                sqlstr = ("select amount,  sum(amount) "
+                sqlstr = ("select amount, sum(amount) "
                           "from  hvhnonc_out "
                           "where in_ID=?"
                           "order by out_date desc;")
@@ -2294,92 +2274,109 @@ class Unregister(tk.Toplevel):
                           "from  hvhnonc_in "
                           "where ID=?;")
                 cursor.execute(sqlstr, (self.state, ))
-                TotalInAmount = int(cursor.fetchone()[0])
-                # unregisterAmount is the last amount
-                self.unregisterAmount.set(lastAmount)
-                # remain is in.amount-sum(out.amount)
-                self.unregisterRemain.set(str(TotalInAmount - TotalOutAmount))
+                # remain is in.amount-sum(out.amount)-unregisterAmount
+                # Auto update the unregisterRemain
+                # by tracing write on unregisterAmount
+                self.compFields["unregisterAmount"].variable.trace(
+                        "w", self.updateRemain)
+                # unregisterAmount is 0 by default
+                self.compFields["unregisterAmount"].variable.set("0")
+
+                # TODO Working here
                 sqlstr = ("select reason,  post_treatment, remark "
                           "from  hvhnonc_out "
                           "where in_ID=?"
                           "order by out_date desc limit 1;")
                 cursor.execute(sqlstr, (self.state, ))
                 data = cursor.fetchone()
-                self.reason.set(data[0])
-                self.postTreatment.set(data[1])
-                self.unregisterRemark.set(data[2])
+                self.compFields["reason"].variable.set(data[0])
+                self.compFields["postTreatment"].variable.set(data[1])
+                self.compFields["unregisterRemark"].variable.set(data[2])
                 connect.close()
+
+    # The callback to auto update unregisterRemain
+    def updateRemain(self, n, m, x):
+        if x is not 'w':
+            return
+        # Check for null
+        if not (self.compFields["amount"].variable.get()
+                and self.compFields["amountUnregistered"].variable.get()
+                and self.compFields["unregisterAmount"].variable.get()):
+            return
+        bought = int(self.compFields["amount"].variable.get())
+        gone = int(self.compFields["amountUnregistered"].variable.get())
+        typed = int(self.compFields["unregisterAmount"].variable.get())
+        newAmount = bought - gone - typed
+        if newAmount < 0:
+            messagebox.showerror("錯誤", "除帳剩餘數量不得小於0!", parent=self)
+            self.compFields["unregisterAmount"].variable.set("0")
+        else:
+            self.compFields["unregisterRemain"].variable.set(str(newAmount))
 
     def initForm(self):
         # enable some widgets
-        self.cb_unregisterDateY.config(state="normal")
-        self.cb_unregisterDateM.config(state="normal")
-        self.cb_unregisterDateD.config(state="normal")
-        self.ent_unregisterAmount.config(state="normal")
-        self.cb_reason.config(state="normal")
-        self.cb_postTreatment.config(state="normal")
-        self.cb_unregisterRemark.config(state="normal")
+        tempFields = (
+                self.compFields["unregisterDate"],
+                self.compFields["unregisterAmount"],
+                self.compFields["reason"],
+                self.compFields["postTreatment"],
+                self.compFields["unregisterRemark"])
+        for field in tempFields:
+            if field.widgetType == "dateframe":
+                field.widget.cb_y.config(state=field.enabledState)
+                field.widget.cb_m.config(state=field.enabledState)
+                field.widget.cb_d.config(state=field.enabledState)
+            else:
+                field.widget.config(state=field.enabledState)
         # set lower part to ""
-        self.unregisterCount.set("")
-        self.amountUnregistered.set("")
-        self.lastUnregisterDateY.set("")
-        self.lastUnregisterDateM.set("")
-        self.lastUnregisterDateD.set("")
-        self.unregisterDateY.set("")
-        self.unregisterDateM.set("")
-        self.unregisterDateD.set("")
-        self.unregisterAmount.set("")
-        self.unregisterRemain.set("")
-        self.reason.set("")
-        self.postTreatment.set("")
-        self.unregisterRemark.set("")
-        # combobox values
-        # unregisterDate: fill in the date choices
-        thisYear = dt.datetime.now().year - 1911
-        years = list(reversed(range(1, thisYear + 1)))
-        self.cb_unregisterDateY.config(values=years)
-        self.cb_unregisterDateM.config(values=list(range(1, 13)))
-        self.cb_unregisterDateD.config(values=list(range(1, 32)))
-        # The others: read in cache and update
+        # date fields
+        self.compFields["lastUnregisterDate"].widget.clear()
+        self.compFields["unregisterDate"].widget.setAsToday()
+        tempFields = (
+                self.compFields["unregisterCount"],
+                self.compFields["amountUnregistered"],
+                self.compFields["unregisterAmount"],
+                self.compFields["unregisterRemain"],
+                self.compFields["reason"],
+                self.compFields["postTreatment"],
+                self.compFields["unregisterRemark"])
+        for field in tempFields:
+            field.variable.set("")
+        # Read in cache and update
         connect, cursor = _getConnection(_default_database)
         sqlstr = ("select change_value "
                   "from hvhnonc_out_cache "
                   "where this_ID=? "
                   "and change_ID=?"
                   "order by rowid desc limit 30;")
-        cursor.execute(sqlstr, ("無", getFieldIDByName("除帳原因")))
-        rows = cursor.fetchall()
-        self.cb_reason.config(values=rows)
-        cursor.execute(sqlstr, ("無", getFieldIDByName("繳存地點")))
-        rows = cursor.fetchall()
-        self.cb_postTreatment.config(values=rows)
-        cursor.execute(sqlstr, ("無", getFieldIDByName("除帳備註")))
-        rows = cursor.fetchall()
-        self.cb_unregisterRemark.config(values=rows)
+        tempFields = (
+                self.compFields["reason"],
+                self.compFields["postTreatment"],
+                self.compFields["unregisterRemark"])
+        feildIDs = (
+                getFieldIDByName("除帳原因"),
+                getFieldIDByName("繳存地點"),
+                getFieldIDByName("除帳備註"),)
+        rows = []
+        for ID in feildIDs:
+            cursor.execute(sqlstr, (getFieldIDByName("無"), str(ID)))
+            rows.append(cursor.fetchall())
+        for i, field in enumerate(tempFields):
+            field.widget.config(values=rows[i])
         connect.close()
 
     def lookupIndexInBook(self, state, book):
-        try:
-            int(state)
-        except ValueError:
-            return None
         if book == self.outBook:
             i = 1
-        else:
+        elif book == self.inBook:
             i = 0
+        else:
+            raise Exception("No such book: ", book)
+            return None
         for index, sublist in enumerate(book):
             if int(state) in (sublist[i],):
                 return index
         return None
-
-    def getOutbookID(self, state: str):
-        try:
-            int(state)
-        except ValueError:
-            return None
-        for index, sublist in enumerate(self.outBook):
-            if int(state) in (sublist[1],):
-                return sublist[0]
 
     def quitMe(self):
         self.destroy()
@@ -2414,7 +2411,7 @@ class Unregister(tk.Toplevel):
                       "from hvhnonc_out_cache "
                       "where change_ID=? "
                       "order by rowid desc limit 30;")
-            cursor.execute(sqlstr, getFieldIDByName("檢索"))
+            cursor.execute(sqlstr, (getFieldIDByName("檢索"),))
             rows = cursor.fetchall()
             history = []
             for row in rows:
@@ -2657,13 +2654,13 @@ class Unregister(tk.Toplevel):
 
     def onButtonFormClick(self):
         # basically the onButtonSelectClick but only look for hchnonc_out
-        self.selectFilter(self, source="out")
+        self.SelectFilter(self, source="out")
 
     def onButtonSelectClick(self):
         # open a select filter toplevel
-        self.selectFilter(self, source="both")
+        self.SelectFilter(self, source="both")
 
-    class selectFilter(tk.Toplevel):
+    class SelectFilter(tk.Toplevel):
         def __init__(self, parent, source: str = "both", *args, **kwargs):
             self.whereToLook = source
             s = ttk.Style()
@@ -2679,80 +2676,90 @@ class Unregister(tk.Toplevel):
             self.wdict = {}
             # category
             self.wdict["category"] = CompoundField(
-                self, "Combobox", "物品大類", "category", "readonly")
+                    parent=self, widgetType="combobox", description="物品大類",
+                    fieldName="category", enabledState="readonly")
             self.wdict["category"].label.grid(row=0, column=0,
                                               padx=5, pady=5)
             self.wdict["category"].widget.grid(row=0, column=1,
                                                padx=5, pady=5)
             # subcategory
             self.wdict["subcategory"] = CompoundField(
-                self, "Combobox", "物品分類", "subcategory", "readonly")
+                parent=self, widgetType="combobox", description="物品分類",
+                fieldName="subcategory", enabledState="readonly")
             self.wdict["subcategory"].label.grid(row=0, column=2,
                                                  padx=5, pady=5)
             self.wdict["subcategory"].widget.grid(row=0, column=3,
                                                   padx=5, pady=5)
             # name
             self.wdict["name"] = CompoundField(
-                self, "Combobox", "物品名稱", "name", "normal")
+                parent=self, widgetType="combobox", description="物品名稱",
+                fieldName="name", enabledState="normal")
             self.wdict["name"].label.grid(row=1, column=0, padx=5, pady=5)
             self.wdict["name"].widget.grid(row=1, column=1, padx=5, pady=5)
             # brand
             self.wdict["brand"] = CompoundField(
-                self, "Combobox", "品牌", "brand", "normal")
+                parent=self, widgetType="combobox", description="品牌",
+                fieldName="brand", enabledState="normal")
             self.wdict["brand"].label.grid(row=1, column=2, padx=5, pady=5)
             self.wdict["brand"].widget.grid(row=1, column=3, padx=5, pady=5)
             # spec
             self.wdict["spec"] = CompoundField(
-                self, "Combobox", "規格", "spec", "normal")
+                parent=self, widgetType="combobox", description="規格",
+                fieldName="spec", enabledState="normal")
             self.wdict["spec"].label.grid(row=2, column=0, padx=5, pady=5)
             self.wdict["spec"].widget.grid(row=2, column=1, padx=5, pady=5)
             # price
             self.wdict["price"] = CompoundField(
-                self, "Entry", "單價", "price", "normal", opt="minmax")
-            self.wdict["price"].widgetMin.config(width=10)
-            self.wdict["price"].widgetMax.config(width=10)
+                parent=self, widgetType="entry", description="單價",
+                fieldName="price", enabledState="normal", span=True)
+            self.wdict["price"].widget.min.config(width=10)
+            self.wdict["price"].widget.max.config(width=10)
             self.wdict["price"].label.grid(row=2, column=2, padx=5, pady=5)
             self.wdict["price"].widget.grid(row=2, column=3, padx=5, pady=5)
             # purchase_date
             self.wdict["purchase_date"] = CompoundField(
-                self, "DateFrame", "日期範圍", "purchase_date", "normal",
-                opt="minmax")
-            self.wdict["purchase_date"].widgetMin.clear()
-            self.wdict["purchase_date"].widgetMax.clear()
+                parent=self, widgetType="dateframe", description="日期範圍",
+                fieldName="purchase_date", enabledState="normal", span=True)
+            self.wdict["purchase_date"].widget.min.clear()
+            self.wdict["purchase_date"].widget.max.clear()
             self.wdict["purchase_date"].label.grid(row=3, column=0, padx=5, pady=5)
             self.wdict["purchase_date"].widget.grid(row=3, column=1, padx=5, pady=5,
                                               columnspan=3, sticky="w")
             # acquire_date
             self.wdict["acquire_date"] = CompoundField(
-                self, "DateFrame", "建帳日期", "acquire_date", "normal",
-                opt="minmax")
-            self.wdict["acquire_date"].widgetMin.clear()
-            self.wdict["acquire_date"].widgetMax.clear()
+                parent=self, widgetType="dateframe", description="建帳日期",
+                fieldName="acquire_date", enabledState="normal", span=True)
+            self.wdict["acquire_date"].widget.min.clear()
+            self.wdict["acquire_date"].widget.max.clear()
             self.wdict["acquire_date"].label.grid(row=4, column=0, padx=5, pady=5)
             self.wdict["acquire_date"].widget.grid(
                 row=4, column=1, padx=5, pady=5, columnspan=3, sticky="w")
             # keep_department
             self.wdict["keep_department"] = CompoundField(
-                self, "Combobox", "保管單位", "keep_department", "normal")
+                parent=self, widgetType="combobox", description="保管單位",
+                fieldName="keep_department", enabledState="normal")
             self.wdict["keep_department"].label.grid(
                 row=5, column=0, padx=5, pady=5)
             self.wdict["keep_department"].widget.grid(
                 row=5, column=1, padx=5, pady=5)
             # place
             self.wdict["place"] = CompoundField(
-                self, "Combobox", "存置地點", "place", "normal")
+                parent=self, widgetType="combobox", description="存置地點",
+                fieldName="place", enabledState="normal")
             self.wdict["place"].label.grid(row=5, column=2, padx=5, pady=5)
             self.wdict["place"].widget.grid(row=5, column=3, padx=5, pady=5)
             # use_department
             self.wdict["use_department"] = CompoundField(
-                self, "Combobox", "使用單位", "use_department", "normal")
+                parent=self, widgetType="combobox", description="使用單位",
+                fieldName="use_department", enabledState="normal")
             self.wdict["use_department"].label.grid(
                 row=6, column=0, padx=5, pady=5)
             self.wdict["use_department"].widget.grid(
                 row=6, column=1, padx=5, pady=5)
             # keeper
             self.wdict["keeper"] = CompoundField(
-                self, "Combobox", "保管人", "keeper", "normal")
+                parent=self, widgetType="combobox", description="保管人",
+                fieldName="keeper", enabledState="normal")
             self.wdict["keeper"].label.grid(row=6, column=2, padx=5, pady=5)
             self.wdict["keeper"].widget.grid(row=6, column=3, padx=5, pady=5)
             # cancel and submit buttons
@@ -2765,6 +2772,7 @@ class Unregister(tk.Toplevel):
                 command=self.onSubmitClick)
             self.btn_submit.grid(row=7, column=3, padx=5, pady=5)
             # init form
+            # TODO: Fix this function
             self.initForm()
             # focus
             self.grab_set()
@@ -2772,14 +2780,16 @@ class Unregister(tk.Toplevel):
         def initForm(self):
             # set all textVariables to ""
             for k, v in self.wdict.items():
-                if v.widgetType == "Dateframe":
+                if v.widgetType == "dateframe":
                     try:
-                        if v.opt == "minmax":
-                            v.widgetMin.clear()
-                            v.widgetMax.clear()
+                        v.widget.min.clear()
+                        v.widget.max.clear()
                     except NameError:
                         v.widget.clear()
-                else:
+                try:
+                    v.variable["min"].set("")
+                    v.variable["max"].set("")
+                except (KeyError, TypeError):
                     v.variable.set("")
             # fetch cache for view
             for k, v in self.wdict.items():
@@ -2813,7 +2823,7 @@ class Unregister(tk.Toplevel):
                           "select ID "
                           "from hvhnonc_category "
                           "where description=?);")
-                param = (self.wdict["category"].variable.get(), )
+                param = (self.wdict["category"].variable.get(),)
                 cursor.execute(sqlstr, param)
                 rows = cursor.fetchall()
                 subcatagories = []
@@ -2826,11 +2836,8 @@ class Unregister(tk.Toplevel):
                           "from hvhnonc_out_cache "
                           "where this_ID='0' and "
                           "this_value='none' and "
-                          "change_ID=("
-                          "select ID "
-                          "from hvhnonc_fields "
-                          "where description=?)")
-                param = (cf.description, )
+                          "change_ID=?;")
+                param = (getFieldIDByName(cf.description),)
                 cursor.execute(sqlstr, param)
                 rows = cursor.fetchall()
                 cf.widget.config(values=rows)
@@ -2887,27 +2894,37 @@ class Unregister(tk.Toplevel):
                 q_footer = "order by purchase_date desc;"
                 q_where = "where ("
                 for key, cf in parent.wdict.items():
-                    # minmax
-                    if hasattr(cf, "opt") and cf.opt == "minmax":
-                        # in date range
-                        if cf.widgetType == "Dateframe":
-                            if (cf.widgetMin.variable.get() == ""
-                                    and cf.widgetMax.variable.get() == ""):
+                    # span == True
+                    try:
+                        cf.widget.tilde
+                        if cf.widgetType == "dateframe":
+                            # continue if there is nothing
+                            if not (cf.widget.min.variable.get()
+                                    or cf.widget.max.variable.get()):
                                 continue
                             tempMin = "1911-01-01"
                             tempMax = "date('now')"
-                            if cf.widgetMin.variable.get() != "":
-                                tempMin = cf.widgetMin.variable.get()
-                            if cf.widgetMax.variable.get() != "":
-                                tempMax = cf.widgetMax.variable.get()
-                            q_where += ("(strftime('%Y-%m-%d', {}) "
-                                        "between ? and ?) and ".format(key))
+                            if cf.widget.min.variable.get():
+                                tempMin = cf.widget.min.variable.get()
+                                # convert to ROC years
+                                year = int(tempMin.split('-')[0])
+                                tempMin = tempMin.replace(
+                                        str(year), str(year + 1911))
+                            if cf.widget.max.variable.get():
+                                tempMax = cf.widget.max.variable.get()
+                                # convert to ROC years
+                                year = int(tempMin.split('-')[0])
+                                tempMin = tempMin.replace(
+                                        str(year), str(year + 1911))
+                            q_where += (
+                                    "(strftime('%Y-%m-%d', {}) "
+                                    "between ? and ?) and ".format(key))
                             params.append(tempMin)
                             params.append(tempMax)
-                        # in price range
-                        elif cf.widgetType == "Entry":
-                            tMin = cf.variableMin.get()
-                            tMax = cf.variableMax.get()
+                        # entry and span == True
+                        elif cf.widgetType == "entry":
+                            tMin = cf.variable["min"].get()
+                            tMax = cf.variable["max"].get()
                             if (tMin != "" and tMax != ""):
                                 q_where += ("({0} >= ? and "
                                             "{0} <= ?) and ").format(key)
@@ -2919,19 +2936,11 @@ class Unregister(tk.Toplevel):
                             elif (tMin == "" and tMax != ""):
                                 q_where += ("{0} <= ? and ".format(key))
                                 params.append(tMax)
-                            else:
-                                pass
-                    elif (cf.variable.get() != ""):
-                        q_where += ("{} like ? and ".format(key))
-                        params.append("%{}%".format(cf.variable.get()))
-                    elif cf.widgetType in ("Combobox", "Entry"):
-                        pass
-                    else:
-                        messagebox.showerror(
-                            "err",
-                            "unknown widget {0}:{1} in wdict".format(
-                                key, cf.widgetType),
-                            parent=self)
+                    except AttributeError:
+                        # no span
+                        if cf.variable.get():
+                            q_where += ("{} like ? and ".format(key))
+                            params.append("%{}%".format(cf.variable.get()))
                 # where(1) if no input
                 q_where += "1) "
                 q_in_full = q_in + q_where

@@ -374,18 +374,18 @@ class Register(tk.Toplevel):
         self.compFields["spec"] = CompoundField(
             parent=self, widgetType="combobox", description="規格",
             fieldName="spec", enabledState="normal")
-        self.compFields["objID"] = CompoundField(
+        self.compFields["object_ID"] = CompoundField(
             parent=self, widgetType="entry",
-            description="物品編號", fieldName="objID",
+            description="物品編號", fieldName="object_ID",
             enabledState="disabled")
-        self.compFields["objID"].widget.config(state="disabled")
-        # serial frame
+        self.compFields["object_ID"].widget.config(state="disabled")
+        # serial_ID frame
         self.f_serial = tk.Frame(self)
-        self.compFields["serial"] = CompoundField(
+        self.compFields["serial_ID"] = CompoundField(
             parent=self.f_serial, widgetType="entry", description="流水號",
-            fieldName="serial", enabledState="disabled")
-        self.compFields["serial"].widget.config(width=5)
-        self.compFields["serial"].widget.config(state="disabled")
+            fieldName="serial_ID", enabledState="disabled")
+        self.compFields["serial_ID"].widget.config(width=5)
+        self.compFields["serial_ID"].widget.config(state="disabled")
         self.btn_lookupSerial = ttk.Button(
             self.f_serial, text="流水號總覽", style="register.TButton",
             command=self.lookupSerial)
@@ -434,12 +434,12 @@ class Register(tk.Toplevel):
             self.compFields["keep_year"].baseFrame, text="年",
             font=_default_font)
         # compound field
-        self.compFields["keep_dept"] = CompoundField(
+        self.compFields["keep_department"] = CompoundField(
             parent=self, widgetType="combobox", description="保管單位",
-            fieldName="keep_dept", enabledState="normal")
-        self.compFields["use_dept"] = CompoundField(
+            fieldName="keep_department", enabledState="normal")
+        self.compFields["use_department"] = CompoundField(
             parent=self, widgetType="combobox", description="使用單位",
-            fieldName="use_dept", enabledState="normal")
+            fieldName="use_department", enabledState="normal")
         self.compFields["keeper"] = CompoundField(
             parent=self, widgetType="combobox", description="保管人",
             fieldName="keeper", enabledState="normal")
@@ -498,11 +498,13 @@ class Register(tk.Toplevel):
         self.compFields["brand"].widget.grid(row=2, column=1, padx=5, pady=5)
         self.compFields["spec"].label.grid(row=2, column=2, padx=5, pady=5)
         self.compFields["spec"].widget.grid(row=2, column=3, padx=5, pady=5)
-        self.compFields["objID"].label.grid(row=3, column=0, padx=5, pady=5)
-        self.compFields["objID"].widget.grid(row=3, column=1, padx=5, pady=5)
-        # serial frame
-        self.compFields["serial"].label.pack(side='left', padx=15)
-        self.compFields["serial"].widget.pack(side='left', padx=15)
+        self.compFields["object_ID"].label.grid(
+            row=3, column=0, padx=5, pady=5)
+        self.compFields["object_ID"].widget.grid(
+            row=3, column=1, padx=5, pady=5)
+        # serial_ID frame
+        self.compFields["serial_ID"].label.pack(side='left', padx=15)
+        self.compFields["serial_ID"].widget.pack(side='left', padx=15)
         self.btn_lookupSerial.pack(side='left', padx=15)
         self.f_serial.grid(row=3, column=2, columnspan=2, padx=5, pady=5)
         # continue gridding
@@ -533,13 +535,13 @@ class Register(tk.Toplevel):
         self.compFields["keep_year"].baseFrame.grid(
             row=6, column=3, padx=5, pady=5)
         # continue gridding
-        self.compFields["keep_dept"].label.grid(
+        self.compFields["keep_department"].label.grid(
             row=7, column=0, padx=5, pady=5)
-        self.compFields["keep_dept"].widget.grid(
+        self.compFields["keep_department"].widget.grid(
             row=7, column=1, padx=5, pady=5)
-        self.compFields["use_dept"].label.grid(
+        self.compFields["use_department"].label.grid(
             row=7, column=2, padx=5, pady=5)
-        self.compFields["use_dept"].widget.grid(
+        self.compFields["use_department"].widget.grid(
             row=7, column=3, padx=5, pady=5)
         self.compFields["keeper"].label.grid(row=8, column=0, padx=5, pady=5)
         self.compFields["keeper"].widget.grid(row=8, column=1, padx=5, pady=5)
@@ -619,7 +621,7 @@ class Register(tk.Toplevel):
                 self.initializeAllField()
                 record = self.book[self.index]
                 # set values
-                things = ["objID", "serial", "category", "subcategory",
+                things = ["object_ID", "serial_ID", "category", "subcategory",
                           "name", "brand", "spec", "unit"]
                 for i, v in enumerate(things):
                     # skip record[0], it's unique ID
@@ -642,7 +644,7 @@ class Register(tk.Toplevel):
                 w.updateVar()
                 # set more values
                 things = ["price", "amount", "place", "keep_year", "source",
-                          "keep_dept", "use_dept", "keeper", "remark"]
+                          "keep_department", "use_department", "keeper", "remark"]
                 for i, v in enumerate(things):
                     ii = i + 11
                     self.compFields[v].variable.set(str(record[ii]))
@@ -692,10 +694,10 @@ class Register(tk.Toplevel):
         self.compFields["place"].widget.config(values=places)
         cursor.execute(sqlstr, (getFieldIDByName("保管單位"), ))
         keep_depts = cursor.fetchall()
-        self.compFields["keep_dept"].widget.config(values=keep_depts)
+        self.compFields["keep_department"].widget.config(values=keep_depts)
         cursor.execute(sqlstr, (getFieldIDByName("使用單位"), ))
         use_depts = cursor.fetchall()
-        self.compFields["use_dept"].widget.config(values=use_depts)
+        self.compFields["use_department"].widget.config(values=use_depts)
         cursor.execute(sqlstr, (getFieldIDByName("保管人"), ))
         keepers = cursor.fetchall()
         self.compFields["keeper"].widget.config(values=keepers)
@@ -806,7 +808,7 @@ class Register(tk.Toplevel):
             itemCount = cursor.fetchone()
             self.title("序號: 共{}筆".format(itemCount[0]))
             self.geometry("640x500")
-            # get all objIDs and sqlIDs
+            # get all object_IDs and sqlIDs
             sqlstr = ("select object_ID, name, count(*) "
                       "from hvhnonc_in "
                       "group by object_ID, name "
@@ -966,7 +968,7 @@ class Register(tk.Toplevel):
 
             def onDoubleClick(self, event):
                 item = self.tv.identify('item', event.x, event.y)
-                #print("you clicked on", self.tv.item(item,"values")[0])
+                # print("you clicked on", self.tv.item(item,"values")[0])
                 self.parent.state = str(self.tv.item(item, "values")[0])
                 self.parent.updateByState(self.parent.state)
                 self.destroy()
@@ -1087,12 +1089,12 @@ class Register(tk.Toplevel):
             messagebox.showerror("錯誤", "來源只能為'購置', '贈送', '撥用'",
                                  parent=self)
             return
-        # keep_dept: not null
-        if not self.compFields["keep_dept"].variable.get():
+        # keep_department: not null
+        if not self.compFields["keep_department"].variable.get():
             messagebox.showerror("錯誤", "保管單位未填", parent=self)
             return
         # object_ID, serial_ID
-        # objID is '6-(ID_cat)-(ID_subcat)'
+        # object_ID is '6-(ID_cat)-(ID_subcat)'
         sqlstr = ("select parent_ID, ID "
                   "from hvhnonc_subcategory "
                   "where parent_ID=("
@@ -1106,18 +1108,18 @@ class Register(tk.Toplevel):
         try:
             cursor.execute(sqlstr, params)
             row = cursor.fetchone()
-            objID = ("6",
-                     "{:02d}".format(int(row[0])),
-                     "{:02d}".format(int(row[1])))
+            object_ID = ("6",
+                         "{:02d}".format(int(row[0])),
+                         "{:02d}".format(int(row[1])))
         except Exception as e:
             print("Exception in saveThis: %s" % e)
             tk.messagebox.showerror("錯誤1", str(e), parent=self)
-        objID = " - ".join(objID)
+        object_ID = " - ".join(object_ID)
         sqlstr = ("select serial_ID "
                   "from hvhnonc_in "
                   "where object_ID=? and name=?;")
         name = self.compFields["name"].variable.get()
-        params = (objID, name)
+        params = (object_ID, name)
         try:
             cursor.execute(sqlstr, params)
         except Exception as e:
@@ -1156,7 +1158,7 @@ class Register(tk.Toplevel):
                       "keep_department, use_department, keeper, "
                       "remark) "
                       "values({});")
-            params = (str(objID), str(serialID),
+            params = (str(object_ID), str(serialID),
                       category, subcategory, name,
                       self.compFields["brand"].variable.get(),
                       self.compFields["spec"].variable.get(),
@@ -1167,8 +1169,8 @@ class Register(tk.Toplevel):
                       self.compFields["place"].variable.get(),
                       self.compFields["keep_year"].variable.get(),
                       self.compFields["source"].variable.get(),
-                      self.compFields["keep_dept"].variable.get(),
-                      self.compFields["use_dept"].variable.get(),
+                      self.compFields["keep_department"].variable.get(),
+                      self.compFields["use_department"].variable.get(),
                       self.compFields["keeper"].variable.get(),
                       self.compFields["remark"].variable.get())
             sqlstr = sqlstr.format("?, " * (len(params) - 1) + "?")
@@ -1207,7 +1209,7 @@ class Register(tk.Toplevel):
                           "keep_department, use_department, "
                           "keeper, remark) "
                           "values({});")
-                params = (self.state, str(objID), str(serialID),
+                params = (self.state, str(object_ID), str(serialID),
                           category, subcategory, name,
                           self.compFields["brand"].variable.get(),
                           self.compFields["spec"].variable.get(),
@@ -1218,8 +1220,8 @@ class Register(tk.Toplevel):
                           self.compFields["place"].variable.get(),
                           self.compFields["keep_year"].variable.get(),
                           self.compFields["source"].variable.get(),
-                          self.compFields["keep_dept"].variable.get(),
-                          self.compFields["use_dept"].variable.get(),
+                          self.compFields["keep_department"].variable.get(),
+                          self.compFields["use_department"].variable.get(),
                           self.compFields["keeper"].variable.get(),
                           self.compFields["remark"].variable.get())
                 sqlstr = sqlstr.format("?, " * (len(params) - 1) + "?")
@@ -1253,7 +1255,7 @@ class Register(tk.Toplevel):
                           "keep_department, use_department, "
                           "keeper, remark) "
                           "values({});")
-                params = (str(objID), str(serialID),
+                params = (str(object_ID), str(serialID),
                           category, subcategory, name,
                           self.compFields["brand"].variable.get(),
                           self.compFields["spec"].variable.get(),
@@ -1264,8 +1266,8 @@ class Register(tk.Toplevel):
                           self.compFields["place"].variable.get(),
                           self.compFields["keep_year"].variable.get(),
                           self.compFields["source"].variable.get(),
-                          self.compFields["keep_dept"].variable.get(),
-                          self.compFields["use_dept"].variable.get(),
+                          self.compFields["keep_department"].variable.get(),
+                          self.compFields["use_department"].variable.get(),
                           self.compFields["keeper"].variable.get(),
                           self.compFields["remark"].variable.get())
                 sqlstr = sqlstr.format("?, " * (len(params) - 1) + "?")
@@ -1409,7 +1411,7 @@ class Register(tk.Toplevel):
                 parent=self, widgetType="dateframe",
                 description="取得日期", fieldName="acquire_date",
                 enabledState="readonly", span=True)
-            self.compFields["keep_dept"] = CompoundField(
+            self.compFields["keep_department"] = CompoundField(
                 parent=self, widgetType="combobox",
                 description="保管單位", fieldName="keep_department",
                 enabledState="normal")
@@ -1417,7 +1419,7 @@ class Register(tk.Toplevel):
                 parent=self, widgetType="combobox",
                 description="存置地點", fieldName="place",
                 enabledState="normal")
-            self.compFields["use_dept"] = CompoundField(
+            self.compFields["use_department"] = CompoundField(
                 parent=self, widgetType="combobox",
                 description="使用單位", fieldName="use_department",
                 enabledState="normal")
@@ -1470,17 +1472,17 @@ class Register(tk.Toplevel):
             self.compFields["acquire_date"].widget.grid(
                 row=4, column=1, padx=5, pady=5,
                 columnspan=3, sticky=tk.W)
-            self.compFields["keep_dept"].label.grid(
+            self.compFields["keep_department"].label.grid(
                 row=5, column=0, padx=5, pady=5)
-            self.compFields["keep_dept"].widget.grid(
+            self.compFields["keep_department"].widget.grid(
                 row=5, column=1, padx=5, pady=5)
             self.compFields["place"].label.grid(
                 row=5, column=2, padx=5, pady=5)
             self.compFields["place"].widget.grid(
                 row=5, column=3, padx=5, pady=5)
-            self.compFields["use_dept"].label.grid(
+            self.compFields["use_department"].label.grid(
                 row=6, column=0, padx=5, pady=5)
-            self.compFields["use_dept"].widget.grid(
+            self.compFields["use_department"].widget.grid(
                 row=6, column=1, padx=5, pady=5)
             self.compFields["keeper"].label.grid(
                 row=6, column=2, padx=5, pady=5)
@@ -1527,7 +1529,7 @@ class Register(tk.Toplevel):
             depts = []
             for item in row:
                 depts.append(item[0])
-            self.compFields["keep_dept"].widget.config(values=depts)
+            self.compFields["keep_department"].widget.config(values=depts)
             # 存置地點
             cursor.execute(sqlstr, (getFieldIDByName("存置地點"),))
             row = cursor.fetchall()
@@ -1541,7 +1543,7 @@ class Register(tk.Toplevel):
             depts = []
             for item in row:
                 depts.append(item[0])
-            self.compFields["use_dept"].widget.config(values=depts)
+            self.compFields["use_department"].widget.config(values=depts)
             # 保管人
             cursor.execute(sqlstr, (getFieldIDByName("保管人"),))
             row = cursor.fetchall()
@@ -1801,7 +1803,7 @@ class Register(tk.Toplevel):
                         params.append("%{}%".format(value))
                 # where(1) if no input
                 sqlstr += "1) order by acquire_date desc;"
-                print(sqlstr)
+                #print(sqlstr)
                 cursor.execute(sqlstr, params)
                 data = cursor.fetchall()
                 self.title("篩選結果: 共{}筆".format(len(data)))
@@ -1818,7 +1820,7 @@ class Register(tk.Toplevel):
 
             def onDoubleClick(self, event):
                 item = self.tv.identify('item', event.x, event.y)
-                #print("you clicked on", self.tv.item(item, "values")[0])
+                # print("you clicked on", self.tv.item(item, "values")[0])
                 self.parent.parent.state = str(
                     self.tv.item(item, "values")[0])
                 self.parent.parent.updateByState(
@@ -1838,11 +1840,10 @@ class Register(tk.Toplevel):
 class Unregister(tk.Toplevel):
     def __init__(self, parent, *args, **kwargs):
         # for update purposes
-        self.state = "none"
-        self.inBook = self.getAllRecords("hvhnonc_in")
-        self.outBook = self.getAllRecords("hvhnonc_out")
-        self.inIndex = 0
-        self.outIndex = 0
+        self.state = "sleep"
+        self.book = self.getAllIDs("hvhnonc_out")
+        self.index = 0
+        self.inID = 0
         # styles
         s = ttk.Style()
         s.configure('unregister.TButton', font=_default_button_font)
@@ -1914,23 +1915,27 @@ class Unregister(tk.Toplevel):
         self.compFields["brand"].widget.grid(row=2, column=1, padx=5, pady=5)
         self.compFields["spec"].label.grid(row=2, column=2, padx=5, pady=5)
         self.compFields["spec"].widget.grid(row=2, column=3, padx=5, pady=5)
-        # objID(entry), serial(entry)
-        self.compFields["objID"] = CompoundField(
+        # object_ID(entry), serial_ID(entry)
+        self.compFields["object_ID"] = CompoundField(
             parent=self.f_mainForm,
             widgetType="entry",
             fieldName="object_ID",
             enabledState="disabled",
             description="物品編號")
-        self.compFields["serial"] = CompoundField(
+        self.compFields["serial_ID"] = CompoundField(
             parent=self.f_mainForm,
             widgetType="entry",
             fieldName="serial_ID",
             enabledState="disabled",
             description="流水號")
-        self.compFields["objID"].label.grid(row=3, column=0, padx=5, pady=5)
-        self.compFields["objID"].widget.grid(row=3, column=1, padx=5, pady=5)
-        self.compFields["serial"].label.grid(row=3, column=2, padx=5, pady=5)
-        self.compFields["serial"].widget.grid(row=3, column=3, padx=5, pady=5)
+        self.compFields["object_ID"].label.grid(
+            row=3, column=0, padx=5, pady=5)
+        self.compFields["object_ID"].widget.grid(
+            row=3, column=1, padx=5, pady=5)
+        self.compFields["serial_ID"].label.grid(
+            row=3, column=2, padx=5, pady=5)
+        self.compFields["serial_ID"].widget.grid(
+            row=3, column=3, padx=5, pady=5)
         # acquire_date(dateframe), keepYear(entry)
         self.compFields["purchase_date"] = CompoundField(
             parent=self.f_mainForm,
@@ -1970,7 +1975,7 @@ class Unregister(tk.Toplevel):
         self.compFields["amount"].label.grid(row=5, column=2, padx=5, pady=5)
         self.compFields["amount"].widget.grid(row=5, column=3, padx=5, pady=5)
         # keepDept(combobox), place(combobox)
-        self.compFields["keep_dept"] = CompoundField(
+        self.compFields["keep_department"] = CompoundField(
             parent=self.f_mainForm,
             widgetType="combobox",
             fieldName="keep_department",
@@ -1982,10 +1987,10 @@ class Unregister(tk.Toplevel):
             fieldName="place",
             enabledState="normal",
             description="存置地點")
-        self.compFields["keep_dept"].label.grid(row=6, column=0,
-                                                padx=5, pady=5)
-        self.compFields["keep_dept"].widget.grid(row=6, column=1,
-                                                 padx=5, pady=5)
+        self.compFields["keep_department"].label.grid(row=6, column=0,
+                                                      padx=5, pady=5)
+        self.compFields["keep_department"].widget.grid(row=6, column=1,
+                                                       padx=5, pady=5)
         self.compFields["place"].label.grid(row=6, column=2, padx=5, pady=5)
         self.compFields["place"].widget.grid(row=6, column=3, padx=5, pady=5)
         # keeper(combobox), useDept(combobox)
@@ -1995,7 +2000,7 @@ class Unregister(tk.Toplevel):
             fieldName="keeper",
             enabledState="normal",
             description="保管人")
-        self.compFields["use_dept"] = CompoundField(
+        self.compFields["use_department"] = CompoundField(
             parent=self.f_mainForm,
             widgetType="combobox",
             fieldName="use_department",
@@ -2003,10 +2008,10 @@ class Unregister(tk.Toplevel):
             description="使用單位")
         self.compFields["keeper"].label.grid(row=7, column=0, padx=5, pady=5)
         self.compFields["keeper"].widget.grid(row=7, column=1, padx=5, pady=5)
-        self.compFields["use_dept"].label.grid(row=7, column=2,
-                                               padx=5, pady=5)
-        self.compFields["use_dept"].widget.grid(row=7, column=3,
-                                                padx=5, pady=5)
+        self.compFields["use_department"].label.grid(row=7, column=2,
+                                                     padx=5, pady=5)
+        self.compFields["use_department"].widget.grid(row=7, column=3,
+                                                      padx=5, pady=5)
         # remark(entry)
         self.compFields["remark"] = CompoundField(
             parent=self.f_mainForm,
@@ -2087,9 +2092,12 @@ class Unregister(tk.Toplevel):
             enabledState="disabled",
             description="剩餘數量")
         # Save the disabled background color
-        self._DEFAULT_DBG = \
-                self.compFields["unregisterRemain"].widget.cget(
-                        "disabledbackground")
+        self._DEFAULT_DBG = self.compFields["unregisterRemain"].widget.cget(
+            "disabledbackground")
+        # Auto update the unregisterRemain
+        # by tracing write on unregisterAmount
+        self.compFields["unregisterAmount"].variable.trace(
+            "w", self.updateRemain)
         self.compFields["unregisterRemain"].widget.config(width=3)
         self.compFields["unregisterRemain"].label.pack(side="left",
                                                        padx=5, pady=5)
@@ -2178,17 +2186,17 @@ class Unregister(tk.Toplevel):
         self.seperator3.pack(fill=tk.X)
         self.f_bottomNavigationBar.pack()
         # initialize the form
-        self.updateByState("none")
+        self.updateUnregister(state="sleep")
         # focus
         self.grab_set()
         # get to the topmost but don't get in the way
         self.attributes("-topmost", "true")
         self.attributes("-topmost", "false")
 
-    def updateByState(self, state, **kwargs):
+    def updateUnregister(self, state: str = "awake", **kwargs):
         self.state = state
-        if state == "none":
-            # set all widgets as disabled
+        if state == "sleep":
+            # Disable and clear all widgets
             for key, cf in self.compFields.items():
                 if "date" in key.lower():
                     cf.widget.cb_y.config(state="disabled")
@@ -2196,148 +2204,132 @@ class Unregister(tk.Toplevel):
                     cf.widget.cb_d.config(state="disabled")
                 else:
                     cf.widget.config(state="disabled")
-            # clear them
             for key, cf in self.compFields.items():
                 if "date" in key.lower():
                     cf.widget.clear()
                 else:
                     cf.variable.set("")
-        else:
-            # expect an int ID
-            try:
-                int(state)
-            except ValueError as ve:
-                tk.messagebox.showerror("錯誤", ve, parent=self)
-                self.updateByState("none")
-                return
-            # lookup the state(storing an ID) in the inBook
-            self.inIndex = self.lookupIndexInBook(state, self.inBook)
-            if self.inIndex is None:
-                print(self.inIndex)
-                tk.messagebox.showerror("錯誤",
-                                        "找不到索引值{}".format(state),
-                                        parent=self)
-                self.updateByState("none")
-                return
-            # Auto update the unregisterRemain
-            # by tracing write on unregisterAmount
-            self.compFields["unregisterAmount"].variable.trace(
-                "w", self.updateRemain)
-            # print inBook values to the widgets
-            row = self.inBook[self.inIndex]
-            self.compFields["category"].variable.set(row[3])
-            self.compFields["subcategory"].variable.set(row[4])
-            self.compFields["name"].variable.set(row[5])
-            self.compFields["unit"].variable.set(row[8])
-            self.compFields["brand"].variable.set(row[6])
-            self.compFields["spec"].variable.set(row[7])
-            self.compFields["objID"].variable.set(row[1])
-            self.compFields["serial"].variable.set(row[2])
-            indate = row[9].split("-")
-            self.compFields["purchase_date"].widget.y.set(
-                str(int(indate[0]) - 1911))
-            self.compFields["purchase_date"].widget.m.set(indate[1])
-            self.compFields["purchase_date"].widget.d.set(indate[2])
-            self.compFields["purchase_date"].widget.updateVar()
-            self.compFields["keep_year"].variable.set(row[14])
-            self.compFields["price"].variable.set(row[11])
-            self.compFields["amount"].variable.set(row[12])
-            self.compFields["keep_dept"].variable.set(row[16])
-            self.compFields["place"].variable.set(row[13])
-            self.compFields["keeper"].variable.set(row[18])
-            self.compFields["use_dept"].variable.set(row[17])
-            self.compFields["remark"].variable.set(row[19])
-            # initialization
-            self.initForm()
-            if kwargs.get("outIndex",None):
-                self.outIndex = kwargs.get("outIndex")
-            else:
-                self.outIndex = self.lookupIndexInBook(state, self.outBook)
-            self.title("除帳 in_ID = {}, out_ID = {}".format(
-                    self.inIndex, self.outIndex))
-            # if not in outbook print 0s
-            if not self.outIndex:
-                self.compFields["unregisterCount"].variable.set("0")
-                self.compFields["amountUnregistered"].variable.set("0")
-                self.compFields["unregisterAmount"].variable.set("0")
-            # if in outBook, fetch the latest row and count of that ID
-            else:
-                # upper section
+        elif state == "awake":
+            # Fetch an outID from **kwargs
+            outID = kwargs.get("outID", None)
+            #print(outID)
+            if outID is not None:
+                # Fetch in_ID using out_ID
                 connect, cursor = _getConnection(_default_database)
-                sqlstr = ("select count(*), out_date, sum(amount) "
-                          "from hvhnonc_out where in_ID = ?"
-                          "order by out_date desc limit 1;")
-                cursor.execute(sqlstr, (self.state, ))
-                data = cursor.fetchone()
-                # get count
-                self.compFields["unregisterCount"].variable.set(str(data[0]))
-                # get date
-                outDate = data[1].split("-")
-                self.compFields["lastUnregisterDate"].widget.y.set(
-                    str(int(outDate[0]) - 1911))
-                self.compFields["lastUnregisterDate"].widget.m.set(outDate[1])
-                self.compFields["lastUnregisterDate"].widget.d.set(outDate[2])
-                self.compFields["lastUnregisterDate"].widget.updateVar()
-                # get sum
-                self.compFields["amountUnregistered"].variable.set(
-                    str(data[2]))
-                # these are the same as the lastest date
-                self.compFields["unregisterDate"].widget.y.set(
-                    self.compFields["lastUnregisterDate"].widget.y.get())
-                self.compFields["unregisterDate"].widget.m.set(
-                    self.compFields["lastUnregisterDate"].widget.m.get())
-                self.compFields["unregisterDate"].widget.d.set(
-                    self.compFields["lastUnregisterDate"].widget.d.get())
-                self.compFields["unregisterDate"].widget.updateVar()
-                # get unregistered amount and its total
-                sqlstr = ("select amount, sum(amount) "
-                          "from  hvhnonc_out "
-                          "where in_ID=?"
-                          "order by out_date desc;")
-                cursor.execute(sqlstr, (self.state, ))
-                (lastAmount, TotalOutAmount) = cursor.fetchone()
-                TotalOutAmount = int(TotalOutAmount)
-                sqlstr = ("select amount "
-                          "from  hvhnonc_in "
-                          "where ID=?;")
-                cursor.execute(sqlstr, (self.state, ))
-                # set unregisterAmount as the database says
-                self.compFields["unregisterAmount"].variable.set(int(lastAmount))
-                sqlstr = ("select reason,  post_treatment, remark "
-                          "from  hvhnonc_out "
-                          "where in_ID=?"
-                          "order by out_date desc, rowid desc limit 1;")
-                cursor.execute(sqlstr, (self.state, ))
-                data = cursor.fetchone()
-                self.compFields["reason"].variable.set(data[0])
-                self.compFields["postTreatment"].variable.set(data[1])
-                self.compFields["unregisterRemark"].variable.set(data[2])
+                sqlstr = ("select in_ID from hvhnonc_out where ID=?;")
+                params = (outID,)
+                row = cursor.execute(sqlstr, params).fetchone()
+                inID = row[0]
                 connect.close()
+            else:
+                inID = kwargs.get("inID", None)
+            if inID is None:
+                messagebox.showerror("錯誤", "找不到ID")
+                self.updateUnregister(state="sleep")
+                return
+            # Try to get latest out_ID using in_ID again
+            if outID is not None:
+                connect, cursor = _getConnection(_default_database)
+                sqlstr = ("select ID "
+                          "from hvhnonc_out "
+                          "where in_ID=? "
+                          "order by ID desc;")
+                params = (inID,)
+                row = cursor.execute(sqlstr, params).fetchone()
+                if row:
+                    outID = row[0]
+                connect.close()
+            self.index = self.findIndex(inID=inID, outID=outID)
+            self.title("除帳: {}[{},{}]".format(self.index, outID, inID))
+            # show inData
+            connect, cursor = _getConnection(_default_database)
+            # connect.set_trace_callback(print)
+            fields = ("category", "subcategory", "name", "unit", "brand",
+                      "spec", "object_ID", "serial_ID", "purchase_date",
+                      "keep_year", "price", "amount", "keep_department",
+                      "place", "keeper", "use_department", "remark")
+            sqlstr = ("select {} from hvhnonc_in where ID=?;")
+            sqlstr = sqlstr.format(", ".join(fields))
+            cursor.execute(sqlstr, (inID,))
+            row = cursor.fetchone()
+            for i, data in enumerate(row):
+                if isinstance(self.compFields[fields[i]].widget, DateFrame):
+                    date = "".join(data).split("-")
+                    date[0] = str(int(date[0]) - 1911)
+                    self.compFields[fields[i]].widget.y.set(date[0])
+                    self.compFields[fields[i]].widget.m.set(date[1])
+                    self.compFields[fields[i]].widget.d.set(date[2])
+                    self.compFields[fields[i]].widget.updateVar()
+                self.compFields[fields[i]].variable.set(data)
+            # Initialize writable fields
+            self.initForm()
+            # show outData
+            if not outID:
+                self.compFields["unregisterCount"].variable.set("0")
+                self.compFields["unregisterAmount"].variable.set("0")
+                self.compFields["amountUnregistered"].variable.set("0")
+            else:
+                sqlstr = ("select count(*), out_date, amount, reason, "
+                          "post_treatment, remark "
+                          "from hvhnonc_out "
+                          "where ID=?")
+                params = (outID,)
+                cursor.execute(sqlstr, params)
+                row = cursor.fetchone()
+                self.compFields["unregisterCount"].variable.set(row[0])
+                date = "".join(row[1]).split("-")
+                date[0] = str(int(date[0]) - 1911)
+                self.compFields["lastUnregisterDate"].widget.y.set(date[0])
+                self.compFields["lastUnregisterDate"].widget.m.set(date[1])
+                self.compFields["lastUnregisterDate"].widget.d.set(date[2])
+                self.compFields["lastUnregisterDate"].widget.updateVar()
+                self.compFields["unregisterAmount"].variable.set(row[2])
+                self.compFields["unregisterDate"].widget.y.set(date[0])
+                self.compFields["unregisterDate"].widget.m.set(date[1])
+                self.compFields["unregisterDate"].widget.d.set(date[2])
+                self.compFields["unregisterDate"].widget.updateVar()
+                self.compFields["reason"].variable.set(row[3])
+                self.compFields["postTreatment"].variable.set(row[4])
+                self.compFields["unregisterRemark"].variable.set(row[5])
+                # get amount unregistered in the past
+                sqlstr = ("select sum(amount) "
+                          "from hvhnonc_out "
+                          "where in_ID=?")
+                cursor.execute(sqlstr, (inID,))
+                (totalOutAmount,) = cursor.fetchone()
+                self.compFields["amountUnregistered"].variable.set(
+                    totalOutAmount)
+            pass
+        else:  # Invalid state
+            print("Invalid state {}".format(state))
 
     # The callback to auto update unregisterRemain
     def updateRemain(self, n, m, x):
-        if self.state in ("none",):
+        if self.state in ("sleep",):
             return
         if x is not 'w':
             return
-        # Get value from database
-        connect, cursor = _getConnection(_default_database)
-        # Get inAmount
-        sqlstr = ("select amount from hvhnonc_in where ID=?")
-        params = (self.state,)
-        cursor.execute(sqlstr, params)
-        inAmount = cursor.fetchone()[0]
-        # Get outAmount
-        sqlstr = ("select sum(amount) from hvhnonc_out where in_ID=?")
-        cursor.execute(sqlstr, params)
-        outAmount = cursor.fetchone()[0]
-        connect.close()
         try:
+            # Get value from database
+            connect, cursor = _getConnection(_default_database)
+            # Get inAmount
+            sqlstr = ("select amount from hvhnonc_in where ID=?")
+            if self.index:
+                params = (self.book[self.index][1],)
+            else:
+                params = (self.inID,)
+            cursor.execute(sqlstr, params)
+            inAmount = cursor.fetchone()[0]
             inAmount = int(inAmount)
         except (TypeError, ValueError):
             inAmount = 0
         try:
-            outAmount = int(outAmount)
+            # Get outAmount
+            sqlstr = ("select sum(amount) from hvhnonc_out where in_ID=?")
+            params = (self.book[self.index][1],)
+            cursor.execute(sqlstr, params)
+            outAmount = cursor.fetchone()[0]
+            connect.close()
         except (TypeError, ValueError):
             outAmount = 0
         try:
@@ -2348,11 +2340,11 @@ class Unregister(tk.Toplevel):
         newAmount = inAmount - outAmount - typedAmount
         if newAmount < 0:
             self.compFields["unregisterRemain"].widget.config(
-                    disabledbackground="Misty Rose")
+                disabledbackground="Misty Rose")
             self.compFields["unregisterRemain"].variable.set("0")
         else:
             self.compFields["unregisterRemain"].widget.config(
-                    disabledbackground=self._DEFAULT_DBG)
+                disabledbackground=self._DEFAULT_DBG)
             self.compFields["unregisterRemain"].variable.set(str(newAmount))
 
     def initForm(self):
@@ -2406,19 +2398,6 @@ class Unregister(tk.Toplevel):
         for i, field in enumerate(tempFields):
             field.widget.config(values=rows[i])
         connect.close()
-
-    def lookupIndexInBook(self, state, book):
-        if book == self.outBook:
-            i = 1
-        elif book == self.inBook:
-            i = 0
-        else:
-            raise Exception("No such book: ", book)
-            return None
-        for index, sublist in enumerate(book):
-            if int(state) in (sublist[i],):
-                return index
-        return None
 
     def quitMe(self):
         self.destroy()
@@ -2512,36 +2491,54 @@ class Unregister(tk.Toplevel):
                 sb = tk.Scrollbar(self)
                 self.tv = ttk.Treeview(
                     self, yscrollcommand=sb.set,
-                    columns=('1', '2', '3', '4', '5', '6'),
+                    columns=('0', '1', '2', '3', '4', '5', '6', '7'),
                     show="headings")
-                self.tv['displaycolumns'] = ('2', '3', '4', '5', '6')
+                self.tv['displaycolumns'] = ('0', '2', '3', '4', '5', '6')
+                self.tv.heading('0', text='入/除帳')
                 self.tv.heading('1', text='ID')
                 self.tv.heading('2', text='購置日期')
                 self.tv.heading('3', text='品名')
                 self.tv.heading('4', text='存置位置')
                 self.tv.heading('5', text='保管人')
                 self.tv.heading('6', text='備註')
+                self.tv.heading('7', text='outID')
                 sb.config(command=self.tv.yview)
                 # fetch the data
                 # searching in hvhnonc_in
                 connect, cursor = _getConnection(_default_database)
-                connect.set_trace_callback(print)
+                #connect.set_trace_callback(print)
                 phrase = str(parent.query.get())
-                sqlstr = (
-                    "select ID, purchase_date, name, place, keeper, remark "
-                    "from hvhnonc_in "
-                    "where("
-                    "category like :q or "
-                    "subcategory like :q or "
-                    "name like :q or "
-                    "brand like :q or "
-                    "spec like :q or "
-                    "place like :q or "
-                    "keep_department like :q or "
-                    "use_department like :q or "
-                    "keeper like :q or "
-                    "remark like :q) "
-                    "order by purchase_date desc;")
+                sqlin = ("select '入帳' as whichBook, ID as inID, "
+                         "purchase_date as date, name, place, keeper, "
+                         "remark, '' as outID "
+                         "from hvhnonc_in ")
+                sqlout = ("select '除帳' as whichBook, in_ID as inID, "
+                          "out_date as date, name, storage as place, "
+                          "'' as keeper, remark, ID as outID "
+                          "from hvhnonc_out ")
+                sqlwherein = ("where("
+                              "category like :q or "
+                              "subcategory like :q or "
+                              "name like :q or "
+                              "brand like :q or "
+                              "spec like :q or "
+                              "place like :q or "
+                              "keep_department like :q or "
+                              "use_department like :q or "
+                              "keeper like :q or "
+                              "remark like :q) ")
+                sqlwhereout = ("where("
+                               "category like :q or "
+                               "subcategory like :q or "
+                               "name like :q or "
+                               "brand like :q or "
+                               "spec like :q or "
+                               "storage like :q or "
+                               "remark like :q) ")
+                sqlunion = ("union all ")
+                sqlfooter = ("order by date desc, name desc;")
+                sqlstr = (sqlin + sqlwherein + sqlunion + sqlout + sqlwhereout +
+                          sqlfooter)
                 cursor.execute(sqlstr, {'q': "%{}%".format(phrase)})
                 data = cursor.fetchall()
                 for d in data:
@@ -2554,19 +2551,22 @@ class Unregister(tk.Toplevel):
 
             def onDoubleClick(self, event):
                 item = self.tv.identify('item', event.x, event.y)
-                print("you clicked on", self.tv.item(item, "values")[0])
-                self.parent.state = str(self.tv.item(item, "values")[0])
-                self.parent.updateByState(self.parent.state)
+                # print("you clicked on", self.tv.item(item, "values")[0])
+                self.inID = str(self.tv.item(item, "values")[1])
+                out_ID = str(self.tv.item(item, "values")[7])
+                if out_ID in (None, ""):
+                    self.parent.updateUnregister(inID=self.inID)
+                else:
+                    self.parent.updateUnregister(inID=self.inID, outID=out_ID)
                 self.destroy()
 
     def onButtonSaveClick(self):
-        # ignore if state in ("none", "new") or stuff
-        if self.state in ("none", "new"):
+        if self.state in ("sleep"):
             messagebox.showerror("錯誤", "無效的狀態: {}".format(self.state),
                                  parent=self)
             return
-        # if self.outIndex collide ask for update
-        if self.outIndex:
+        # if self.index collide ask for update
+        if self.index:
             isWriteover = tk.messagebox.askyesnocancel(
                 "重複寫入",
                 "是否要複蓋掉最近資料?(按否會新增一筆新資料)",
@@ -2588,33 +2588,33 @@ class Unregister(tk.Toplevel):
         # insert SQL
         connect, cursor = _getConnection(_default_database)
         sqlstr = ("update hvhnonc_out "
-                      "set object_ID=?, "
-                          "serial_ID=?, "
-                          "category=?, "
-                          "subcategory=?, "
-                          "name=?, "
-                          "brand=?, "
-                          "spec=?, "
-                          "unit=?, "
-                          "out_date=?, "
-                          "price=?, "
-                          "amount=?, "
-                          "storage=?, "
-                          "reason=?, "
-                          "post_treatment=?, "
-                          "remark=? "
+                  "set object_ID=?, "
+                  "serial_ID=?, "
+                  "category=?, "
+                  "subcategory=?, "
+                  "name=?, "
+                  "brand=?, "
+                  "spec=?, "
+                  "unit=?, "
+                  "out_date=?, "
+                  "price=?, "
+                  "amount=?, "
+                  "storage=?, "
+                  "reason=?, "
+                  "post_treatment=?, "
+                  "remark=? "
                   "where in_ID=? and rowid=("
-                          "select max(rowid) "
-                          "from hvhnonc_out "
-                          "where in_ID=?)")
+                  "select max(rowid) "
+                  "from hvhnonc_out "
+                  "where in_ID=?)")
         # prepare unregisterDate in ROC years
         unregisterDate = self.compFields["unregisterDate"].variable.get()
         year = int(unregisterDate.split("-")[0])
         if year < 1911:
-                unregisterDate = unregisterDate.replace(
-                    str(year), str(year + 1911))
-        params = (self.compFields["objID"].variable.get(),
-                  self.compFields["serial"].variable.get(),
+            unregisterDate = unregisterDate.replace(
+                str(year), str(year + 1911))
+        params = (self.compFields["object_ID"].variable.get(),
+                  self.compFields["serial_ID"].variable.get(),
                   self.compFields["category"].variable.get(),
                   self.compFields["subcategory"].variable.get(),
                   self.compFields["name"].variable.get(),
@@ -2628,19 +2628,18 @@ class Unregister(tk.Toplevel):
                   self.compFields["reason"].variable.get(),
                   self.compFields["postTreatment"].variable.get(),
                   self.compFields["unregisterRemark"].variable.get(),
-                  int(self.state), int(self.state))
+                  int(self.inID), int(self.inID))
         try:
             cursor.execute(sqlstr, params)
             connect.commit()
             messagebox.showinfo(
-                    "覆寫", "已蓋過最新一筆資料:{}".format(
-                            self.compFields["name"].variable.get()))
+                "覆寫", "已蓋過最新一筆資料:{}".format(
+                    self.compFields["name"].variable.get()))
             # update book
-            self.inBook = self.getAllRecords("hvhnonc_in")
-            self.outBook = self.getAllRecords("hvhnonc_out")
+            self.book = self.getAllIDs("hvhnonc_out")
             # update cache using default sqlstr
             self.updateAllCache()
-            self.updateByState("none")
+            self.updateUnregister(state="sleep")
         except sqlite3.Error as e:
             messagebox.showerror("錯誤", "{}".format(e))
         pass
@@ -2657,12 +2656,12 @@ class Unregister(tk.Toplevel):
         unregisterDate = self.compFields["unregisterDate"].variable.get()
         year = int(unregisterDate.split("-")[0])
         if year < 1911:
-                unregisterDate = unregisterDate.replace(
-                    str(year), str(year + 1911))
+            unregisterDate = unregisterDate.replace(
+                str(year), str(year + 1911))
 
-        params = (int(self.state),
-                  self.compFields["objID"].variable.get(),
-                  self.compFields["serial"].variable.get(),
+        params = (int(self.inID),
+                  self.compFields["object_ID"].variable.get(),
+                  self.compFields["serial_ID"].variable.get(),
                   self.compFields["category"].variable.get(),
                   self.compFields["subcategory"].variable.get(),
                   self.compFields["name"].variable.get(),
@@ -2681,71 +2680,79 @@ class Unregister(tk.Toplevel):
             cursor.execute(sqlstr.format(questionmarks,), params)
             connect.commit()
             messagebox.showinfo(
-                    "存入一筆", "已存入一筆新資料:{}".format(
-                            self.compFields["name"].variable.get()))
+                "存入一筆", "已存入一筆新資料:{}".format(
+                    self.compFields["name"].variable.get()))
             # update book
-            self.inBook = self.getAllRecords("hvhnonc_in")
-            self.outBook = self.getAllRecords("hvhnonc_out")
+            self.book = self.getAllIDs("hvhnonc_out")
             # update cache using default sqlstr
             self.updateAllCache()
-            self.updateByState("none")
+            self.updateUnregister(state="sleep")
         except sqlite3.IntegrityError:
             messagebox.showerror("錯誤", "有欄位不正確!")
             return
         except sqlite3.Error as e:
             messagebox.showerror("錯誤", "{}".format(e))
-            self.updateByState("none")
+            self.updateUnregister(state="sleep")
             return
-        self.updateByState(self.state)
+        self.updateUnregister(inID=self.inID)
 
     def fetchNext(self):
-        if self.state in ("none", ):
-            self.outIndex = 0
-            self.state = str(self.outBook[self.outIndex][1])
-            self.updateByState(self.state, outIndex=self.outIndex)
-        else:
-            if self.outIndex == len(self.outBook) - 1:
-                tk.messagebox.showinfo("到底了", "已到達最後一筆",
-                                       parent=self)
+        try:
+            if self.state in ("sleep",):
+                self.index = 0
+                self.outID = self.book[self.index][0]
+                self.inID = self.book[self.index][1]
+                self.updateUnregister(outID=self.outID)
             else:
-                self.outIndex = self.outIndex + 1
-                self.state = str(self.outBook[self.outIndex][1])
-                self.updateByState(self.state, outIndex=self.outIndex)
+                if self.index == len(self.book) - 1:
+                    tk.messagebox.showinfo("到底了", "已到達最後一筆",
+                                           parent=self)
+                else:
+                    self.index += 1
+                    self.outID = self.book[self.index][0]
+                    self.inID = self.book[self.index][1]
+                    self.updateUnregister(outID=self.outID)
+        except TypeError:
+            tk.messagebox.showinfo("無效", "沒有下一筆", parent=self)
 
     def fetchLast(self):
-        if self.state in ("none", ):
-            self.outIndex = len(self.outBook) - 1
-            self.state = str(self.outBook[self.outIndex][1])
-            self.updateByState(self.state, outIndex=self.outIndex)
-        else:
-            if self.outIndex == 0:
-                tk.messagebox.showinfo("到頂了", "已到達第一筆",
-                                       parent=self)
+        try:
+            if self.state in ("sleep", ):
+                self.index = len(self.book) - 1
+                self.outID = self.book[self.index][0]
+                self.inID = self.book[self.index][1]
+                self.updateUnregister(outID=self.outID)
             else:
-                self.outIndex = self.outIndex - 1
-                self.state = str(self.outBook[self.outIndex][1])
-                self.updateByState(self.state, outIndex=self.outIndex)
+                if self.index == 0:
+                    tk.messagebox.showinfo("到頂了", "已到達第一筆",
+                                           parent=self)
+                else:
+                    self.index = self.index - 1
+                    self.outID = self.book[self.index][0]
+                    self.inID = self.book[self.index][1]
+                    self.updateUnregister(outID=self.outID)
+        except TypeError:
+            tk.messagebox.showinfo("無效", "沒有上一筆", parent=self)
 
     def onButtonDeleteClick(self):
         connect, cursor = _getConnection(_default_database)
-        if self.state in ("none", ):
+        if self.state in ("sleep", ):
             messagebox.showerror("錯誤", "非法的狀態{}".format(self.state))
         sqlstr = ("delete from hvhnonc_out "
                   "where in_ID=? and out_date=("
                   "select max(out_date) "
                   "from hvhnonc_out "
                   "where in_ID=?);")
-        params = (self.state, self.state)
+        params = (self.inID, self.inID)
         try:
             cursor.execute(sqlstr, params)
             connect.commit()
             messagebox.showinfo(
-                    "刪除","已刪除一筆資料:{}".format(
-                            self.compFields["name"].variable.get()))
+                "刪除", "已刪除一筆資料:{}".format(
+                    self.compFields["name"].variable.get()))
             # update book
-            self.inBook = self.getAllRecords("hvhnonc_in")
-            self.outBook = self.getAllRecords("hvhnonc_out")
-            self.updateByState("none")
+            self.book = self.getAllIDs("hvhnonc_out")
+            self.updateUnregister(state="sleep")
         except sqlite3.Error as e:
             messagebox.showerror("錯誤", "{}".format(e))
 
@@ -2968,7 +2975,7 @@ class Unregister(tk.Toplevel):
                 sb = tk.Scrollbar(self)
                 self.tv = ttk.Treeview(
                     self, yscrollcommand=sb.set,
-                    columns=('1', '2', '3', '4', '5', '6'),
+                    columns=('1', '2', '3', '4', '5', '6', '7'),
                     show="headings")
                 self.tv['displaycolumns'] = ('2', '3', '4', '5', '6')
                 self.tv.heading('1', text='ID')
@@ -2977,16 +2984,17 @@ class Unregister(tk.Toplevel):
                 self.tv.heading('4', text='存置位置')
                 self.tv.heading('5', text='保管人')
                 self.tv.heading('6', text='備註')
+                self.tv.heading('7', text='outID')
                 sb.config(command=self.tv.yview)
                 # fetch the data
                 connect, cursor = _getConnection(_default_database)
                 # connect.set_trace_callback(print)
                 params = []
                 q_in = ("select ID, purchase_date as date, name, "
-                        "place as place, keeper, remark "
+                        "place as place, keeper, remark , '' as out_ID "
                         "from hvhnonc_in ")
                 q_out = ("select in_ID as ID, out_date as date, name, "
-                         "storage as place, '' as keeper, remark "
+                         "storage as place, '' as keeper, remark, ID as out_ID "
                          "from hvhnonc_out ")
                 q_union = "union all "
                 q_footer = "order by purchase_date desc;"
@@ -3074,18 +3082,35 @@ class Unregister(tk.Toplevel):
 
             def onDoubleClick(self, event):
                 item = self.tv.identify('item', event.x, event.y)
-                #print("you clicked on", self.tv.item(item, "values")[0])
-                self.parent.parent.updateByState(
-                    self.tv.item(item, "values")[0])
+                # print("you clicked on", self.tv.item(item, "values")[0])
+                self.parent.parent.inID = self.tv.item(item, "values")[0]
+                in_ID = self.parent.parent.inID
+                out_ID = self.tv.item(item, "values")[6]
+                self.parent.parent.index = \
+                    self.parent.parent.findIndex(in_ID, out_ID)
+                if out_ID:
+                    self.parent.parent.updateUnregister(
+                        inID=in_ID, outID=out_ID)
+                else:
+                    self.parent.parent.updateUnregister(inID=in_ID)
                 self.parent.destroy()
 
             def abortLookup(self):
                 self.parent.destroy()
 
-    def getAllRecords(self, tablename):
+    def findIndex(self, inID: str, outID: str) -> int:
+        if inID is None or outID is None:
+            return None
+        for i, row in enumerate(self.book):
+            if (str(inID) == str(row[1])
+                    and str(outID) == str(row[0])):
+                return i
+        return None
+
+    def getAllIDs(self, tablename):
         connect, cursor = _getConnection(_default_database)
         # connect.set_trace_callback(print)
-        sqlstr = "select * from {};".format(tablename)
+        sqlstr = "select ID, in_ID from {};".format(tablename)
         cursor.execute(sqlstr)
         return cursor.fetchall()
 

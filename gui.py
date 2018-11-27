@@ -322,8 +322,8 @@ class Login(tk.Toplevel):
                 "錯誤", "帳號與密碼須為20字以內的英數字", parent=self)
 
     def isValid(self, username, password):
-        if (username.isalnum() and len(username) <= 20 and
-                password.isalnum() and len(password) <= 20):
+        if (username.isalnum() and len(username) <= 20
+                and password.isalnum() and len(password) <= 20):
             return True
         else:
             return False
@@ -577,8 +577,8 @@ class Register(tk.Toplevel):
         if state == "none":
             self.title("輸入")
             for i, v in self.compFields.items():
-                if (isinstance(v.widget, tk.Entry)
-                        or isinstance(v.widget, ttk.Combobox)):
+                if (isinstance(v.widget, tk.Entry) or
+                        isinstance(v.widget, ttk.Combobox)):
                     v.widget.config(state="disabled")
                 if isinstance(v.widget, DateFrame):
                     v.widget.cb_y.config(state="disabled")
@@ -591,8 +591,8 @@ class Register(tk.Toplevel):
             self.initializeAllField()
             self.clearAllFields()
             for i, v in self.compFields.items():
-                if (isinstance(v.widget, tk.Entry)
-                        or isinstance(v.widget, ttk.Combobox)):
+                if (isinstance(v.widget, tk.Entry) or
+                        isinstance(v.widget, ttk.Combobox)):
                     v.widget.config(state=v.enabledState)
                 if isinstance(v.widget, DateFrame):
                     v.widget.cb_y.config(state=v.enabledState)
@@ -610,8 +610,8 @@ class Register(tk.Toplevel):
                 self.updateByState("none")
             if self.index in range(0, len(self.book)):
                 for i, v in self.compFields.items():
-                    if (isinstance(v.widget, tk.Entry)
-                            or isinstance(v.widget, ttk.Combobox)):
+                    if (isinstance(v.widget, tk.Entry) or
+                            isinstance(v.widget, ttk.Combobox)):
                         v.widget.config(state=v.enabledState)
                     if isinstance(v.widget, DateFrame):
                         v.widget.cb_y.config(state=v.enabledState)
@@ -658,8 +658,8 @@ class Register(tk.Toplevel):
 
     def clearAllFields(self):
         for i, v in self.compFields.items():
-            if (isinstance(v.widget, tk.Entry)
-                    or isinstance(v.widget, ttk.Combobox)):
+            if (isinstance(v.widget, tk.Entry) or
+                    isinstance(v.widget, ttk.Combobox)):
                 v.variable.set("")
             if isinstance(v.widget, DateFrame):
                 v.widget.y.set("")
@@ -721,9 +721,9 @@ class Register(tk.Toplevel):
         subcatagories = cursor.fetchall()
         connect.close()
         self.compFields["subcategory"].widget.config(values=subcatagories)
-        if (len(subcatagories) > 0
-                and self.compFields["subcategory"].variable.get()
-                != subcatagories[0][0]):
+        if (len(subcatagories) > 0 and
+                self.compFields["subcategory"].variable.get() !=
+                subcatagories[0][0]):
             self.compFields["subcategory"].widget.set(subcatagories[0][0])
             self.onSubcategorySelected(None)
 
@@ -744,8 +744,8 @@ class Register(tk.Toplevel):
         rows = cursor.fetchall()
         connect.close()
         self.compFields["name"].widget.config(values=rows)
-        if (len(rows) > 0
-                and self.compFields["name"].variable.get() != rows[0][0]):
+        if (len(rows) > 0 and
+                self.compFields["name"].variable.get() != rows[0][0]):
             self.compFields["name"].variable.set(rows[0][0])
         self.onNameSelected(None)
 
@@ -766,22 +766,22 @@ class Register(tk.Toplevel):
         cursor.execute(sqlstr, params)
         units = cursor.fetchall()
         self.compFields["unit"].widget.config(values=units)
-        if (len(units) > 0
-                and self.compFields["unit"].variable.get() != units[0][0]):
+        if (len(units) > 0 and
+                self.compFields["unit"].variable.get() != units[0][0]):
             self.compFields["unit"].variable.set(units[0][0])
         params[2] = getFieldIDByName("品牌")
         cursor.execute(sqlstr, params)
         brands = cursor.fetchall()
         self.compFields["brand"].widget.config(values=brands)
-        if (len(brands) > 0
-                and self.compFields["brand"].variable.get() != brands[0][0]):
+        if (len(brands) > 0 and
+                self.compFields["brand"].variable.get() != brands[0][0]):
             self.compFields["brand"].widget.set(brands[0][0])
         params[2] = getFieldIDByName("規格")
         cursor.execute(sqlstr, params)
         specs = cursor.fetchall()
         self.compFields["spec"].widget.config(values=specs)
-        if (len(specs) > 0
-                and self.compFields["spec"].variable.get() != specs[0][0]):
+        if (len(specs) > 0 and
+                self.compFields["spec"].variable.get() != specs[0][0]):
             self.compFields["spec"].variable.set(specs[0][0])
         connect.close()
 
@@ -1570,9 +1570,9 @@ class Register(tk.Toplevel):
             self.compFields["subcategory"].widget.config(values=subcats)
             self.compFields["subcategory"].widget.bind(
                 "<<ComboboxSelected>>", self.onSubcategorySelected)
-            if (len(subcats) > 0
-                    and self.compFields["subcategory"].variable.get()
-                    != subcats[0]):
+            if (len(subcats) > 0 and
+                    self.compFields["subcategory"].variable.get() !=
+                    subcats[0]):
                 self.compFields["subcategory"].widget.set(subcats[0])
             self.onSubcategorySelected(None)
             connect.close()
@@ -1594,9 +1594,9 @@ class Register(tk.Toplevel):
             names = cursor.fetchall()
             connect.close()
             self.compFields["name"].widget.config(values=names)
-            if (len(names) > 0
-                    and self.compFields["name"].variable.get()
-                    != names[0]):
+            if (len(names) > 0 and
+                    self.compFields["name"].variable.get() !=
+                    names[0]):
                 self.compFields["name"].widget.set(names[0])
             self.onNameSelected(None)
 
@@ -1621,8 +1621,8 @@ class Register(tk.Toplevel):
             for row in rows:
                 brands.append(row[0])
             self.compFields["brand"].widget.config(values=brands)
-            if (len(brands) > 0 and
-                    self.compFields["brand"].variable.get() != brands[0]):
+            if (len(brands) > 0
+                    and self.compFields["brand"].variable.get() != brands[0]):
                 self.compFields["brand"].variable.set(brands[0])
             # 規格
             params = (str(getFieldIDByName('物品名稱')),
@@ -1634,8 +1634,8 @@ class Register(tk.Toplevel):
             for row in rows:
                 specs.append(row[0])
             self.compFields["spec"].widget.config(values=specs)
-            if (len(specs) > 0 and
-                    self.compFields["spec"].variable.get() != specs[0]):
+            if (len(specs) > 0
+                    and self.compFields["spec"].variable.get() != specs[0]):
                 self.compFields["spec"].variable.set(specs[0])
             connect.close()
 
@@ -1803,7 +1803,7 @@ class Register(tk.Toplevel):
                         params.append("%{}%".format(value))
                 # where(1) if no input
                 sqlstr += "1) order by acquire_date desc;"
-                #print(sqlstr)
+                # print(sqlstr)
                 cursor.execute(sqlstr, params)
                 data = cursor.fetchall()
                 self.title("篩選結果: 共{}筆".format(len(data)))
@@ -2212,7 +2212,7 @@ class Unregister(tk.Toplevel):
         elif state == "awake":
             # Fetch an outID from **kwargs
             outID = kwargs.get("outID", None)
-            #print(outID)
+            # print(outID)
             if outID is not None:
                 # Fetch in_ID using out_ID
                 connect, cursor = _getConnection(_default_database)
@@ -2506,7 +2506,7 @@ class Unregister(tk.Toplevel):
                 # fetch the data
                 # searching in hvhnonc_in
                 connect, cursor = _getConnection(_default_database)
-                #connect.set_trace_callback(print)
+                # connect.set_trace_callback(print)
                 phrase = str(parent.query.get())
                 sqlin = ("select '入帳' as whichBook, ID as inID, "
                          "purchase_date as date, name, place, keeper, "
@@ -2537,8 +2537,8 @@ class Unregister(tk.Toplevel):
                                "remark like :q) ")
                 sqlunion = ("union all ")
                 sqlfooter = ("order by date desc, name desc;")
-                sqlstr = (sqlin + sqlwherein + sqlunion + sqlout + sqlwhereout +
-                          sqlfooter)
+                sqlstr = (sqlin + sqlwherein + sqlunion + sqlout + sqlwhereout
+                          + sqlfooter)
                 cursor.execute(sqlstr, {'q': "%{}%".format(phrase)})
                 data = cursor.fetchall()
                 for d in data:
@@ -3005,8 +3005,8 @@ class Unregister(tk.Toplevel):
                         cf.widget.tilde
                         if cf.widgetType == "dateframe":
                             # continue if there is nothing
-                            if not (cf.widget.min.variable.get()
-                                    or cf.widget.max.variable.get()):
+                            if not (cf.widget.min.variable.get() or
+                                    cf.widget.max.variable.get()):
                                 continue
                             tempMin = "1911-01-01"
                             tempMax = "date('now')"
@@ -3064,8 +3064,8 @@ class Unregister(tk.Toplevel):
                         params)
                 elif parent.whereToLook == "out":
                     cursor.execute(
-                        q_out_full
-                        + q_footer.replace("purchase_date", "out_date"),
+                        q_out_full +
+                        q_footer.replace("purchase_date", "out_date"),
                         params)
                 data = cursor.fetchall()
                 self.title("篩選結果: 共{}筆".format(len(data)))
@@ -3102,8 +3102,8 @@ class Unregister(tk.Toplevel):
         if inID is None or outID is None:
             return None
         for i, row in enumerate(self.book):
-            if (str(inID) == str(row[1])
-                    and str(outID) == str(row[0])):
+            if (str(inID) == str(row[1]) and
+                    str(outID) == str(row[0])):
                 return i
         return None
 
@@ -3172,20 +3172,85 @@ class PrintNonc(tk.Toplevel):
         self.attributes("-topmost", "false")
         self.title("列印")
         self.geometry(_default_toplevel_size)
-        self.resizable(False, False)
+        self.resizable(True, True)
         # gui
-        self.l = tk.Label(self, text="列印畫面", font=_default_font)
-        self.l.pack()
-        # buttons
-        self.btn_quit = ttk.Button(self, text='返回',
-                                   style="printNonc.TButton",
-                                   command=self.quitMe)
-        self.btn_quit.pack()
+        self.dateRangeFrame = self.DateRangeFrame(self)
+        self.radioButtonFrame = self.RadioButtonFrame(self)
+        self.otherFieldsFrame = self.OtherFieldsFrame(self)
+        self.BottomButtonsFrame = self.BottomButtonsFrame(self)
+        self.separator = ttk.Separator(self, orient="horizontal")
+        self.radioButtonFrame.grid(row=0, padx=5, pady=5)
+        self.dateRangeFrame.grid(row=1, padx=5, pady=5)
+        self.separator.grid(row=2, sticky="ew")
+        self.otherFieldsFrame.grid(row=3)
+        self.BottomButtonsFrame.grid(row=4)
         # focus
         self.grab_set()
 
     def quitMe(self):
         self.destroy()
+
+    class RadioButtonFrame(tk.Frame):
+        def __init__(self, parent, *args, **kwargs):
+            tk.Frame.__init__(self, parent, *args, **kwargs)
+            self.parent = parent
+            choices = {
+                "registerBook": "[建帳]清單",
+                "monthlyReport": "統計月報表",
+                "nonConsumables": "非消耗品清冊",
+                "unregisterList": "[除帳]減損單",
+                "propertyCard": "動產財產卡",
+                "registerList": "增加單",
+                "differenceList": "增減表",
+                "propertyTag": "財產標籤",
+                "inventoryRecord": "盤點紀錄",
+                "inventoryList": "盤存表",
+                "propertyMaintenanceCard": "財產保管卡",
+            }
+            self.radioVar = tk.IntVar()
+            self.radioButtons = {}
+            i = 0
+            for choice, description in choices.items():
+                self.radioButtons[choice] = tk.Radiobutton(
+                    self, text=description, variable=self.radioVar,
+                    value=i, font=_default_font)
+                self.radioButtons[choice].grid(row=i // 4, column=i % 4,
+                                               sticky=tk.W)
+                i += 1
+
+    class DateRangeFrame(tk.Frame):
+        def __init__(self, parent, *args, **kwargs):
+            tk.Frame.__init__(self, parent, *args, **kwargs)
+            self.parent = parent
+            dateFields = {"date": "日期範圍 (購置或取得)", "key_date": "建帳日期"}
+            self.cf = {}
+            i = 0
+            for key, desc in dateFields.items():
+                self.cf[key] = CompoundField(self, "dateframe", "", "normal",
+                                             desc, span=True)
+                self.cf[key].widget.min.clear()
+                self.cf[key].widget.max.clear()
+                self.cf[key].label.grid(row=i, column=0)
+                self.cf[key].widget.grid(row=i, column=1)
+                i += 1
+
+    class OtherFieldsFrame(tk.Frame):
+        def __init__(self, parent, *args, **kwargs):
+            tk.Frame.__init__(self, parent, *args, **kwargs)
+            self.parent = parent
+            self.testLabel = tk.Label(self, text="A OtherFieldsFrame label")
+            self.testLabel.pack()
+
+    class BottomButtonsFrame(tk.Frame):
+        def __init__(self, parent, *args, **kwargs):
+            tk.Frame.__init__(self, parent, *args, **kwargs)
+            self.parent = parent
+            self.testLabel = tk.Label(self, text="A BottomButtonsFrame label")
+            self.testLabel.pack()
+            self.btn_quit = ttk.Button(self, text='返回',
+                                       style="printNonc.TButton",
+                                       command=parent.quitMe)
+            self.btn_quit.pack()
 
 
 class Maintenance(tk.Toplevel):
@@ -3218,7 +3283,7 @@ def main():
     root = tk.Tk()
     # The combobox style for root, also seen in Index().__init__()
     root.option_add('*TCombobox*Listbox.font', _default_font)
-    test = Unregister(root)
+    test = PrintNonc(root)
     test.protocol("WM_DELETE_WINDOW", lambda: test.parent.destroy())
     root.mainloop()
     root.quit()

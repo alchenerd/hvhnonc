@@ -15,7 +15,7 @@ from typing import Dict
 from __init__ import __version__
 
 _welcome_image = "kaiba.gif"
-_default_toplevel_size = "679x411"
+_default_toplevel_size = "681x421"
 _default_font = (None, 15)
 _default_button_font = (None, 15)
 _default_database = "HVHNONC.db"
@@ -145,6 +145,9 @@ class CompoundField():
                                 font=_default_font, width=20)
         if widgetType == "dateframe":
             return DateFrame(parent, variable)
+        if widgetType == "spinbox":
+            return tk.Spinbox(parent, from_=1, to=100, textvariable=variable,
+                              font=_default_font, width=20)
 
 
 # returns the field ID from hvhnonc_fields
@@ -322,8 +325,8 @@ class Login(tk.Toplevel):
                 "錯誤", "帳號與密碼須為20字以內的英數字", parent=self)
 
     def isValid(self, username, password):
-        if (username.isalnum() and len(username) <= 20
-                and password.isalnum() and len(password) <= 20):
+        if (username.isalnum() and len(username) <= 20 and
+                password.isalnum() and len(password) <= 20):
             return True
         else:
             return False
@@ -345,7 +348,7 @@ class Register(tk.Toplevel):
         self.attributes("-topmost", "true")
         self.attributes("-topmost", "false")
         self.title("輸入")
-        self.geometry(_default_toplevel_size)
+        self.geometry("681x411")
         self.resizable(False, False)
         self.createWidgets()
         self.createView()
@@ -577,8 +580,8 @@ class Register(tk.Toplevel):
         if state == "none":
             self.title("輸入")
             for i, v in self.compFields.items():
-                if (isinstance(v.widget, tk.Entry) or
-                        isinstance(v.widget, ttk.Combobox)):
+                if (isinstance(v.widget, tk.Entry)
+                        or isinstance(v.widget, ttk.Combobox)):
                     v.widget.config(state="disabled")
                 if isinstance(v.widget, DateFrame):
                     v.widget.cb_y.config(state="disabled")
@@ -591,8 +594,8 @@ class Register(tk.Toplevel):
             self.initializeAllField()
             self.clearAllFields()
             for i, v in self.compFields.items():
-                if (isinstance(v.widget, tk.Entry) or
-                        isinstance(v.widget, ttk.Combobox)):
+                if (isinstance(v.widget, tk.Entry)
+                        or isinstance(v.widget, ttk.Combobox)):
                     v.widget.config(state=v.enabledState)
                 if isinstance(v.widget, DateFrame):
                     v.widget.cb_y.config(state=v.enabledState)
@@ -610,8 +613,8 @@ class Register(tk.Toplevel):
                 self.updateByState("none")
             if self.index in range(0, len(self.book)):
                 for i, v in self.compFields.items():
-                    if (isinstance(v.widget, tk.Entry) or
-                            isinstance(v.widget, ttk.Combobox)):
+                    if (isinstance(v.widget, tk.Entry)
+                            or isinstance(v.widget, ttk.Combobox)):
                         v.widget.config(state=v.enabledState)
                     if isinstance(v.widget, DateFrame):
                         v.widget.cb_y.config(state=v.enabledState)
@@ -658,8 +661,8 @@ class Register(tk.Toplevel):
 
     def clearAllFields(self):
         for i, v in self.compFields.items():
-            if (isinstance(v.widget, tk.Entry) or
-                    isinstance(v.widget, ttk.Combobox)):
+            if (isinstance(v.widget, tk.Entry)
+                    or isinstance(v.widget, ttk.Combobox)):
                 v.variable.set("")
             if isinstance(v.widget, DateFrame):
                 v.widget.y.set("")
@@ -721,9 +724,9 @@ class Register(tk.Toplevel):
         subcatagories = cursor.fetchall()
         connect.close()
         self.compFields["subcategory"].widget.config(values=subcatagories)
-        if (len(subcatagories) > 0 and
-                self.compFields["subcategory"].variable.get() !=
-                subcatagories[0][0]):
+        if (len(subcatagories) > 0
+                and self.compFields["subcategory"].variable.get()
+                != subcatagories[0][0]):
             self.compFields["subcategory"].widget.set(subcatagories[0][0])
             self.onSubcategorySelected(None)
 
@@ -744,8 +747,8 @@ class Register(tk.Toplevel):
         rows = cursor.fetchall()
         connect.close()
         self.compFields["name"].widget.config(values=rows)
-        if (len(rows) > 0 and
-                self.compFields["name"].variable.get() != rows[0][0]):
+        if (len(rows) > 0
+                and self.compFields["name"].variable.get() != rows[0][0]):
             self.compFields["name"].variable.set(rows[0][0])
         self.onNameSelected(None)
 
@@ -766,22 +769,22 @@ class Register(tk.Toplevel):
         cursor.execute(sqlstr, params)
         units = cursor.fetchall()
         self.compFields["unit"].widget.config(values=units)
-        if (len(units) > 0 and
-                self.compFields["unit"].variable.get() != units[0][0]):
+        if (len(units) > 0
+                and self.compFields["unit"].variable.get() != units[0][0]):
             self.compFields["unit"].variable.set(units[0][0])
         params[2] = getFieldIDByName("品牌")
         cursor.execute(sqlstr, params)
         brands = cursor.fetchall()
         self.compFields["brand"].widget.config(values=brands)
-        if (len(brands) > 0 and
-                self.compFields["brand"].variable.get() != brands[0][0]):
+        if (len(brands) > 0
+                and self.compFields["brand"].variable.get() != brands[0][0]):
             self.compFields["brand"].widget.set(brands[0][0])
         params[2] = getFieldIDByName("規格")
         cursor.execute(sqlstr, params)
         specs = cursor.fetchall()
         self.compFields["spec"].widget.config(values=specs)
-        if (len(specs) > 0 and
-                self.compFields["spec"].variable.get() != specs[0][0]):
+        if (len(specs) > 0
+                and self.compFields["spec"].variable.get() != specs[0][0]):
             self.compFields["spec"].variable.set(specs[0][0])
         connect.close()
 
@@ -1570,9 +1573,9 @@ class Register(tk.Toplevel):
             self.compFields["subcategory"].widget.config(values=subcats)
             self.compFields["subcategory"].widget.bind(
                 "<<ComboboxSelected>>", self.onSubcategorySelected)
-            if (len(subcats) > 0 and
-                    self.compFields["subcategory"].variable.get() !=
-                    subcats[0]):
+            if (len(subcats) > 0
+                    and self.compFields["subcategory"].variable.get()
+                    != subcats[0]):
                 self.compFields["subcategory"].widget.set(subcats[0])
             self.onSubcategorySelected(None)
             connect.close()
@@ -1594,9 +1597,9 @@ class Register(tk.Toplevel):
             names = cursor.fetchall()
             connect.close()
             self.compFields["name"].widget.config(values=names)
-            if (len(names) > 0 and
-                    self.compFields["name"].variable.get() !=
-                    names[0]):
+            if (len(names) > 0
+                    and self.compFields["name"].variable.get()
+                    != names[0]):
                 self.compFields["name"].widget.set(names[0])
             self.onNameSelected(None)
 
@@ -1621,8 +1624,8 @@ class Register(tk.Toplevel):
             for row in rows:
                 brands.append(row[0])
             self.compFields["brand"].widget.config(values=brands)
-            if (len(brands) > 0
-                    and self.compFields["brand"].variable.get() != brands[0]):
+            if (len(brands) > 0 and
+                    self.compFields["brand"].variable.get() != brands[0]):
                 self.compFields["brand"].variable.set(brands[0])
             # 規格
             params = (str(getFieldIDByName('物品名稱')),
@@ -1634,8 +1637,8 @@ class Register(tk.Toplevel):
             for row in rows:
                 specs.append(row[0])
             self.compFields["spec"].widget.config(values=specs)
-            if (len(specs) > 0
-                    and self.compFields["spec"].variable.get() != specs[0]):
+            if (len(specs) > 0 and
+                    self.compFields["spec"].variable.get() != specs[0]):
                 self.compFields["spec"].variable.set(specs[0])
             connect.close()
 
@@ -1850,7 +1853,7 @@ class Unregister(tk.Toplevel):
         tk.Toplevel.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.title("除帳")
-        self.geometry("665x509")
+        self.geometry("665x515")
         self.resizable(False, False)
         # Four main frames in the GUI
         self.f_mainForm = tk.Frame(self)
@@ -2537,8 +2540,8 @@ class Unregister(tk.Toplevel):
                                "remark like :q) ")
                 sqlunion = ("union all ")
                 sqlfooter = ("order by date desc, name desc;")
-                sqlstr = (sqlin + sqlwherein + sqlunion + sqlout + sqlwhereout
-                          + sqlfooter)
+                sqlstr = (sqlin + sqlwherein + sqlunion +
+                          sqlout + sqlwhereout + sqlfooter)
                 cursor.execute(sqlstr, {'q': "%{}%".format(phrase)})
                 data = cursor.fetchall()
                 for d in data:
@@ -2828,8 +2831,8 @@ class Unregister(tk.Toplevel):
             self.wdict["purchase_date"].widget.max.clear()
             self.wdict["purchase_date"].label.grid(
                 row=3, column=0, padx=5, pady=5)
-            self.wdict["purchase_date"].widget.grid(row=3, column=1, padx=5, pady=5,
-                                                    columnspan=3, sticky="w")
+            self.wdict["purchase_date"].widget.grid(
+                    row=3, column=1, padx=5, pady=5, columnspan=3, sticky="w")
             # acquire_date
             self.wdict["acquire_date"] = CompoundField(
                 parent=self, widgetType="dateframe", description="建帳日期",
@@ -2994,7 +2997,8 @@ class Unregister(tk.Toplevel):
                         "place as place, keeper, remark , '' as out_ID "
                         "from hvhnonc_in ")
                 q_out = ("select in_ID as ID, out_date as date, name, "
-                         "storage as place, '' as keeper, remark, ID as out_ID "
+                         "storage as place, '' as keeper, remark, "
+                         "ID as out_ID "
                          "from hvhnonc_out ")
                 q_union = "union all "
                 q_footer = "order by purchase_date desc;"
@@ -3005,8 +3009,8 @@ class Unregister(tk.Toplevel):
                         cf.widget.tilde
                         if cf.widgetType == "dateframe":
                             # continue if there is nothing
-                            if not (cf.widget.min.variable.get() or
-                                    cf.widget.max.variable.get()):
+                            if not (cf.widget.min.variable.get()
+                                    or cf.widget.max.variable.get()):
                                 continue
                             tempMin = "1911-01-01"
                             tempMax = "date('now')"
@@ -3064,8 +3068,8 @@ class Unregister(tk.Toplevel):
                         params)
                 elif parent.whereToLook == "out":
                     cursor.execute(
-                        q_out_full +
-                        q_footer.replace("purchase_date", "out_date"),
+                        q_out_full
+                        + q_footer.replace("purchase_date", "out_date"),
                         params)
                 data = cursor.fetchall()
                 self.title("篩選結果: 共{}筆".format(len(data)))
@@ -3102,8 +3106,8 @@ class Unregister(tk.Toplevel):
         if inID is None or outID is None:
             return None
         for i, row in enumerate(self.book):
-            if (str(inID) == str(row[1]) and
-                    str(outID) == str(row[0])):
+            if (str(inID) == str(row[1])
+                    and str(outID) == str(row[0])):
                 return i
         return None
 
@@ -3168,24 +3172,53 @@ class PrintNonc(tk.Toplevel):
         s.configure('printNonc.TButton', font=_default_button_font)
         tk.Toplevel.__init__(self, parent, *args, **kwargs)
         self.parent = parent
-        self.attributes("-topmost", "true")
-        self.attributes("-topmost", "false")
         self.title("列印")
-        self.geometry(_default_toplevel_size)
-        self.resizable(True, True)
+        self.geometry("657x421")
+        self.resizable(False, False)
         # gui
         self.dateRangeFrame = self.DateRangeFrame(self)
         self.radioButtonFrame = self.RadioButtonFrame(self)
         self.otherFieldsFrame = self.OtherFieldsFrame(self)
         self.BottomButtonsFrame = self.BottomButtonsFrame(self)
         self.separator = ttk.Separator(self, orient="horizontal")
-        self.radioButtonFrame.grid(row=0, padx=5, pady=5)
-        self.dateRangeFrame.grid(row=1, padx=5, pady=5)
+        self.radioButtonFrame.grid(row=0, pady=5)
+        self.dateRangeFrame.grid(row=1, pady=5)
         self.separator.grid(row=2, sticky="ew")
         self.otherFieldsFrame.grid(row=3)
         self.BottomButtonsFrame.grid(row=4)
+        # init
+        self.initialize_field()
         # focus
+        self.attributes("-topmost", "true")
+        self.attributes("-topmost", "false")
         self.grab_set()
+
+    def initialize_field(self):
+        # last day of month, copied from stackoverflow
+        # stackoverflow  "get-last-day-of-the-month-in-python"
+        def last_day_of_month(any_day):
+            next_month = (any_day.replace(day=28) + dt.timedelta(days=4))
+            return next_month - dt.timedelta(days=next_month.day)
+
+        # set date span to this month
+        today = dt.datetime.today()
+        monthStart = dt.datetime(today.year, today.month, 1)
+        monthEnd = last_day_of_month(today)
+        self.dateRangeFrame.cf["購置或取得日期"].widget.min.y.set(
+                str(monthStart.year - 1911))
+        self.dateRangeFrame.cf["購置或取得日期"].widget.min.m.set(
+                str(monthStart.month))
+        self.dateRangeFrame.cf["購置或取得日期"].widget.min.d.set(
+                str(monthStart.day))
+        self.dateRangeFrame.cf["購置或取得日期"].widget.min.updateVar()
+        self.dateRangeFrame.cf["購置或取得日期"].widget.max.y.set(
+                str(monthEnd.year - 1911))
+        self.dateRangeFrame.cf["購置或取得日期"].widget.max.m.set(
+                str(monthEnd.month))
+        self.dateRangeFrame.cf["購置或取得日期"].widget.max.d.set(
+                str(monthEnd.day))
+        self.dateRangeFrame.cf["購置或取得日期"].widget.max.updateVar()
+
 
     def quitMe(self):
         self.destroy()
@@ -3194,19 +3227,17 @@ class PrintNonc(tk.Toplevel):
         def __init__(self, parent, *args, **kwargs):
             tk.Frame.__init__(self, parent, *args, **kwargs)
             self.parent = parent
-            choices = {
-                "registerBook": "[建帳]清單",
-                "monthlyReport": "統計月報表",
-                "nonConsumables": "非消耗品清冊",
-                "unregisterList": "[除帳]減損單",
-                "propertyCard": "動產財產卡",
-                "registerList": "增加單",
-                "differenceList": "增減表",
-                "propertyTag": "財產標籤",
-                "inventoryRecord": "盤點紀錄",
-                "inventoryList": "盤存表",
-                "propertyMaintenanceCard": "財產保管卡",
-            }
+            choices = {"registerBook": "[建帳]清單",
+                       "monthlyReport": "統計月報表",
+                       "nonConsumables": "非消耗品清冊",
+                       "unregisterList": "[除帳]減損單",
+                       "propertyCard": "動產財產卡",
+                       "registerList": "增加單",
+                       "differenceList": "增減表",
+                       "propertyTag": "財產標籤",
+                       "inventoryRecord": "盤點紀錄",
+                       "inventoryList": "盤存表",
+                       "propertyMaintenanceCard": "財產保管卡"}
             self.radioVar = tk.IntVar()
             self.radioButtons = {}
             i = 0
@@ -3222,35 +3253,142 @@ class PrintNonc(tk.Toplevel):
         def __init__(self, parent, *args, **kwargs):
             tk.Frame.__init__(self, parent, *args, **kwargs)
             self.parent = parent
-            dateFields = {"date": "日期範圍 (購置或取得)", "key_date": "建帳日期"}
+            dateFields = ["購置或取得日期", "建帳日期"]
             self.cf = {}
-            i = 0
-            for key, desc in dateFields.items():
-                self.cf[key] = CompoundField(self, "dateframe", "", "normal",
-                                             desc, span=True)
-                self.cf[key].widget.min.clear()
-                self.cf[key].widget.max.clear()
-                self.cf[key].label.grid(row=i, column=0)
-                self.cf[key].widget.grid(row=i, column=1)
-                i += 1
+            for i, field in enumerate(dateFields):
+                self.cf[field] = CompoundField(self, "dateframe", "",
+                                               "normal", field, span=True)
+                self.cf[field].widget.min.clear()
+                self.cf[field].widget.max.clear()
+                self.cf[field].label.grid(row=i, column=0, sticky=tk.E)
+                self.cf[field].widget.grid(row=i, column=1, sticky=tk.W)
 
     class OtherFieldsFrame(tk.Frame):
         def __init__(self, parent, *args, **kwargs):
             tk.Frame.__init__(self, parent, *args, **kwargs)
             self.parent = parent
-            self.testLabel = tk.Label(self, text="A OtherFieldsFrame label")
-            self.testLabel.pack()
+            fields = {"category": "物品大項",
+                      "subcategory": "物品細目",
+                      "name": "物品名稱",
+                      "place": "存置地點",
+                      "keep_department": "保管單位",
+                      "use_department": "使用單位",
+                      "keeper": "保管人", }
+            self.cf = {}
+            i = 0
+            for field, description in fields.items():
+                self.cf[field] = CompoundField(
+                    self, "combobox", field, "normal", description)
+                if description in ("物品大項", "保管單位"):
+                    self.cf[field].label.grid(
+                            row=i, column=0, padx=5, pady=5)
+                    self.cf[field].widget.grid(
+                            row=i, column=1, padx=5, pady=5)
+                elif description in ("物品細目", "使用單位"):
+                    self.cf[field].label.grid(
+                            row=i, column=2, padx=5, pady=5)
+                    self.cf[field].widget.grid(
+                            row=i, column=3, padx=5, pady=5)
+                    i += 1  # new row
+                else:
+                    self.cf[field].label.grid(
+                            row=i, column=0, padx=5, pady=5)
+                    self.cf[field].widget.grid(
+                            row=i, column=1, padx=5, pady=5)
+                    i += 1  # new row
+            # clear button
+            self.btn_clear = ttk.Button(
+                    self, text="清空選項", style="printNonc.TButton",
+                    command=self.on_button_clear_clicked)
+            self.btn_clear.grid(row=1, column=3, padx=5, pady=5)
+            # last line
+            self.cf["linePerPage"] = CompoundField(
+                self, "spinbox", field, "normal", "每頁列印筆數")
+            self.cf["linePerPage"].variable.set("20")
+            self.cf["linePerPage"].label.grid(
+                row=i, column=0, columnspan=2, sticky=tk.E)
+            self.cf["linePerPage"].widget.grid(
+                row=i, column=2, columnspan=2, sticky=tk.W)
+            # Fetch suggested category from database
+            connect, cursor = _getConnection(_default_database)
+            sqlstr = ("select description from hvhnonc_category")
+            rows = cursor.execute(sqlstr).fetchall()
+            categories = [row[0] for row in rows if row[0]]
+            self.cf["category"].widget.config(values=categories)
+            # Hook combobox select callback
+            self.cf["category"].widget.bind("<<ComboboxSelected>>",
+                                            self.on_category_selected)
+            self.on_category_selected(None)
+            # Fetch other comboboxes' cache
+            for key, cf in self.cf.items():
+                if isinstance(cf.widget, ttk.Combobox):
+                    if key not in ("category", "subcategory", "name"):
+                        # TODO: finish here
+                        print(key)
+
+        def on_category_selected(self, event):
+            # fetch suggested subcategory
+            connect, cursor = _getConnection(_default_database)
+            sqlstr = ("select description "
+                      "from hvhnonc_subcategory "
+                      "where parent_ID=("
+                          "select ID "
+                          "from hvhnonc_category "
+                          "where description=?);")
+            params = (self.cf["category"].variable.get(),)
+            rows = cursor.execute(sqlstr, params).fetchall()
+            subcategories = [row[0] for row in rows if row[0]]
+            self.cf["subcategory"].widget.config(
+                    values=subcategories)
+            self.cf["subcategory"].widget.bind(
+                    "<<ComboboxSelected>>", self.on_subcategory_selected)
+            if (len(subcategories) and subcategories[0] not in (None, "")):
+                self.cf["subcategory"].variable.set(subcategories[0])
+            self.on_subcategory_selected(None)
+
+        def on_subcategory_selected(self, event):
+            # fetch suggested subcategory
+            connect, cursor = _getConnection(_default_database)
+            sqlstr = ("select change_value "
+                      "from hvhnonc_in_cache "
+                      "where this_ID=:thisID "
+                            "and this_value=:thisValue "
+                            "and change_ID=:changeID;")
+            params = {"thisID": getFieldIDByName("物品細目"),
+                      "thisValue": self.cf["subcategory"].variable.get(),
+                      "changeID": getFieldIDByName("物品名稱")}
+            rows = cursor.execute(sqlstr, params).fetchall()
+            names = [row[0] for row in rows if row[0]]
+            self.cf["name"].widget.config(values=names)
+            if (len(names) and names[0] not in (None, "")):
+                self.cf["name"].variable.set(names[0])
+
+        # callback of button that clears the cat-subcat-name comboboxes
+        def on_button_clear_clicked(self):
+            self.cf["category"].variable.set("")
+            self.cf["subcategory"].variable.set("")
+            self.cf["name"].variable.set("")
 
     class BottomButtonsFrame(tk.Frame):
         def __init__(self, parent, *args, **kwargs):
             tk.Frame.__init__(self, parent, *args, **kwargs)
             self.parent = parent
-            self.testLabel = tk.Label(self, text="A BottomButtonsFrame label")
-            self.testLabel.pack()
-            self.btn_quit = ttk.Button(self, text='返回',
+            self.btn_quit = ttk.Button(self, text="返回",
                                        style="printNonc.TButton",
                                        command=parent.quitMe)
-            self.btn_quit.pack()
+            self.btn_quit.grid(row=0, column=0, padx=5, pady=5)
+            self.btn_quit = ttk.Button(self, text="變更預設印表機",
+                                       style="printNonc.TButton",
+                                       command=parent.quitMe)
+            self.btn_quit.grid(row=0, column=1, padx=5, pady=5)
+            self.btn_quit = ttk.Button(self, text="預覽",
+                                       style="printNonc.TButton",
+                                       command=parent.quitMe)
+            self.btn_quit.grid(row=0, column=2, padx=5, pady=5)
+            self.btn_quit = ttk.Button(self, text="列印",
+                                       style="printNonc.TButton",
+                                       command=parent.quitMe)
+            self.btn_quit.grid(row=0, column=3, padx=5, pady=5)
 
 
 class Maintenance(tk.Toplevel):
@@ -3283,6 +3421,8 @@ def main():
     root = tk.Tk()
     # The combobox style for root, also seen in Index().__init__()
     root.option_add('*TCombobox*Listbox.font', _default_font)
+    root.option_add("*Font", _default_font)
+    root.option_add("*Label.Font", _default_font)
     test = PrintNonc(root)
     test.protocol("WM_DELETE_WINDOW", lambda: test.parent.destroy())
     root.mainloop()

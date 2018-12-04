@@ -3227,27 +3227,25 @@ class PrintNonc(tk.Toplevel):
         def __init__(self, parent, *args, **kwargs):
             tk.Frame.__init__(self, parent, *args, **kwargs)
             self.parent = parent
-            choices = {"registerBook": "[建帳]清單",
-                       "monthlyReport": "統計月報表",
-                       "nonConsumables": "非消耗品清冊",
-                       "unregisterList": "[除帳]減損單",
-                       "propertyCard": "動產財產卡",
-                       "registerList": "增加單",
-                       "differenceList": "增減表",
-                       "propertyTag": "財產標籤",
-                       "inventoryRecord": "盤點紀錄",
-                       "inventoryList": "盤存表",
-                       "propertyMaintenanceCard": "財產保管卡"}
+            choices = {0: "[建帳]清單",
+                       1: "統計月報表",
+                       2: "非消耗品清冊",
+                       3: "[除帳]減損單",
+                       4: "動產財產卡",
+                       5: "增加單",
+                       6: "增減表",
+                       7: "財產標籤",
+                       8: "盤點紀錄",
+                       9: "盤存表",
+                       10: "財產保管卡"}
             self.radioVar = tk.IntVar()
             self.radioButtons = {}
-            i = 0
-            for choice, description in choices.items():
-                self.radioButtons[choice] = tk.Radiobutton(
+            for i, description in choices.items():
+                self.radioButtons[i] = tk.Radiobutton(
                     self, text=description, variable=self.radioVar,
                     value=i, font=_default_font)
-                self.radioButtons[choice].grid(row=i // 4, column=i % 4,
-                                               sticky=tk.W)
-                i += 1
+                self.radioButtons[i].grid(row=i // 4, column=i % 4,
+                                          sticky=tk.W)
 
     class DateRangeFrame(tk.Frame):
         def __init__(self, parent, *args, **kwargs):
@@ -3323,8 +3321,27 @@ class PrintNonc(tk.Toplevel):
             for key, cf in self.cf.items():
                 if isinstance(cf.widget, ttk.Combobox):
                     if key not in ("category", "subcategory", "name"):
-                        # TODO: finish here
-                        print(key)
+                        self.fetch_cache(cf)
+
+        def fetch_cache(self, cf: CompoundField):
+            connect, cursor = _getConnection(_default_database)
+            sqlstr = ("select change_value "
+                      "from hvhnonc_in_cache "
+                      "where this_ID=:thisID "
+                            "and this_value=:thisValue "
+                            "and change_ID=:changeID "
+                      "union all "
+                      "select change_value "
+                      "from hvhnonc_out_cache "
+                      "where this_ID=:thisID "
+                            "and this_value=:thisValue "
+                            "and change_ID=:changeID;")
+            params = {"thisID": getFieldIDByName("無"),
+                      "thisValue": "none",
+                      "changeID": getFieldIDByName(cf.description)}
+            rows = cursor.execute(sqlstr, params).fetchall()
+            cachehits = [row[0] for row in rows if row[0]]
+            cf.widget.config(values=cachehits)
 
         def on_category_selected(self, event):
             # fetch suggested subcategory
@@ -3344,6 +3361,8 @@ class PrintNonc(tk.Toplevel):
                     "<<ComboboxSelected>>", self.on_subcategory_selected)
             if (len(subcategories) and subcategories[0] not in (None, "")):
                 self.cf["subcategory"].variable.set(subcategories[0])
+            else:
+                self.cf["name"].variable.set("")
             self.on_subcategory_selected(None)
 
         def on_subcategory_selected(self, event):
@@ -3351,6 +3370,12 @@ class PrintNonc(tk.Toplevel):
             connect, cursor = _getConnection(_default_database)
             sqlstr = ("select change_value "
                       "from hvhnonc_in_cache "
+                      "where this_ID=:thisID "
+                            "and this_value=:thisValue "
+                            "and change_ID=:changeID "
+                      "union all "
+                      "select change_value "
+                      "from hvhnonc_out_cache "
                       "where this_ID=:thisID "
                             "and this_value=:thisValue "
                             "and change_ID=:changeID;")
@@ -3362,6 +3387,8 @@ class PrintNonc(tk.Toplevel):
             self.cf["name"].widget.config(values=names)
             if (len(names) and names[0] not in (None, "")):
                 self.cf["name"].variable.set(names[0])
+            else:
+                self.cf["name"].variable.set("")
 
         # callback of button that clears the cat-subcat-name comboboxes
         def on_button_clear_clicked(self):
@@ -3377,18 +3404,27 @@ class PrintNonc(tk.Toplevel):
                                        style="printNonc.TButton",
                                        command=parent.quitMe)
             self.btn_quit.grid(row=0, column=0, padx=5, pady=5)
-            self.btn_quit = ttk.Button(self, text="變更預設印表機",
-                                       style="printNonc.TButton",
-                                       command=parent.quitMe)
+            self.btn_quit = ttk.Button(
+                    self, text="變更預設印表機", style="printNonc.TButton",
+                    command=parent.on_change_default_printer_button_click)
             self.btn_quit.grid(row=0, column=1, padx=5, pady=5)
-            self.btn_quit = ttk.Button(self, text="預覽",
-                                       style="printNonc.TButton",
-                                       command=parent.quitMe)
+            self.btn_quit = ttk.Button(
+                    self, text="預覽", style="printNonc.TButton",
+                    command=parent.on_preview_button_click)
             self.btn_quit.grid(row=0, column=2, padx=5, pady=5)
-            self.btn_quit = ttk.Button(self, text="列印",
-                                       style="printNonc.TButton",
-                                       command=parent.quitMe)
+            self.btn_quit = ttk.Button(
+                    self, text="列印", style="printNonc.TButton",
+                    command=parent.on_printer_print_button_click)
             self.btn_quit.grid(row=0, column=3, padx=5, pady=5)
+
+    def on_change_default_printer_button_click(self):
+        print(__name__)
+
+    def on_preview_button_click(self):
+        print(__name__)
+
+    def on_printer_print_button_click(self):
+        print(__name__)
 
 
 class Maintenance(tk.Toplevel):

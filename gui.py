@@ -3459,7 +3459,7 @@ def main():
     root.option_add('*TCombobox*Listbox.font', _default_font)
     root.option_add("*Font", _default_font)
     root.option_add("*Label.Font", _default_font)
-    test = PrintNonc(root)
+    test = Unregister(root)
     test.protocol("WM_DELETE_WINDOW", lambda: test.parent.destroy())
     root.mainloop()
     root.quit()

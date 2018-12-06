@@ -10,10 +10,10 @@ if __name__ == '__main__':
     from _register_skeleton import Ui_Dialog as RegisterDialog
     import sys
     sys.path.append('../')
-    from myconnect.connect import _get_connection
+    from myconnect import connect
 else:
     from myqtpy._register_skeleton import Ui_Dialog as RegisterDialog
-    from myconnect.connect import _get_connection
+    from myconnect import connect
 
 class Register(QtWidgets.QDialog, RegisterDialog):
     def __init__(self, dialog):
@@ -21,8 +21,78 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         self.setupUi(dialog)
         self.returnBtn.clicked.connect(dialog.reject)
         self.createBtn.clicked.connect(self.on_createBtn_clicked)
+        self.category.currentTextChanged.connect(self.on_category_changed)
+        self.name.currentTextChanged.connect(self.on_name_changed)
+        self.subcategory.currentTextChanged.connect(
+                self.on_subcategory_changed)
         self.disable_all_fields()
         self.clear_all_fields()
+
+    def on_name_changed(self):
+        # update unit, brand, spec from hvhnonc_in_cache
+        con, cursor= connect._get_connection()
+        sqlstr = ('select change_value '
+                  'from hvhnonc_in_cache '
+                  'where this_ID=? '
+                  'and this_value=? '
+                  'and change_ID=?')
+        params = [connect.get_field_id(connect.get_description('name')),
+                  self.name.currentText()]
+        # unit
+        p = params + [connect.get_field_id(connect.get_description('unit')),]
+        cursor.execute(sqlstr, p)
+        rows = cursor.fetchall()
+        self.unit.clear()
+        if rows:
+            self.unit.addItems([row[0] for row in rows])
+        # brand
+        p = params + [connect.get_field_id(connect.get_description('brand')),]
+        cursor.execute(sqlstr, p)
+        rows = cursor.fetchall()
+        self.brand.clear()
+        if rows:
+            self.brand.addItems([row[0] for row in rows])
+        # spec
+        p = params + [connect.get_field_id(connect.get_description('spec')),]
+        cursor.execute(sqlstr, p)
+        rows = cursor.fetchall()
+        self.spec.clear()
+        if rows:
+            self.spec.addItems([row[0] for row in rows])
+
+    def on_subcategory_changed(self):
+        # update name from hvhnonc_in_cache
+        con, cursor= connect._get_connection()
+        sqlstr = ('select change_value '
+                  'from hvhnonc_in_cache '
+                  'where this_ID=? '
+                  'and this_value=? '
+                  'and change_ID=?')
+        params = [
+                connect.get_field_id(connect.get_description('subcategory')),
+                self.subcategory.currentText(),
+                connect.get_field_id(connect.get_description('name'))]
+        cursor.execute(sqlstr, params)
+        rows = cursor.fetchall()
+        self.name.clear()
+        if rows:
+            self.name.addItems([row[0] for row in rows])
+
+    def on_category_changed(self):
+        # update subcategory
+        con, cursor= connect._get_connection()
+        sqlstr = ('select description '
+                  'from hvhnonc_subcategory '
+                  'where parent_ID=('
+                  'select ID '
+                  'from hvhnonc_category '
+                  'where description=?);')
+        params = (self.category.currentText(),)
+        cursor.execute(sqlstr, params)
+        rows = cursor.fetchall()
+        options = [row[0] for row in rows]
+        self.subcategory.clear()
+        self.subcategory.addItems(options)
 
     def on_createBtn_clicked(self):
         self.init_all_fields()
@@ -38,13 +108,35 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         self.fetch_options(widgetsToInit)
 
     def fetch_options(self, d: Dict[str, QtWidgets.QComboBox]):
-        con = _get_connection()
+        con, cursor= connect._get_connection()
         for key, widget in d.items():
-            # fetch options from hvhnonc
-            if key == 'category':
-                pass
+            # constant choices
+            if key == 'source':
+                options = ['購置', '撥用', '贈送']
+                widget.addItems(options)
+                continue
+            # fetch options from hvhnonc_category
+            elif key == 'category':
+                sqlstr = ('select description '
+                          'from hvhnonc_category '
+                          'order by ID')
+                cursor.execute(sqlstr)
+                rows = cursor.fetchall()
+                options = [row[0] for row in rows]
+                widget.addItems(options)
+                widget.clearEditText()
+            # fetch options from hvhnonc_in_cache
             else:
-                pass
+                sqlstr = ('select change_value '
+                          'from hvhnonc_in_cache '
+                          'where this_ID=0 and '
+                          'change_ID=?')
+                params = (connect.get_field_id(connect.get_description(key)),)
+                cursor.execute(sqlstr, params)
+                rows = cursor.fetchall()
+                options = [row[0] for row in rows]
+                widget.addItems(options)
+                widget.clearEditText()
         con.close()
 
     def enable_all_fields(self):
@@ -71,6 +163,7 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         for i in widgetsToClear.values():
             if isinstance(i, QtWidgets.QComboBox):
                 i.clearEditText()
+                i.clear()
             elif isinstance(i, QtWidgets.QLineEdit):
                 i.clear()
             elif isinstance(i, QtWidgets.QDateEdit):

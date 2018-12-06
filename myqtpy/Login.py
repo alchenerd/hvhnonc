@@ -7,12 +7,15 @@ import hashlib
 import sqlite3
 from PyQt5 import QtWidgets
 from typing import Dict
-# These are mine
+# These modules are mine
 if __name__ == '__main__':
     from _login_skeleton import Ui_Dialog as LoginDialog
+    import sys
+    sys.path.append('../')
+    from myconnect.connect import _get_connection
 else:
     from myqtpy._login_skeleton import Ui_Dialog as LoginDialog
-from myconnect.connect import _getConnection
+    from myconnect.connect import _get_connection
 
 class Login(QtWidgets.QDialog, LoginDialog):
     def __init__(self, dialog):
@@ -42,7 +45,7 @@ class Login(QtWidgets.QDialog, LoginDialog):
             return False
         (username, password) = (credential.get('username'),
                                 credential.get('password'))
-        con = _getConnection()
+        con = _get_connection()
         con.row_factory = sqlite3.Row
         sqlstr = ("select {hash}, {salt} from {table} where {username}=?;")
         sqlstr = sqlstr.format(**{'hash': 'hash_SHA256',
@@ -69,7 +72,6 @@ if __name__ == '__main__':
     import sys
     app = QtWidgets.QApplication(sys.argv)
     Dialog = QtWidgets.QDialog()
-    ui = Login()
-    ui.setupUi(Dialog)
+    ui = Login(Dialog)
     Dialog.show()
     sys.exit(app.exec_())

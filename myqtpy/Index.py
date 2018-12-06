@@ -6,6 +6,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from myqtpy._index_skeleton import Ui_MainWindow as IndexUi
 from myqtpy.Dummy import Dummy
+from myqtpy.Register import Register
 
 
 class Index(QtWidgets.QMainWindow, IndexUi):
@@ -16,19 +17,22 @@ class Index(QtWidgets.QMainWindow, IndexUi):
     def setupUi(self, mainWindow):
         super(self.__class__, self).setupUi(mainWindow)
         self.addBtn.clicked.connect(
-                lambda: self.on_btn_clicked(type='add'))
+                lambda: self.on_btn_clicked(type_='register'))
         self.removeBtn.clicked.connect(
-                lambda: self.on_btn_clicked(type='remove'))
+                lambda: self.on_btn_clicked(type_='unregister'))
         self.printBtn.clicked.connect(
-                lambda: self.on_btn_clicked(type='print'))
+                lambda: self.on_btn_clicked(type_='print'))
         self.maintenanceBtn.clicked.connect(
-                lambda: self.on_btn_clicked(type='maintenance'))
+                lambda: self.on_btn_clicked(type_='maintenance'))
         self.quitBtn.clicked.connect(QtCore.QCoreApplication.instance().quit)
 
-    def on_btn_clicked(self, type):
+    def on_btn_clicked(self, type_):
         self.childWindow = QtWidgets.QDialog()
-        ui = Dummy(self.childWindow)
-        self.childWindow.setWindowTitle(type)
+        if type_ == 'register':
+            ui = Register(self.childWindow)
+        else:
+            ui = Dummy(self.childWindow)
+            self.childWindow.setWindowTitle(type_)
         self.childWindow.show()
         self.childWindow.exec_()
 

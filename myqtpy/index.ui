@@ -134,6 +134,13 @@
    </widget>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>addBtn</tabstop>
+  <tabstop>removeBtn</tabstop>
+  <tabstop>printBtn</tabstop>
+  <tabstop>maintenanceBtn</tabstop>
+  <tabstop>quitBtn</tabstop>
+ </tabstops>
  <resources>
   <include location="myqtpy.qrc"/>
  </resources>

@@ -66,6 +66,10 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        MainWindow.setTabOrder(self.addBtn, self.removeBtn)
+        MainWindow.setTabOrder(self.removeBtn, self.printBtn)
+        MainWindow.setTabOrder(self.printBtn, self.maintenanceBtn)
+        MainWindow.setTabOrder(self.maintenanceBtn, self.quitBtn)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -77,14 +81,4 @@ class Ui_MainWindow(object):
         self.printBtn.setText(_translate("MainWindow", "列印"))
         self.quitBtn.setText(_translate("MainWindow", "離開"))
 
-from myqtpy import myqtpy_rc
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())
-
+import myqtpy_rc

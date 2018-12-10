@@ -165,7 +165,7 @@ class Ui_Dialog(object):
         self.source.setEnabled(False)
         self.source.setMinimumSize(QtCore.QSize(201, 33))
         self.source.setMaximumSize(QtCore.QSize(201, 33))
-        self.source.setEditable(True)
+        self.source.setEditable(False)
         self.source.setInsertPolicy(QtWidgets.QComboBox.InsertAtTop)
         self.source.setObjectName("source")
         self.horizontalLayout.addWidget(self.source)

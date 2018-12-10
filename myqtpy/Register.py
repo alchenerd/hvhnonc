@@ -22,18 +22,269 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         self.setupUi(dialog)
         self.returnBtn.clicked.connect(dialog.reject)
         self.createBtn.clicked.connect(self.on_createBtn_clicked)
+        self.saveBtn.clicked.connect(self.on_saveBtn_clicked)
+        self.deleteBtn.clicked.connect(self.on_deleteBtn_clicked)
         self.category.currentTextChanged.connect(self.on_category_changed)
         self.name.currentTextChanged.connect(self.on_name_changed)
         self.subcategory.currentTextChanged.connect(
                 self.on_subcategory_changed)
-        self.idDict = self.get_id_dict()
+        self.idDict = None
         self.idIndex = -1
         self.getNextBtn.clicked.connect(self.onclick_next_record)
         self.getPreviousBtn.clicked.connect(self.onclick_previous_record)
-        self.disable_all_fields()
+        self.isEnabled = None
         self.clear_all_fields()
+        self.disable_all_fields()
+
+    def on_saveBtn_clicked(self):
+        if not self.isEnabled:
+            return
+        if not self.form_is_valid():
+            return
+        if self.idIndex == -1:
+            # a new record
+            self.save_as_new()
+        elif self.idIndex in range(len(self.idDict.keys())):
+            # index in history, ask for write over or save as new
+            qmb = QtWidgets.QMessageBox(self)
+            qmb.setIcon(QtWidgets.QMessageBox.Question)
+            qmb.setWindowTitle(u'要覆蓋嗎?')
+            qmb.setText(u'請選擇本筆儲存方式')
+            qmb.addButton('覆蓋本筆', QtWidgets.QMessageBox.YesRole)
+            qmb.addButton('新增一筆', QtWidgets.QMessageBox.NoRole)
+            qmb.addButton('取消', QtWidgets.QMessageBox.RejectRole)
+            reply = qmb.exec_()
+            # hacky since the reply is questionably coded
+            dActions = {
+                    0: lambda: self.write_over(
+                            str(self.idDict[self.idIndex])),
+                    1: self.save_as_new,
+                    2: lambda: None}
+            dActions[reply]()
+
+    # validate the form, and pop messagebox if invalid
+    def form_is_valid(self) -> bool:
+        messagebox = QtWidgets.QMessageBox(self)
+        messagebox.addButton('確認', QtWidgets.QMessageBox.YesRole)
+        messagebox.setWindowTitle('錯誤')
+        messagebox.setIcon(QtWidgets.QMessageBox.Critical)
+        msg = '在以下欄位發現有問題：\n'
+        isValid = True
+        # category: not null
+        if not self.category.currentText():
+            isValid = False
+            msg += '-物品大項未填\n'
+        # subcategory: not null
+        if not self.subcategory.currentText():
+            isValid = False
+            msg += '-物品細目未填\n'
+        # name: not null
+        if not self.name.currentText():
+            isValid = False
+            msg += '-物品名稱未填\n'
+        # price: int not null > 0
+        price = self.price.text()
+        if not price:
+            isValid = False
+            msg += '-單價未填\n'
+        elif (not price.isnumeric() or int(price) < 0):
+            isValid = False
+            msg += '-單價須為正數\n'
+        # amount: int not null >0
+        amount = self.amount.text()
+        if not amount:
+            isValid = False
+            msg += '-數量未填\n'
+        elif (not amount.isnumeric() or int(amount) < 0):
+            isValid = False
+            msg += '-數量須為正數\n'
+        # keep_year: int not null >0
+        keep_year = self.keep_year.text()
+        if not keep_year:
+            isValid = False
+            msg += '-保管年限未填\n'
+        elif (not keep_year.isnumeric() or int(keep_year) < 0):
+            isValid = False
+            msg += '-保管年限須為正數\n'
+        # keep_department: not null
+        if not self.keep_department.currentText():
+            isValid = False
+            msg += '-保管單位未填\n'
+        if not isValid:
+            messagebox.setText(msg[:-1])
+            messagebox.exec_()
+        return isValid
+
+    def save_as_new(self):
+        con, cursor= connect._get_connection()
+        # detemine the object_ID and serial_ID
+        sqlstr = ('select parent_ID, ID '
+                  'from hvhnonc_subcategory '
+                  'where parent_ID=('
+                  'select ID '
+                  'from hvhnonc_category '
+                  'where description=?) '
+                  'and description=?;')
+        params = (self.category.currentText(), self.subcategory.currentText())
+        cursor.execute(sqlstr, params)
+        row = cursor.fetchone()
+        row = ('6', '{:02d}'.format(row[0]), '{:02d}'.format(row[1]))
+        object_ID = ' - '.join(row)
+        sqlstr = ('select max(serial_ID) '
+                  'from hvhnonc_in '
+                  'where object_ID=? and name=?')
+        name = self.name.currentText()
+        params = (object_ID, name)
+        cursor.execute(sqlstr, params)
+        row = cursor.fetchone()
+        if row and row[0]:
+            serial_ID = '{:03}'.format(int(row[0]) + 1)
+        else:
+            serial_ID = '001'
+        # save as new using sqlite
+        sqlstr = ('insert into hvhnonc_in('
+                  'object_ID, serial_ID, category, subcategory, '
+                  'name, brand, spec, unit, purchase_date, acquire_date, '
+                  'price, amount, place, keep_year, source, '
+                  'keep_department, use_department, keeper, '
+                  'remark) '
+                  'values({});')
+        params = (object_ID, serial_ID,
+                  self.category.currentText(),
+                  self.subcategory.currentText(),
+                  self.name.currentText(),
+                  self.brand.currentText(),
+                  self.spec.currentText(),
+                  self.unit.currentText(),
+                  self.purchase_date.date().toPyDate(),
+                  self.acquire_date.date().toPyDate(),
+                  self.price.text(),
+                  self.amount.text(),
+                  self.place.currentText(),
+                  self.keep_year.text(),
+                  self.source.currentText(),
+                  self.keep_department.currentText(),
+                  self.use_department.currentText(),
+                  self.keeper.currentText(),
+                  self.remark.currentText())
+        questionmarks = ('?, ' * len(params))[:-2]
+        cursor.execute(sqlstr.format(questionmarks), params)
+        con.commit()
+        con.close()
+        # update field cache
+        self.update_field_cache()
+        # show success messagebox
+        QtWidgets.QMessageBox.information(
+                self, u'成功',
+                u'已新增一筆資料: {}'.format(self.name.currentText()))
+        # reset form
+        self.clear_all_fields()
+        self.disable_all_fields()
+
+    def write_over(self, id: str):
+        con, cursor= connect._get_connection()
+        sqlstr = ('replace into hvhnonc_in('
+                  'ID, object_ID, serial_ID, '
+                  'category, subcategory, '
+                  'name, brand, spec, unit, '
+                  'purchase_date, acquire_date, '
+                  'price, amount, place, '
+                  'keep_year, source, '
+                  'keep_department, use_department, '
+                  'keeper, remark) '
+                  'values({});')
+        params = (self.idDict[self.idIndex],
+                  self.object_ID.text(),
+                  self.serial_ID.text(),
+                  self.category.currentText(),
+                  self.subcategory.currentText(),
+                  self.name.currentText(),
+                  self.brand.currentText(),
+                  self.spec.currentText(),
+                  self.unit.currentText(),
+                  self.purchase_date.date().toPyDate(),
+                  self.acquire_date.date().toPyDate(),
+                  self.price.text(),
+                  self.amount.text(),
+                  self.place.currentText(),
+                  self.keep_year.text(),
+                  self.source.currentText(),
+                  self.keep_department.currentText(),
+                  self.use_department.currentText(),
+                  self.keeper.currentText(),
+                  self.remark.currentText())
+        questionmarks = ('?, ' * len(params))[:-2]
+        cursor.execute(sqlstr.format(questionmarks), params)
+        con.commit()
+        con.close()
+        self.update_field_cache()
+        # show success messagebox
+        msg = u'已複寫一筆資料: {}({})'.format(
+                self.name.currentText(), self.idDict[self.idIndex])
+        QtWidgets.QMessageBox.information(self, u'成功', msg)
+        # reset form
+        self.clear_all_fields()
+        self.disable_all_fields()
+
+    def update_field_cache(self):
+        con, cursor= connect._get_connection()
+        comboboxes = {k:w for k, w in self.__dict__.items()
+                if isinstance(w, QtWidgets.QComboBox)}
+        for k, w in comboboxes.items():
+            sqlstr = ('insert or ignore into '
+                      'hvhnonc_in_cache(this_ID, this_value, '
+                      'change_ID, change_value) '
+                      'values(?, ?, ?, ?);')
+            if k in ('category', 'subcategory', 'source'):
+                continue
+            if k in ('name'):
+                params = (connect.get_field_id(connect.get_description('subcategory')),
+                          self.subcategory.currentText(),
+                          connect.get_field_id(connect.get_description(k)),
+                          w.currentText())
+            elif k in ('unit', 'brand', 'spec'):
+                params = (connect.get_field_id(connect.get_description('name')),
+                          self.name.currentText(),
+                          connect.get_field_id(connect.get_description(k)),
+                          w.currentText())
+            else:
+                params = (0, '',
+                          connect.get_field_id(connect.get_description(k)),
+                          w.currentText())
+            cursor.execute(sqlstr, params)
+        con.commit()
+        con.close()
+
+    def on_deleteBtn_clicked(self):
+        if not self.isEnabled:
+            return
+        if self.idIndex == -1:
+            QtWidgets.QMessageBox.critical(self, '錯誤', '不能刪除未存入的資料')
+            return
+        mb = QtWidgets.QMessageBox(self)
+        mb.setWindowTitle('確認刪除')
+        mb.setText('確定要刪除本筆: {} 嗎?'.format(self.name.currentText()))
+        mb.addButton('取消', QtWidgets.QMessageBox.NoRole)
+        mb.addButton('確定', QtWidgets.QMessageBox.YesRole)
+        toDelete = mb.exec_()
+        if toDelete:
+            con, cursor= connect._get_connection()
+            sqlstr = ('delete from hvhnonc_in where ID=?;')
+            params = (self.idDict[self.idIndex],)
+            cursor.execute(sqlstr, params)
+            con.commit()
+            con.close()
+            msg = u'已刪除一筆資料: {}({})'.format(
+                    self.name.currentText(), self.idDict[self.idIndex])
+            QtWidgets.QMessageBox.information(self, u'成功', msg)
+        else:
+            return
+        # reset form
+        self.clear_all_fields()
+        self.disable_all_fields()
 
     def onclick_previous_record(self):
+        self.idDict = self.get_id_dict()
         # modify idIndex
         if self.idIndex == -1:
             self.idIndex = len(self.idDict) - 1
@@ -41,13 +292,13 @@ class Register(QtWidgets.QDialog, RegisterDialog):
             QtWidgets.QMessageBox.warning(self, u'到頂了', u'已到達第一筆')
         else:
             self.idIndex -= 1
-        print('previous: {}'.format(self.idIndex))
         # update view using new idIndex
         record = self.get_record(self.idDict[self.idIndex])
         self.init_all_fields()
         self.update_by_record(record)
 
     def onclick_next_record(self):
+        self.idDict = self.get_id_dict()
         # modify idIndex
         if self.idIndex == -1:
             self.idIndex = 0
@@ -57,7 +308,6 @@ class Register(QtWidgets.QDialog, RegisterDialog):
             self.idIndex += 1
         # update view using new idIndex
         record = self.get_record(self.idDict[self.idIndex])
-        print('next: {}'.format(self.idIndex))
         self.init_all_fields()
         self.update_by_record(record)
 
@@ -87,13 +337,16 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         sqlstr = ('select * from hvhnonc_in where ID=?')
         params = (str(index),)
         cursor.execute(sqlstr, params)
-        return cursor.fetchone()
+        res = cursor.fetchone()
+        con.close()
+        return res
 
     def get_id_dict(self):
         con, cursor= connect._get_connection()
         sqlstr = ('select ID from hvhnonc_in order by acquire_date;')
         cursor.execute(sqlstr)
         rows = cursor.fetchall()
+        con.close()
         return {i: row[0] for i, row in enumerate(rows)}
 
     def on_name_changed(self):
@@ -127,6 +380,7 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         self.spec.clear()
         if rows:
             self.spec.addItems([row[0] for row in rows])
+        con.close()
 
     def on_subcategory_changed(self):
         # update name from hvhnonc_in_cache
@@ -142,6 +396,7 @@ class Register(QtWidgets.QDialog, RegisterDialog):
                 connect.get_field_id(connect.get_description('name'))]
         cursor.execute(sqlstr, params)
         rows = cursor.fetchall()
+        con.close()
         self.name.clear()
         if rows:
             self.name.addItems([row[0] for row in rows])
@@ -159,6 +414,7 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         params = (self.category.currentText(),)
         cursor.execute(sqlstr, params)
         rows = cursor.fetchall()
+        con.close()
         options = [row[0] for row in rows]
         self.subcategory.clear()
         self.subcategory.addItems(options)
@@ -211,6 +467,8 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         con.close()
 
     def enable_all_fields(self):
+        self.isEnabled = True
+        self.idDict = self.get_id_dict()
         widgetsToEnable = {k: i for k , i in self.__dict__.items() if (
                 isinstance(i, QtWidgets.QComboBox) or
                 isinstance(i, QtWidgets.QLineEdit) or
@@ -219,6 +477,8 @@ class Register(QtWidgets.QDialog, RegisterDialog):
             w.setEnabled(True)
 
     def disable_all_fields(self):
+        self.isEnabled = False
+        self.idIndex = -1
         widgetsToDisable = {k: i for k , i in self.__dict__.items() if (
                 isinstance(i, QtWidgets.QComboBox) or
                 isinstance(i, QtWidgets.QLineEdit) or

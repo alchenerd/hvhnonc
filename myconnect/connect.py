@@ -33,7 +33,11 @@ def get_description(engName: str):
              'keep_department': u'保管單位',
              'use_department': u'使用單位',
              'keeper': u'保管人',
-             'remark': u'備註事項'}
+             'remark': u'備註事項',
+             'ID': u'編號',
+             'purchase_date': u'購置日期',
+             'acquire_date': u'取得日期',
+             }
     try:
         return _DICT.get(engName)
     except Exception as e:

@@ -9,12 +9,14 @@ import sqlite3
 # These modules are mine
 if __name__ == '__main__':
     from _register_skeleton import Ui_Dialog as RegisterDialog
+    from SearchBox import SearchBox
     import sys
     sys.path.append('../')
     from myconnect import connect
 else:
     from myqtpy._register_skeleton import Ui_Dialog as RegisterDialog
     from myconnect import connect
+    from myqtpy.SearchBox import SearchBox
 
 class Register(QtWidgets.QDialog, RegisterDialog):
     def __init__(self, dialog):
@@ -24,6 +26,7 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         self.createBtn.clicked.connect(self.on_createBtn_clicked)
         self.saveBtn.clicked.connect(self.on_saveBtn_clicked)
         self.deleteBtn.clicked.connect(self.on_deleteBtn_clicked)
+        self.searchBtn.clicked.connect(self.on_searchBtn_clicked)
         self.category.currentTextChanged.connect(self.on_category_changed)
         self.name.currentTextChanged.connect(self.on_name_changed)
         self.subcategory.currentTextChanged.connect(
@@ -35,6 +38,13 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         self.isEnabled = None
         self.clear_all_fields()
         self.disable_all_fields()
+
+    def on_searchBtn_clicked(self):
+        print('on_searchBtn_clicked')
+        # open a search box
+        self.sb = QtWidgets.QDialog()
+        SearchBox(self.sb)
+        print(self.sb.exec_())
 
     def on_saveBtn_clicked(self):
         if not self.isEnabled:
@@ -238,12 +248,14 @@ class Register(QtWidgets.QDialog, RegisterDialog):
             if k in ('category', 'subcategory', 'source'):
                 continue
             if k in ('name'):
-                params = (connect.get_field_id(connect.get_description('subcategory')),
+                params = (connect.get_field_id(
+                                  connect.get_description('subcategory')),
                           self.subcategory.currentText(),
                           connect.get_field_id(connect.get_description(k)),
                           w.currentText())
             elif k in ('unit', 'brand', 'spec'):
-                params = (connect.get_field_id(connect.get_description('name')),
+                params = (connect.get_field_id(
+                                  connect.get_description('name')),
                           self.name.currentText(),
                           connect.get_field_id(connect.get_description(k)),
                           w.currentText())

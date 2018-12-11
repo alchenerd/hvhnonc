@@ -31,22 +31,6 @@
   <property name="modal">
    <bool>false</bool>
   </property>
-  <widget class="QLineEdit" name="query">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>10</y>
-     <width>301</width>
-     <height>33</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <family>微軟正黑體</family>
-     <pointsize>16</pointsize>
-    </font>
-   </property>
-  </widget>
   <widget class="QPushButton" name="cancelBtn">
    <property name="geometry">
     <rect>
@@ -88,7 +72,31 @@
     <string>搜尋</string>
    </property>
   </widget>
+  <widget class="QComboBox" name="query">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>301</width>
+     <height>33</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>微軟正黑體</family>
+     <pointsize>16</pointsize>
+    </font>
+   </property>
+   <property name="editable">
+    <bool>true</bool>
+   </property>
+  </widget>
  </widget>
+ <tabstops>
+  <tabstop>query</tabstop>
+  <tabstop>cancelBtn</tabstop>
+  <tabstop>searchBtn</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

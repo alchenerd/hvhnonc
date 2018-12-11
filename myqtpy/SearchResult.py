@@ -30,6 +30,7 @@ class SearchResult(QtWidgets.QDialog, SearchResultDialog):
             rows = cursor.fetchall()
         except Exception as e:
             print("Error in SearchResult", e)
+        con.close()
         self.tableWidget.setRowCount(0)
         self.tableWidget.setColumnCount(0)
         if rows and len(rows):

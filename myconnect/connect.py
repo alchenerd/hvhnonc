@@ -37,6 +37,7 @@ def get_description(engName: str):
              'ID': u'編號',
              'purchase_date': u'購置日期',
              'acquire_date': u'取得日期',
+             'query': u'檢索',
              }
     try:
         return _DICT.get(engName)

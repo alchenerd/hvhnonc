@@ -30,11 +30,11 @@ class SearchBox(QtWidgets.QDialog, SearchBoxDialog):
         con, cursor = connect._get_connection()
         for k, w in widgets.items():
             sqlstr = ('select change_value '
-                      'from hvhnonc_in_cache '
+                      'from hvhnonc_cache '
                       'where this_ID=0 '
                       'and change_ID=? '
                       'order by rowid desc;')
-            params = (connect.get_field_id(connect.get_description(k)),)
+            params = (connect.get_field_id(k),)
             cursor.execute(sqlstr, params)
             rows = cursor.fetchall()
             options = [row[0] for row in rows]
@@ -46,7 +46,6 @@ class SearchBox(QtWidgets.QDialog, SearchBoxDialog):
     def on_searchBtn_clicked(self, dialog):
         #update search cache
         self.update_field_cache()
-        dialog.accept()
         # open a search result window
         self.resultWindow = QtWidgets.QDialog()
         sqlstr = ('select * '
@@ -60,23 +59,24 @@ class SearchBox(QtWidgets.QDialog, SearchBoxDialog):
                   'or keep_department like :q '
                   'or use_department like :q '
                   'or keeper like :q '
-                  'or remark like :q ')
+                  'or remark like :q '
+                  'order by rowid asc')
         params = ('%{}%'.format(self.query.currentText()),)
         SearchResult(self.resultWindow, sqlstr, params)
-        self.resultWindow.exec_()
+        dialog.done(self.resultWindow.exec_())
 
     def update_field_cache(self):
         con, cursor= connect._get_connection()
         comboboxes = {k:w for k, w in self.__dict__.items()
                 if isinstance(w, QtWidgets.QComboBox)}
         sqlstr = ('insert or ignore into '
-                  'hvhnonc_in_cache(this_ID, this_value, '
+                  'hvhnonc_cache(this_ID, this_value, '
                   'change_ID, change_value) '
                   'values(?, ?, ?, ?);')
         for k, w in comboboxes.items():
             if k in ('query',):
                 params = (0, '',
-                          connect.get_field_id(connect.get_description(k)),
+                          connect.get_field_id(k),
                           w.currentText())
                 cursor.execute(sqlstr, params)
         con.commit()

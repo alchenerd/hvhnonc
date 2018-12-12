@@ -2,7 +2,7 @@
 """
 @author: alchenerd (alchenerd@gmail.com)
 """
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 from typing import Tuple
 import sqlite3
 
@@ -17,6 +17,7 @@ from myconnect import connect
 
 class SearchResult(QtWidgets.QDialog, SearchResultDialog):
     def __init__(self, dialog, sqlstr: str, params: Tuple[str, ...]):
+        self.dialog = dialog
         super(self.__class__, self).__init__(dialog)
         self.setupUi(dialog)
         con, cursor = connect._get_connection()
@@ -39,14 +40,18 @@ class SearchResult(QtWidgets.QDialog, SearchResultDialog):
             colLen = 0
         self.tableWidget.setColumnCount(colLen)
         if rows and len(rows):
-            print(rows[0].keys())
-            headerLabels = [connect.get_description(i) for i in rows[0].keys()]
+            headerLabels = [connect.get_ch_name(i) for i in rows[0].keys()]
             self.tableWidget.setHorizontalHeaderLabels(headerLabels)
         for i, row in enumerate(rows):
             self.tableWidget.insertRow(i)
             for j, k in enumerate(row.keys()):
                 self.tableWidget.setItem(
                         i, j, QtWidgets.QTableWidgetItem(str(row[k])))
+        self.tableWidget.doubleClicked.connect(self.on_cell_double_clicked)
+
+    def on_cell_double_clicked(self, index: QtCore.QModelIndex):
+        recordID = int(self.tableWidget.item(index.row(), 0).text())
+        QtWidgets.QDialog.done(self.dialog, recordID)
 
 
 if __name__ == '__main__':

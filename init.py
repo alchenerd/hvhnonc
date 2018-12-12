@@ -9,11 +9,11 @@ Builds a database for furthur use
 
 import sqlite3
 
-def buildDatabase(sqlname: str = "HVHNONC.db.sql", dbname: str = "HVHNONC.db"):
-    executeScriptsFromFile(sqlname, dbname)
+def build_db(sqlname: str = "HVHNONC.db.sql", dbname: str = "HVHNONC.db"):
+    execute_script(sqlname, dbname)
 
 
-def executeScriptsFromFile(filename, DBname):
+def execute_script(filename, DBname):
     # Open and read the file as a single buffer
     connect = sqlite3.connect(DBname)
     cursor = connect.cursor()

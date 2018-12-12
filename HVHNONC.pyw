@@ -23,11 +23,11 @@ def login():
 
 
 def main():
+    init.build_db()
     import sys
     app = QtWidgets.QApplication(sys.argv)
     app.setFont(_myDefaultFont)
     if login():
-        init.buildDatabase()
         mainWindow = QtWidgets.QMainWindow()
         Index(mainWindow)
         mainWindow.show()

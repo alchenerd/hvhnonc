@@ -19,7 +19,7 @@ class Dummy(QtWidgets.QDialog, DummyDialog):
 if __name__ == '__main__':
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    Dialog = QtWidgets.QDialog()
-    ui = Dummy(Dialog)
-    Dialog.show()
+    dialog = QtWidgets.QDialog()
+    ui = Dummy(dialog)
+    dialog.show()
     sys.exit(app.exec_())

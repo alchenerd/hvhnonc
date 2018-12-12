@@ -6,17 +6,17 @@
 from PyQt5 import QtWidgets, QtCore
 from typing import Dict
 import sqlite3
+import sys
+
 # These modules are mine
 if __name__ == '__main__':
-    from _register_skeleton import Ui_Dialog as RegisterDialog
-    from SearchBox import SearchBox
-    import sys
     sys.path.append('../')
-    from myconnect import connect
 else:
-    from myqtpy._register_skeleton import Ui_Dialog as RegisterDialog
-    from myconnect import connect
-    from myqtpy.SearchBox import SearchBox
+    sys.path.append('./myqtpy/')
+from _register_skeleton import Ui_Dialog as RegisterDialog
+from SearchBox import SearchBox
+from Filter import Filter
+from myconnect import connect
 
 class Register(QtWidgets.QDialog, RegisterDialog):
     def __init__(self, dialog):
@@ -27,11 +27,12 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         self.saveBtn.clicked.connect(self.on_saveBtn_clicked)
         self.deleteBtn.clicked.connect(self.on_deleteBtn_clicked)
         self.searchBtn.clicked.connect(self.on_searchBtn_clicked)
+        self.formBtn.clicked.connect(self.on_formBtn_clicked)
         self.category.currentTextChanged.connect(self.on_category_changed)
         self.name.currentTextChanged.connect(self.on_name_changed)
         self.subcategory.currentTextChanged.connect(
                 self.on_subcategory_changed)
-        self.idDict = None
+        self.idDict = self.get_id_dict()
         self.idIndex = -1
         self.getNextBtn.clicked.connect(self.onclick_next_record)
         self.getPreviousBtn.clicked.connect(self.onclick_previous_record)
@@ -39,12 +40,36 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         self.clear_all_fields()
         self.disable_all_fields()
 
+    def on_formBtn_clicked(self):
+        print('on_formBtn_clicked')
+        # open a filter window
+        self.filterWindow = QtWidgets.QDialog()
+        Filter(self.filterWindow)
+        self.filterWindow.exec()
+
     def on_searchBtn_clicked(self):
-        print('on_searchBtn_clicked')
         # open a search box
         self.sb = QtWidgets.QDialog()
         SearchBox(self.sb)
-        print(self.sb.exec_())
+        # self.sb.exec_() returns a hvhnonc_in ID
+        returnID = self.sb.exec_()
+        if returnID == 0:
+            return
+        # set self id index
+        for k, i in self.idDict.items():
+            if i == returnID:
+                self.idIndex = k
+        # fetch a record from the db
+        con, cursor= connect._get_connection()
+        con.row_factory = sqlite3.Row
+        cursor = con.cursor()
+        sqlstr = ('select * from hvhnonc_in where ID=?')
+        params = (returnID,)
+        cursor.execute(sqlstr, params)
+        record = cursor.fetchone()
+        con.close()
+        self.init_all_fields()
+        self.update_by_record(record)
 
     def on_saveBtn_clicked(self):
         if not self.isEnabled:
@@ -242,26 +267,24 @@ class Register(QtWidgets.QDialog, RegisterDialog):
                 if isinstance(w, QtWidgets.QComboBox)}
         for k, w in comboboxes.items():
             sqlstr = ('insert or ignore into '
-                      'hvhnonc_in_cache(this_ID, this_value, '
+                      'hvhnonc_cache(this_ID, this_value, '
                       'change_ID, change_value) '
                       'values(?, ?, ?, ?);')
             if k in ('category', 'subcategory', 'source'):
                 continue
             if k in ('name'):
-                params = (connect.get_field_id(
-                                  connect.get_description('subcategory')),
+                params = (connect.get_field_id('subcategory'),
                           self.subcategory.currentText(),
-                          connect.get_field_id(connect.get_description(k)),
+                          connect.get_field_id(k),
                           w.currentText())
             elif k in ('unit', 'brand', 'spec'):
-                params = (connect.get_field_id(
-                                  connect.get_description('name')),
+                params = (connect.get_field_id('name'),
                           self.name.currentText(),
-                          connect.get_field_id(connect.get_description(k)),
+                          connect.get_field_id(k),
                           w.currentText())
             else:
                 params = (0, '',
-                          connect.get_field_id(connect.get_description(k)),
+                          connect.get_field_id(k),
                           w.currentText())
             cursor.execute(sqlstr, params)
         con.commit()
@@ -339,7 +362,7 @@ class Register(QtWidgets.QDialog, RegisterDialog):
                     date = QtCore.QDate(year, month, day)
                     x.setDate(date)
             except Exception as e:
-                if k != 'ID':
+                if k not in ('ID', 'old_ID'):
                     print(e)
 
     def get_record(self, index: int):
@@ -362,31 +385,31 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         return {i: row[0] for i, row in enumerate(rows)}
 
     def on_name_changed(self):
-        # update unit, brand, spec from hvhnonc_in_cache
+        # update unit, brand, spec from hvhnonc_cache
         con, cursor= connect._get_connection()
         sqlstr = ('select change_value '
-                  'from hvhnonc_in_cache '
+                  'from hvhnonc_cache '
                   'where this_ID=? '
                   'and this_value=? '
                   'and change_ID=?')
-        params = [connect.get_field_id(connect.get_description('name')),
+        params = [connect.get_field_id('name'),
                   self.name.currentText()]
         # unit
-        p = params + [connect.get_field_id(connect.get_description('unit')),]
+        p = params + [connect.get_field_id('unit'),]
         cursor.execute(sqlstr, p)
         rows = cursor.fetchall()
         self.unit.clear()
         if rows:
             self.unit.addItems([row[0] for row in rows])
         # brand
-        p = params + [connect.get_field_id(connect.get_description('brand')),]
+        p = params + [connect.get_field_id('brand'),]
         cursor.execute(sqlstr, p)
         rows = cursor.fetchall()
         self.brand.clear()
         if rows:
             self.brand.addItems([row[0] for row in rows])
         # spec
-        p = params + [connect.get_field_id(connect.get_description('spec')),]
+        p = params + [connect.get_field_id('spec'),]
         cursor.execute(sqlstr, p)
         rows = cursor.fetchall()
         self.spec.clear()
@@ -395,17 +418,17 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         con.close()
 
     def on_subcategory_changed(self):
-        # update name from hvhnonc_in_cache
+        # update name from hvhnonc_cache
         con, cursor= connect._get_connection()
         sqlstr = ('select change_value '
-                  'from hvhnonc_in_cache '
+                  'from hvhnonc_cache '
                   'where this_ID=? '
                   'and this_value=? '
                   'and change_ID=?')
         params = [
-                connect.get_field_id(connect.get_description('subcategory')),
+                connect.get_field_id('subcategory'),
                 self.subcategory.currentText(),
-                connect.get_field_id(connect.get_description('name'))]
+                connect.get_field_id('name')]
         cursor.execute(sqlstr, params)
         rows = cursor.fetchall()
         con.close()
@@ -464,13 +487,13 @@ class Register(QtWidgets.QDialog, RegisterDialog):
                 options = [row[0] for row in rows]
                 widget.addItems(options)
                 widget.clearEditText()
-            # fetch options from hvhnonc_in_cache
+            # fetch options from hvhnonc_cache
             else:
                 sqlstr = ('select change_value '
-                          'from hvhnonc_in_cache '
+                          'from hvhnonc_cache '
                           'where this_ID=0 and '
                           'change_ID=?')
-                params = (connect.get_field_id(connect.get_description(key)),)
+                params = (connect.get_field_id(key),)
                 cursor.execute(sqlstr, params)
                 rows = cursor.fetchall()
                 options = [row[0] for row in rows]

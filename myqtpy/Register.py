@@ -29,9 +29,9 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         self.searchBtn.clicked.connect(self.on_searchBtn_clicked)
         self.formBtn.clicked.connect(self.on_formBtn_clicked)
         self.category.currentTextChanged.connect(self.on_category_changed)
-        self.name.currentTextChanged.connect(self.on_name_changed)
         self.subcategory.currentTextChanged.connect(
                 self.on_subcategory_changed)
+        self.name.currentTextChanged.connect(self.on_name_changed)
         self.idDict = self.get_id_dict()
         self.idIndex = -1
         self.getNextBtn.clicked.connect(self.onclick_next_record)

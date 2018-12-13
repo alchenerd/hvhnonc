@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>850</width>
+    <width>948</width>
     <height>338</height>
    </rect>
   </property>
@@ -22,13 +22,13 @@
         <widget class="QLineEdit" name="price_min">
          <property name="minimumSize">
           <size>
-           <width>135</width>
+           <width>145</width>
            <height>33</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>135</width>
+           <width>145</width>
            <height>33</height>
           </size>
          </property>
@@ -69,13 +69,13 @@
         <widget class="QLineEdit" name="price_max">
          <property name="minimumSize">
           <size>
-           <width>135</width>
+           <width>145</width>
            <height>33</height>
           </size>
          </property>
          <property name="maximumSize">
           <size>
-           <width>135</width>
+           <width>145</width>
            <height>33</height>
           </size>
          </property>
@@ -94,19 +94,20 @@
        <item>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
+          <widget class="QCheckBox" name="purchase_date_chk">
+           <property name="font">
+            <font>
+             <family>微軟正黑體</family>
+             <pointsize>16</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QDateEdit" name="purchase_date_min">
-           <property name="minimumSize">
-            <size>
-             <width>136</width>
-             <height>33</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>136</width>
-             <height>33</height>
-            </size>
-           </property>
            <property name="font">
             <font>
              <family>微軟正黑體</family>
@@ -145,18 +146,6 @@
          </item>
          <item>
           <widget class="QDateEdit" name="purchase_date_max">
-           <property name="minimumSize">
-            <size>
-             <width>136</width>
-             <height>33</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>136</width>
-             <height>33</height>
-            </size>
-           </property>
            <property name="font">
             <font>
              <family>微軟正黑體</family>
@@ -188,19 +177,20 @@
      <item row="4" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_3">
        <item>
+        <widget class="QCheckBox" name="acquire_date_chk">
+         <property name="font">
+          <font>
+           <family>微軟正黑體</family>
+           <pointsize>16</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QDateEdit" name="acquire_date_min">
-         <property name="minimumSize">
-          <size>
-           <width>136</width>
-           <height>33</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>136</width>
-           <height>33</height>
-          </size>
-         </property>
          <property name="font">
           <font>
            <family>微軟正黑體</family>
@@ -239,18 +229,6 @@
        </item>
        <item>
         <widget class="QDateEdit" name="acquire_date_max">
-         <property name="minimumSize">
-          <size>
-           <width>136</width>
-           <height>33</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>136</width>
-           <height>33</height>
-          </size>
-         </property>
          <property name="font">
           <font>
            <family>微軟正黑體</family>
@@ -262,19 +240,32 @@
          </property>
         </widget>
        </item>
+       <item>
+        <spacer name="horizontalSpacer_3">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
       </layout>
      </item>
      <item row="0" column="3">
       <widget class="QComboBox" name="subcategory">
        <property name="minimumSize">
         <size>
-         <width>300</width>
+         <width>350</width>
          <height>33</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>300</width>
+         <width>350</width>
          <height>33</height>
         </size>
        </property>
@@ -306,13 +297,13 @@
       <widget class="QComboBox" name="brand">
        <property name="minimumSize">
         <size>
-         <width>300</width>
+         <width>350</width>
          <height>33</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>300</width>
+         <width>350</width>
          <height>33</height>
         </size>
        </property>
@@ -357,13 +348,13 @@
       <widget class="QComboBox" name="spec">
        <property name="minimumSize">
         <size>
-         <width>300</width>
+         <width>350</width>
          <height>33</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>300</width>
+         <width>350</width>
          <height>33</height>
         </size>
        </property>
@@ -408,13 +399,13 @@
       <widget class="QComboBox" name="name">
        <property name="minimumSize">
         <size>
-         <width>300</width>
+         <width>350</width>
          <height>33</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>300</width>
+         <width>350</width>
          <height>33</height>
         </size>
        </property>
@@ -433,13 +424,13 @@
       <widget class="QComboBox" name="category">
        <property name="minimumSize">
         <size>
-         <width>300</width>
+         <width>350</width>
          <height>33</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>300</width>
+         <width>350</width>
          <height>33</height>
         </size>
        </property>
@@ -497,13 +488,13 @@
       <widget class="QComboBox" name="place">
        <property name="minimumSize">
         <size>
-         <width>300</width>
+         <width>350</width>
          <height>33</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>300</width>
+         <width>350</width>
          <height>33</height>
         </size>
        </property>
@@ -535,13 +526,13 @@
       <widget class="QComboBox" name="keep_department">
        <property name="minimumSize">
         <size>
-         <width>300</width>
+         <width>350</width>
          <height>33</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>300</width>
+         <width>350</width>
          <height>33</height>
         </size>
        </property>
@@ -573,13 +564,13 @@
       <widget class="QComboBox" name="use_department">
        <property name="minimumSize">
         <size>
-         <width>300</width>
+         <width>350</width>
          <height>33</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>300</width>
+         <width>350</width>
          <height>33</height>
         </size>
        </property>
@@ -611,13 +602,13 @@
       <widget class="QComboBox" name="keeper">
        <property name="minimumSize">
         <size>
-         <width>300</width>
+         <width>350</width>
          <height>33</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
-         <width>300</width>
+         <width>350</width>
          <height>33</height>
         </size>
        </property>
@@ -679,6 +670,9 @@
        <property name="text">
         <string>取消</string>
        </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
       </widget>
      </item>
      <item>
@@ -698,6 +692,9 @@
        <property name="text">
         <string>確定</string>
        </property>
+       <property name="default">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
     </layout>
@@ -712,8 +709,10 @@
   <tabstop>spec</tabstop>
   <tabstop>price_min</tabstop>
   <tabstop>price_max</tabstop>
+  <tabstop>purchase_date_chk</tabstop>
   <tabstop>purchase_date_min</tabstop>
   <tabstop>purchase_date_max</tabstop>
+  <tabstop>acquire_date_chk</tabstop>
   <tabstop>acquire_date_min</tabstop>
   <tabstop>acquire_date_max</tabstop>
   <tabstop>place</tabstop>

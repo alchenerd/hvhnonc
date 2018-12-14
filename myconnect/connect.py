@@ -19,6 +19,10 @@ def _get_connection(databaseName: str = _default_database):
         return None
 
 def get_ch_name(name: str):
+    try:
+        name.encode('ascii')
+    except UnicodeEncodeError:
+        return name
     con, cur = _get_connection()
     sqlstr = ('select ch_name from hvhnonc_fields where en_name=? limit 1;')
     params = (name,)

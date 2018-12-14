@@ -32,7 +32,6 @@ class Filter(QtWidgets.QDialog, FilterDialog):
         self.init_all_fields()
 
     def on_submitBtn_clicked(self, dialog):
-        print('on_submitBtn_clicked')
         # open a search result window
         self.resultWindow = QtWidgets.QDialog()
         sqlstr, params = self.load_form_query()
@@ -46,7 +45,6 @@ class Filter(QtWidgets.QDialog, FilterDialog):
                       if isinstance(value, QtWidgets.QComboBox)}
         for key, widget in comboboxes.items():
             if widget.currentText() not in (None, ''):
-                print(widget.currentText())
                 sqlstr += ('{} like ? and '.format(key))
                 params.append('%{}%'.format(widget.currentText()))
         # price range
@@ -68,7 +66,6 @@ class Filter(QtWidgets.QDialog, FilterDialog):
                     price['max'] = 2 ** 63 - 1
                 else:
                     QtWidgets.QMessageBox.critical(self, '錯誤', str(ve))
-            print('price: ', price)
             sqlstr += '(price >= ? and price <= ?) and '
             params += [str(price['min']), str(price['max'])]
         # purchase_date: QDateEdit
@@ -88,20 +85,16 @@ class Filter(QtWidgets.QDialog, FilterDialog):
             params.append(str(minDate))
             params.append(str(maxDate))
         sqlstr += '1) order by acquire_date desc;'
-        print(sqlstr)
-        print('::'.join(params))
         return sqlstr, params
 
 
     def on_pdatehk_changed(self, state: int):
         self.purchase_date_min.setEnabled(bool(state))
         self.purchase_date_max.setEnabled(bool(state))
-        print(self.purchase_date_chk.checkState())
 
     def on_adatechk_changed(self, state: int):
         self.acquire_date_min.setEnabled(bool(state))
         self.acquire_date_max.setEnabled(bool(state))
-        print(self.acquire_date_chk.checkState())
 
     def on_name_changed(self):
         # update brand, spec from hvhnonc_cache
@@ -182,7 +175,6 @@ class Filter(QtWidgets.QDialog, FilterDialog):
             w.setEnabled(False)
 
     def fetch_options(self, widgets: Dict[str, QtWidgets.QComboBox]):
-        print('\n'.join(widgets.keys()))
         con, cur = connect._get_connection()
         for key, widget in widgets.items():
             if key == 'category':

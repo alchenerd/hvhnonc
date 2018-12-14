@@ -15,6 +15,7 @@ else:
     sys.path.append('./myqtpy/')
 from _register_skeleton import Ui_Dialog as RegisterDialog
 from SearchBox import SearchBox
+from SearchResult import SearchResult
 from Filter import Filter
 from myconnect import connect
 
@@ -36,12 +37,23 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         self.idIndex = -1
         self.getNextBtn.clicked.connect(self.onclick_next_record)
         self.getPreviousBtn.clicked.connect(self.onclick_previous_record)
+        self.lookupSerialBtn.clicked.connect(self.on_serial_lookup_clicked)
         self.isEnabled = None
         self.clear_all_fields()
         self.disable_all_fields()
 
+    def on_serial_lookup_clicked(self):
+        # open a result window
+        sqlstr = ("select object_ID, name, count(*) as '數量' "
+                  "from hvhnonc_in group by name")
+        self.resultWindow = QtWidgets.QDialog()
+        params = []
+        self.sr = SearchResult(self.resultWindow, sqlstr, params)
+        self.resultWindow.resize(320,600)
+        self.sr.tableWidget.doubleClicked.disconnect()
+        self.resultWindow.exec_()
+
     def on_formBtn_clicked(self):
-        print('on_formBtn_clicked')
         # open a filter window
         self.filterWindow = QtWidgets.QDialog()
         Filter(self.filterWindow)

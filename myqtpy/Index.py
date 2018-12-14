@@ -7,6 +7,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from myqtpy._index_skeleton import Ui_MainWindow as IndexUi
 from myqtpy.Dummy import Dummy
 from myqtpy.Register import Register
+from myqtpy.Unregister import Unregister
 
 
 class Index(QtWidgets.QMainWindow, IndexUi):
@@ -30,6 +31,8 @@ class Index(QtWidgets.QMainWindow, IndexUi):
         self.childWindow = QtWidgets.QDialog()
         if type_ == 'register':
             ui = Register(self.childWindow)
+        elif type_ == 'unregister':
+            ui = Unregister(self.childWindow)
         else:
             ui = Dummy(self.childWindow)
             self.childWindow.setWindowTitle(type_)

@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS `hvhnonc_in` (
 CREATE TABLE IF NOT EXISTS `hvhnonc_out` (
 	`ID`	INTEGER,
 	`in_ID`	INTEGER,
-	`out_date`	TEXT NOT NULL,
+	`unregister_date`	TEXT NOT NULL,
 	`amount`	INTEGER NOT NULL CHECK(amount > 0),
 	`reason`	TEXT,
 	`unregister_place`	TEXT,

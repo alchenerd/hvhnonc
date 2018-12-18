@@ -42,15 +42,18 @@ class SearchResult(QtWidgets.QDialog, SearchResultDialog):
         if rows and len(rows):
             headerLabels = [connect.get_ch_name(i) for i in rows[0].keys()]
             self.tableWidget.setHorizontalHeaderLabels(headerLabels)
-        for i, row in enumerate(rows):
-            self.tableWidget.insertRow(i)
-            for j, k in enumerate(row.keys()):
-                self.tableWidget.setItem(
-                        i, j, QtWidgets.QTableWidgetItem(str(row[k])))
+            for i, row in enumerate(rows):
+                self.tableWidget.insertRow(i)
+                for j, k in enumerate(row.keys()):
+                    self.tableWidget.setItem(
+                            i, j, QtWidgets.QTableWidgetItem(str(row[k])))
         self.tableWidget.doubleClicked.connect(self.on_cell_double_clicked)
 
     def on_cell_double_clicked(self, index: QtCore.QModelIndex):
+        type_ = self.tableWidget.item(index.row(), 1).text()
         recordID = int(self.tableWidget.item(index.row(), 0).text())
+        if type_ == '除帳':
+            recordID = -recordID
         QtWidgets.QDialog.done(self.dialog, recordID)
 
 

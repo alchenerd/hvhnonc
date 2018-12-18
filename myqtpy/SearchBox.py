@@ -17,7 +17,9 @@ from myconnect import connect
 
 
 class SearchBox(QtWidgets.QDialog, SearchBoxDialog):
-    def __init__(self, dialog):
+    def __init__(self, dialog, mode: str):
+        # mode = ('in', 'both')
+        self.mode = mode
         super(self.__class__, self).__init__(dialog)
         self.setupUi(dialog)
         self.fetch_options(self.query)
@@ -48,19 +50,53 @@ class SearchBox(QtWidgets.QDialog, SearchBoxDialog):
         self.update_field_cache()
         # open a search result window
         self.resultWindow = QtWidgets.QDialog()
-        sqlstr = ('select * '
-                  'from hvhnonc_in '
-                  'where name like :q '
-                  'or category like :q '
-                  'or subcategory like :q '
-                  'or brand like :q '
-                  'or spec like :q '
-                  'or place like :q '
-                  'or keep_department like :q '
-                  'or use_department like :q '
-                  'or keeper like :q '
-                  'or remark like :q '
-                  'order by rowid asc')
+        Q_IN = (
+                'select '
+                    'ID, '
+                    '"入帳" as type, '
+                    'name, '
+                    'acquire_date as date, '
+                    'keeper, '
+                    'remark '
+                'from '
+                    'hvhnonc_in '
+                'where '
+                    'name like :q or category like :q '
+                    'or subcategory like :q or brand like :q '
+                    'or spec like :q or place like :q '
+                    'or keep_department like :q or use_department like :q '
+                    'or keeper like :q or remark like :q ')
+        Q_OUT = (
+                'select '
+                    'hvhnonc_out.ID as ID, '
+                    '"除帳" as type, '
+                    'hvhnonc_in.name as name, '
+                    'hvhnonc_out.unregister_date as date, '
+                    'hvhnonc_in.keeper as keeper, '
+                    'hvhnonc_out.unregister_remark as remark '
+                'from '
+                    'hvhnonc_out '
+                'left join '
+                    'hvhnonc_in '
+                'on '
+                    'hvhnonc_out.in_ID = hvhnonc_in.ID '
+                    'and (hvhnonc_in.name like :q '
+                    'or hvhnonc_in.category like :q '
+                    'or hvhnonc_in.subcategory like :q '
+                    'or hvhnonc_in.brand like :q '
+                    'or hvhnonc_in.spec like :q '
+                    'or hvhnonc_in.place like :q '
+                    'or hvhnonc_in.keep_department like :q '
+                    'or hvhnonc_in.use_department like :q '
+                    'or hvhnonc_in.keeper like :q '
+                    'or hvhnonc_in.remark like :q) ')
+        Q_BOTH = (Q_IN + 'union all ' + Q_OUT + 'order by date')
+        if self.mode == 'in':
+            sqlstr = Q_IN
+        if self.mode == 'out':
+            sqlstr = Q_OUT
+        if self.mode == 'both':
+            sqlstr = Q_BOTH
         params = ('%{}%'.format(self.query.currentText()),)
         SearchResult(self.resultWindow, sqlstr, params)
         dialog.done(self.resultWindow.exec_())

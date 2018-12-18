@@ -62,7 +62,7 @@ class Register(QtWidgets.QDialog, RegisterDialog):
     def on_searchBtn_clicked(self):
         # open a search box
         self.sb = QtWidgets.QDialog()
-        SearchBox(self.sb)
+        SearchBox(self.sb, 'in')
         # self.sb.exec_() returns a hvhnonc_in ID
         returnID = self.sb.exec_()
         if returnID == 0:

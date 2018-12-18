@@ -187,6 +187,9 @@ INSERT OR IGNORE INTO `hvhnonc_fields` (`ch_name`, `en_name`) VALUES ('檢索', 
 INSERT OR IGNORE INTO `hvhnonc_fields` (`ch_name`, `en_name`) VALUES ('除帳原因', 'reason');
 INSERT OR IGNORE INTO `hvhnonc_fields` (`ch_name`, `en_name`) VALUES ('繳存地點', 'unregister_place');
 INSERT OR IGNORE INTO `hvhnonc_fields` (`ch_name`, `en_name`) VALUES ('除帳備註', 'unregister_remark');
+INSERT OR IGNORE INTO `hvhnonc_fields` (`ch_name`, `en_name`) VALUES ('除帳日期', 'unregister_date');
+INSERT OR IGNORE INTO `hvhnonc_fields` (`ch_name`, `en_name`) VALUES ('日期', 'date');
+INSERT OR IGNORE INTO `hvhnonc_fields` (`ch_name`, `en_name`) VALUES ('類型', 'type');
 
 
 CREATE TABLE IF NOT EXISTS `hvhnonc_cache` (

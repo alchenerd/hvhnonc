@@ -76,7 +76,7 @@ class SearchBox(QtWidgets.QDialog, SearchBoxDialog):
                     'hvhnonc_out.unregister_remark as remark '
                 'from '
                     'hvhnonc_out '
-                'left join '
+                'inner join '
                     'hvhnonc_in '
                 'on '
                     'hvhnonc_out.in_ID = hvhnonc_in.ID '
@@ -90,13 +90,14 @@ class SearchBox(QtWidgets.QDialog, SearchBoxDialog):
                     'or hvhnonc_in.use_department like :q '
                     'or hvhnonc_in.keeper like :q '
                     'or hvhnonc_in.remark like :q) ')
-        Q_BOTH = (Q_IN + 'union all ' + Q_OUT + 'order by date')
+        Q_BOTH = (Q_IN + 'union all ' + Q_OUT)
+        Q_ORDER = 'order by date desc'
         if self.mode == 'in':
-            sqlstr = Q_IN
+            sqlstr = Q_IN + Q_ORDER
         if self.mode == 'out':
-            sqlstr = Q_OUT
+            sqlstr = Q_OUT + Q_ORDER
         if self.mode == 'both':
-            sqlstr = Q_BOTH
+            sqlstr = Q_BOTH + Q_ORDER
         params = ('%{}%'.format(self.query.currentText()),)
         SearchResult(self.resultWindow, sqlstr, params)
         dialog.done(self.resultWindow.exec_())

@@ -38,9 +38,24 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         SearchBox(self.sb, 'both')
         # self.sb.exec_() returns a hvhnonc_in ID or a negative hvhnonc_out ID
         returnID = self.sb.exec_()
-        print(returnID)
         if returnID == 0:
             return
+        self.unregisterIdIndex = -1
+        self.update_field_by_id(returnID)
+
+    def update_field_by_id(self, returnID: int):
+        if returnID < 0:
+            oid = -returnID
+            iid = self.get_inID(oid)
+        else:
+            # return id has no unregister record
+            oid = -1
+            iid = returnID
+        self.load_inRecord(iid)
+        self.load_history_record(iid, oid)
+        self.load_outRecord(oid)
+        self.enable_some_fields()
+        self.amount_initialize()
 
     def amount_initialize(self):
         if self.unregister_amount.text() in (None, ''):
@@ -101,7 +116,10 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         cursor.execute(sqlstr, params)
         row = cursor.fetchone()
         con.close()
-        return row[0]
+        if row:
+            return row[0]
+        else:
+            return -1
 
     def onclick_next(self):
         if self.unregisterIdIndex == -1:
@@ -111,12 +129,7 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         else:
             self.unregisterIdIndex += 1
         oid = self.unregisgerIdDict[self.unregisterIdIndex] # outID
-        iid = self.get_inID(oid)
-        self.load_inRecord(iid)
-        self.load_history_record(iid)
-        self.load_outRecord(oid)
-        self.enable_some_fields()
-        self.amount_initialize()
+        self.update_field_by_id(-oid) # negative value for unregister record
 
     def onclick_prev(self):
         if self.unregisterIdIndex == -1:
@@ -126,14 +139,23 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         else:
             self.unregisterIdIndex -= 1
         oid = self.unregisgerIdDict[self.unregisterIdIndex] # outID
-        iid = self.get_inID(oid)
-        self.load_inRecord(iid)
-        self.load_history_record(iid)
-        self.load_outRecord(oid)
-        self.enable_some_fields()
-        self.amount_initialize()
+        self.update_field_by_id(-oid) # negative value for unregister record
 
-    def load_history_record(self, iid: int):
+    def clear_history_record(self):
+        widgetsToClear = ('last_unregister_date', 'unregistered_amount',
+                          'unregistered_count')
+        widgetsToClear = [self.__dict__.get(x) for x in widgetsToClear]
+        for widget in widgetsToClear:
+            if isinstance(widget, QtWidgets.QLineEdit):
+                widget.clear()
+            elif isinstance(widget, QtWidgets.QComboBox):
+                widget.clearEditText()
+            elif isinstance(widget, QtWidgets.QDateEdit):
+                (y, m, d) = (1800, 1, 1)
+                date = QtCore.QDate(y, m, d)
+                widget.setDate(date)
+
+    def load_history_record(self, iid: int, oid: int = 0):
         con, cursor = connect._get_connection()
         con.row_factory = sqlite3.Row
         cursor = con.cursor()
@@ -147,6 +169,9 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         params = (iid,)
         cursor.execute(sqlstr, params)
         row = cursor.fetchone()
+        if oid < 0:
+            self.clear_history_record()
+            return
         con.close()
         for k in row.keys():
             try:
@@ -185,7 +210,24 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
                 date = QtCore.QDate(y, m, d)
                 w.setDate(date)
 
+    def clear_out_fields(self):
+        widgetsToClear = ('unregister_date', 'unregister_amount', 'reason',
+                          'unregister_place', 'unregister_remark')
+        widgetsToClear = [self.__dict__.get(x) for x in widgetsToClear]
+        for widget in widgetsToClear:
+            if isinstance(widget, QtWidgets.QLineEdit):
+                widget.clear()
+            elif isinstance(widget, QtWidgets.QComboBox):
+                widget.clearEditText()
+            elif isinstance(widget, QtWidgets.QDateEdit):
+                (y, m, d) = (1800, 1, 1)
+                date = QtCore.QDate(y, m, d)
+                widget.setDate(date)
+
     def load_outRecord(self, oid: int):
+        if oid == -1:
+            self.clear_out_fields()
+            return
         con, cursor = connect._get_connection()
         con.row_factory = sqlite3.Row
         cursor = con.cursor()

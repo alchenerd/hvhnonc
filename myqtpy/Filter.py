@@ -18,7 +18,9 @@ from myconnect import connect
 from SearchResult import SearchResult
 
 class Filter(QtWidgets.QDialog, FilterDialog):
-    def __init__(self, dialog):
+    def __init__(self, dialog, mode: str = 'in'):
+        # ('in', 'out', 'both')
+        self.mode = mode
         super(self.__class__, self).__init__(dialog)
         self.setupUi(dialog)
         self.category.currentTextChanged.connect(self.on_category_changed)
@@ -39,6 +41,83 @@ class Filter(QtWidgets.QDialog, FilterDialog):
         dialog.done(self.resultWindow.exec_())
 
     def load_form_query(self) -> Tuple[str, List[str]]:
+        if self.mode == 'in':
+            return self.load_form_query_in()
+        elif self.mode == 'out':
+            return self.load_form_query_out()
+        elif self.mode == 'both':
+            return self.load_form_query_both()
+        else:
+            print('Why are you running?!')
+
+    def load_form_query_out(self) -> Tuple[str, List[str]]:
+        sqlstr = ('select {columns} from hvhnonc_out '
+                  'inner join hvhnonc_in '
+                  'on hvhnonc_out.in_ID = hvhnonc_in.ID '
+                  'and {conditions}')
+        params = []
+        d = {}
+        d['columns'] = ('hvhnonc_out.ID, hvhnonc_in.name, '
+                        'hvhnonc_in.purchase_date, '
+                        'hvhnonc_out.unregister_date, '
+                        'hvhnonc_in.keep_department, '
+                        'hvhnonc_in.keeper, '
+                        'hvhnonc_out.unregister_place, '
+                        'hvhnonc_out.unregister_remark ')
+        d['conditions'] = '('
+        comboboxes = {key: value for key, value in self.__dict__.items()
+                      if isinstance(value, QtWidgets.QComboBox)}
+        for key, widget in comboboxes.items():
+            if widget.currentText() not in (None, ''):
+                d['conditions'] += ('hvhnonc_in.{} like ? and '.format(key))
+                params.append('%{}%'.format(widget.currentText()))
+        # price range
+        price = {}
+        if (self.price_min.text() not in (None, '')
+            or self.price_max.text() not in (None, '')):
+            try:
+                price['min'] = int(self.price_min.text())
+            except ValueError as ve:
+                if self.price_min.text() == '':
+                    price['min'] = 0
+                else:
+                    QtWidgets.QMessageBox.critical(self, '錯誤', str(ve))
+            try:
+                price['max'] = int(self.price_max.text())
+            except ValueError as ve:
+                if self.price_max.text() == '':
+                    # maximum int of sqlite3
+                    price['max'] = 2 ** 63 - 1
+                else:
+                    QtWidgets.QMessageBox.critical(self, '錯誤', str(ve))
+            d['conditions'] += '(hvhnonc_in.price >= ? and price <= ?) and '
+            params += [str(price['min']), str(price['max'])]
+        # purchase_date: QDateEdit
+        if self.purchase_date_chk.checkState():
+            minDate = self.purchase_date_min.date().toPyDate()
+            maxDate = self.purchase_date_max.date().toPyDate()
+            sqlstr += ("(strftime('%Y-%m-%d', hvhnonc_in.{}) "
+                      "between ? and ?) and ".format('purchase_date'))
+            params.append(str(minDate))
+            params.append(str(maxDate))
+        # out_date: QDateEdit
+        # NOTE: Since I reused Filter window,
+        # the original 'acquire_date' fields is now used as 'out_date'
+        if self.acquire_date_chk.checkState():
+            minDate = self.acquire_date_min.date().toPyDate()
+            maxDate = self.acquire_date_max.date().toPyDate()
+            sqlstr += ("(strftime('%Y-%m-%d', hvhnonc_out.{}) "
+                      "between ? and ?) and ".format('unregister_date'))
+            params.append(str(minDate))
+            params.append(str(maxDate))
+        sqlstr += '1) order by hvhnonc_out.unregister_date desc;'
+        sqlstr = sqlstr.format(**d)
+        return (sqlstr, params)
+
+    def load_form_query_both(self) -> Tuple[str, List[str]]:
+        return ('constructing (both)', [])
+
+    def load_form_query_in(self) -> Tuple[str, List[str]]:
         sqlstr = 'select * from hvhnonc_in where ('
         params = []
         comboboxes = {key: value for key, value in self.__dict__.items()

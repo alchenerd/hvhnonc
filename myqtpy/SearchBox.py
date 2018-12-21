@@ -18,7 +18,7 @@ from myconnect import connect
 
 class SearchBox(QtWidgets.QDialog, SearchBoxDialog):
     def __init__(self, dialog, mode: str):
-        # mode = ('in', 'both')
+        # mode = ('in', 'out', 'both')
         self.mode = mode
         super(self.__class__, self).__init__(dialog)
         self.setupUi(dialog)

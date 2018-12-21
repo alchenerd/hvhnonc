@@ -6,6 +6,7 @@ from PyQt5 import QtCore, QtWidgets
 
 from _unregister_skeleton import Ui_Dialog as UnregisterDialog
 from SearchBox import SearchBox
+from Filter import Filter
 from myconnect import connect
 
 """
@@ -27,10 +28,27 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         self.getPreviousBtn.clicked.connect(self.onclick_prev)
         self.getNextBtn.clicked.connect(self.onclick_next)
         self.searchBtn.clicked.connect(self.on_searchBtn_clicked)
+        self.formBtn.clicked.connect(self.on_formBtn_clicked)
+        self.selectRecordBtn.clicked.connect(self.on_selectRecordBtn_clicked)
         self.unregister_amount.textEdited.connect(self.amount_edit)
         self.isEnabled = None
         self.clear_all_fields()
         self.disable_all_fields()
+
+    def on_selectRecordBtn_clicked(self):
+        print('on_selectRecordBtn_clicked')
+        pass
+
+    def on_formBtn_clicked(self):
+        # open a search box
+        self.sb = QtWidgets.QDialog()
+        Filter(self.sb, mode='out')
+        returnID = self.sb.exec_()
+        if returnID == 0:
+            return
+        self.unregisterIdIndex = -1
+        self.update_field_by_id(returnID)
+
 
     def on_searchBtn_clicked(self):
         # open a search box
@@ -46,6 +64,9 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
     def update_field_by_id(self, returnID: int):
         if returnID < 0:
             oid = -returnID
+            for k, id in self.unregisgerIdDict.items():
+                if id == oid:
+                    self.unregisterIdIndex = k
             iid = self.get_inID(oid)
         else:
             # return id has no unregister record
@@ -252,7 +273,6 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
                 (y, m, d) = map(int, row[k].split('-'))
                 date = QtCore.QDate(y, m, d)
                 w.setDate(date)
-
 
     def clear_all_fields(self):
         widgetsToClear = {k: i for k, i in self.__dict__.items() if (

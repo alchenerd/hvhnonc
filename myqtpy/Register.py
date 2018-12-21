@@ -57,7 +57,22 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         # open a filter window
         self.filterWindow = QtWidgets.QDialog()
         Filter(self.filterWindow)
-        self.filterWindow.exec()
+        returnID = self.filterWindow.exec()
+        if not returnID:
+            return
+        # update the self.idIndex
+        self.idIndex = self.getIdIndex(returnID)
+        # fetch a record from the db
+        con, cursor= connect._get_connection()
+        con.row_factory = sqlite3.Row
+        cursor = con.cursor()
+        sqlstr = ('select * from hvhnonc_in where ID=?')
+        params = (returnID,)
+        cursor.execute(sqlstr, params)
+        record = cursor.fetchone()
+        con.close()
+        self.init_all_fields()
+        self.update_by_record(record)
 
     def on_searchBtn_clicked(self):
         # open a search box
@@ -67,6 +82,7 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         returnID = self.sb.exec_()
         if returnID == 0:
             return
+        self.idIndex = self.getIdIndex(returnID)
         # set self id index
         for k, i in self.idDict.items():
             if i == returnID:
@@ -387,6 +403,11 @@ class Register(QtWidgets.QDialog, RegisterDialog):
         res = cursor.fetchone()
         con.close()
         return res
+
+    def getIdIndex(self, id: int):
+        for k, v in self.idDict.items():
+            if v == id:
+                return k
 
     def get_id_dict(self):
         con, cursor= connect._get_connection()

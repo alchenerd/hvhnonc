@@ -36,8 +36,14 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         self.disable_all_fields()
 
     def on_selectRecordBtn_clicked(self):
-        print('on_selectRecordBtn_clicked')
-        pass
+        # open a search box
+        self.sb = QtWidgets.QDialog()
+        Filter(self.sb, mode='both')
+        returnID = self.sb.exec_()
+        if returnID == 0:
+            return
+        self.unregisterIdIndex = -1
+        self.update_field_by_id(returnID)
 
     def on_formBtn_clicked(self):
         # open a search box

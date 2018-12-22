@@ -41,14 +41,19 @@ class Filter(QtWidgets.QDialog, FilterDialog):
         dialog.done(self.resultWindow.exec_())
 
     def load_form_query(self) -> Tuple[str, List[str]]:
+        sqlstr = None
+        params = None
+        sqlstr, params
         if self.mode == 'in':
-            return self.load_form_query_in()
+            sqlstr, params = self.load_form_query_in()
         elif self.mode == 'out':
-            return self.load_form_query_out()
+            sqlstr, params = self.load_form_query_out()
         elif self.mode == 'both':
-            return self.load_form_query_both()
+            sqlstr, params = self.load_form_query_both()
         else:
             print('Why are you running?!')
+            return None, None
+        return sqlstr + 'order by date desc;', params
 
     def load_form_query_out(self) -> Tuple[str, List[str]]:
         sqlstr = ('select {columns} from hvhnonc_out '
@@ -57,13 +62,14 @@ class Filter(QtWidgets.QDialog, FilterDialog):
                   'and {conditions}')
         params = []
         d = {}
-        d['columns'] = ('hvhnonc_out.ID, hvhnonc_in.name, '
-                        'hvhnonc_in.purchase_date, '
-                        'hvhnonc_out.unregister_date, '
-                        'hvhnonc_in.keep_department, '
-                        'hvhnonc_in.keeper, '
-                        'hvhnonc_out.unregister_place, '
-                        'hvhnonc_out.unregister_remark ')
+        d['columns'] = ('hvhnonc_out.ID as ID, '
+                        '"除帳" as type, '
+                        'hvhnonc_in.name as name, '
+                        'hvhnonc_out.unregister_date as date, '
+                        'hvhnonc_in.keep_department as keep_department, '
+                        'hvhnonc_in.keeper as keeper, '
+                        'hvhnonc_out.unregister_place as place, '
+                        'hvhnonc_out.unregister_remark as remark')
         d['conditions'] = '('
         comboboxes = {key: value for key, value in self.__dict__.items()
                       if isinstance(value, QtWidgets.QComboBox)}
@@ -110,15 +116,22 @@ class Filter(QtWidgets.QDialog, FilterDialog):
                       "between ? and ?) and ".format('unregister_date'))
             params.append(str(minDate))
             params.append(str(maxDate))
-        sqlstr += '1) order by hvhnonc_out.unregister_date desc;'
+        sqlstr += '1) '
         sqlstr = sqlstr.format(**d)
         return (sqlstr, params)
 
     def load_form_query_both(self) -> Tuple[str, List[str]]:
-        return ('constructing (both)', [])
+        sqlstrin, params = self.load_form_query_in()
+        sqlstrout, params = self.load_form_query_out()
+        sqlstr = sqlstrin + 'union all ' + sqlstrout
+        return (sqlstr, params)
 
     def load_form_query_in(self) -> Tuple[str, List[str]]:
-        sqlstr = 'select * from hvhnonc_in where ('
+        d = {}
+        d['columns'] = ('ID, "入帳" as type, name, acquire_date as date, '
+                        'keep_department, keeper, place, remark')
+        sqlstr = 'select {columns} from hvhnonc_in where ('
+        sqlstr = sqlstr.format(**d)
         params = []
         comboboxes = {key: value for key, value in self.__dict__.items()
                       if isinstance(value, QtWidgets.QComboBox)}
@@ -163,7 +176,7 @@ class Filter(QtWidgets.QDialog, FilterDialog):
                       "between ? and ?) and ".format('acquire_date'))
             params.append(str(minDate))
             params.append(str(maxDate))
-        sqlstr += '1) order by acquire_date desc;'
+        sqlstr += '1) '
         return sqlstr, params
 
 

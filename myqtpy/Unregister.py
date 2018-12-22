@@ -23,6 +23,7 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
     def __init__(self, dialog):
         super(self.__class__, self).__init__(dialog)
         self.setupUi(dialog)
+        self.isEnabled = None
         self.unregisterIdIndex = -1
         self.unregisgerIdDict = self.get_id_dict('unregister')
         self.getPreviousBtn.clicked.connect(self.onclick_prev)
@@ -30,10 +31,66 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         self.searchBtn.clicked.connect(self.on_searchBtn_clicked)
         self.formBtn.clicked.connect(self.on_formBtn_clicked)
         self.selectRecordBtn.clicked.connect(self.on_selectRecordBtn_clicked)
+        self.saveBtn.clicked.connect(self.on_saveBtn_clicked)
+        self.deleteBtn.clicked.connect(self.on_deleteBtn_clicked)
         self.unregister_amount.textEdited.connect(self.amount_edit)
         self.isEnabled = None
         self.clear_all_fields()
         self.disable_all_fields()
+
+    def on_saveBtn_clicked(self):
+        print('on_saveBtn_clicked')
+        # check if valid field
+        if not self.check_user_input():
+            return
+        # check if valid unregisterIdIndex
+        if self.unregisterIdIndex in range(len(self.unregisgerIdDict)):
+            # valid id, ask user save as new or writeover
+            choice = self.ask_new_or_writeover()
+            if choice == 'new':
+                self.save_as_new()
+            elif choice == 'writeover':
+                self.write_over()
+            pass
+        else:
+            # invalid id, check if new record(editable):
+            if isEnabled == True:
+                #TODO: save as new
+                pass
+
+    #TODO: finish the 4 saving methods below
+    def ask_new_or_writeover(self) -> str:
+        """Asks user if save as new or writeover with a messagebox.
+
+        Returns a string. It's either 'new' or 'writeover'."""
+        return 'new'
+
+    def check_user_input(self) -> bool:
+        """ Checks if the user input of unregister form is valid.
+
+        Returns Boolean of the input's validity.
+        In case of returning False, a messagebox will popup and
+        inform user where went wrong."""
+        print('check_user_input')
+        if not self.isEnabled:
+            print('Not enabled!')
+            return False
+        else:
+            return True
+
+    def save_as_new(self):
+        """ Save users input to database as a new row via sqlite."""
+        print('save_as_new')
+
+    def write_over(self):
+        """ Write over old record with the user input via sqlite.
+
+        The old record is located with
+        self.unregisgerIdDict[self.unregisterIdIndex])."""
+        print('write_over')
+
+    def on_deleteBtn_clicked(self):
+        print('on_deleteBtn_clicked')
 
     def on_selectRecordBtn_clicked(self):
         # open a search box
@@ -115,6 +172,7 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
 
     # enable some fields for user editing
     def enable_some_fields(self):
+        self.isEnabled = True
         fieldsToEnable = ['unregister_date', 'unregister_amount', 'reason',
                           'unregister_place', 'unregister_remark']
         fieldsToEnable = [getattr(self, x) for x in fieldsToEnable]

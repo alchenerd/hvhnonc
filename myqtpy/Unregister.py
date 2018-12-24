@@ -24,6 +24,7 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         super(self.__class__, self).__init__(dialog)
         self.setupUi(dialog)
         self.isEnabled = None
+        self.iid = None # in_ID
         self.unregisterIdIndex = -1
         self.unregisgerIdDict = self.get_id_dict('unregister')
         self.getPreviousBtn.clicked.connect(self.onclick_prev)
@@ -34,11 +35,11 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         self.saveBtn.clicked.connect(self.on_saveBtn_clicked)
         self.deleteBtn.clicked.connect(self.on_deleteBtn_clicked)
         self.unregister_amount.textEdited.connect(self.amount_edit)
-        self.isEnabled = None
         self.clear_all_fields()
         self.disable_all_fields()
 
     def on_saveBtn_clicked(self):
+        """ Callback function when saveBtn is clicked. """
         print('on_saveBtn_clicked')
         # check if valid field
         if not self.check_user_input():
@@ -49,38 +50,93 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
             choice = self.ask_new_or_writeover()
             if choice == 'new':
                 self.save_as_new()
-            elif choice == 'writeover':
+            elif choice == 'write_over':
                 self.write_over()
-            pass
+            elif choice == 'cancel':
+                return
         else:
             # invalid id, check if new record(editable):
-            if isEnabled == True:
-                #TODO: save as new
-                pass
+            if self.isEnabled == True:
+                if self.ask_confirm():
+                    self.save_as_new()
+        # update unregisgerIdDict
+        self.unregisgerIdDict = self.get_id_dict('unregister')
 
     #TODO: finish the 4 saving methods below
-    def ask_new_or_writeover(self) -> str:
-        """Asks user if save as new or writeover with a messagebox.
+    def ask_confirm(self) -> bool:
+        """ Asks user 'Are you sure?'. """
+        mb = QtWidgets.QMessageBox()
+        mb.setIcon(QtWidgets.QMessageBox.Question)
+        mb.setWindowTitle(u'確定?')
+        mb.setText(u'確定要存入一筆新資料嗎?')
+        mb.addButton(u'取消', QtWidgets.QMessageBox.RejectRole)
+        mb.addButton(u'確定', QtWidgets.QMessageBox.AcceptRole)
+        return mb.exec_()
 
-        Returns a string. It's either 'new' or 'writeover'."""
-        return 'new'
+
+    def ask_new_or_writeover(self) -> str:
+        """ Asks user if save as new or writeover with a messagebox.
+
+        Returns
+        -------
+        str
+            'cancel', 'new' or 'writeover', which indicates the user's choice.
+        """
+        mb = QtWidgets.QMessageBox()
+        mb.setWindowTitle('存入資料')
+        mb.setText('請選擇存入本筆資料的方式：')
+        mb.addButton('取消', QtWidgets.QMessageBox.RejectRole)
+        mb.addButton('新增一筆', QtWidgets.QMessageBox.YesRole)
+        mb.addButton('覆蓋本筆', QtWidgets.QMessageBox.NoRole)
+        res = mb.exec_()
+        if res == 0:
+            return 'cancel'
+        elif res == 1:
+            return 'new'
+        elif res == 2:
+            return 'write_over'
 
     def check_user_input(self) -> bool:
         """ Checks if the user input of unregister form is valid.
 
-        Returns Boolean of the input's validity.
-        In case of returning False, a messagebox will popup and
-        inform user where went wrong."""
+        Returns
+        -------
+        bool
+            The user input's validity.
+            In case of returning False, a messagebox will popup and
+            inform user where went wrong.
+        """
         print('check_user_input')
         if not self.isEnabled:
-            print('Not enabled!')
             return False
-        else:
-            return True
+        # We check amount > 0 only for now.
+        if int(self.unregister_amount.text()) <= 0:
+            QtWidgets.QMessageBox.warning(
+                    self, u'錯誤', u'除帳數量不可小於等於0!')
+            return False
+        return True
 
     def save_as_new(self):
         """ Save users input to database as a new row via sqlite."""
         print('save_as_new')
+        con, cur = connect._get_connection()
+        sqlstr = ('insert into hvhnonc_out({fields}) values({questionmarks})')
+        d = {}
+        d['fields'] = ('in_ID, unregister_date, amount, reason, '
+                       'unregister_place, unregister_remark')
+        params = [str(self.iid), self.unregister_date.date().toPyDate(),
+                  self.unregister_amount.text(), self.reason.currentText(),
+                  self.unregister_place.currentText(),
+                  self.unregister_remark.text()]
+        d['questionmarks'] = ('?, ' * len(params))[:-2]
+        cur.execute(sqlstr.format(**d), params)
+        con.commit()
+        con.close()
+        self.update_cache()
+        QtWidgets.QMessageBox.information(self, '成功', '已存入一筆資料')
+
+    def update_cache(self):
+        pass
 
     def write_over(self):
         """ Write over old record with the user input via sqlite.
@@ -88,6 +144,28 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         The old record is located with
         self.unregisgerIdDict[self.unregisterIdIndex])."""
         print('write_over')
+        con, cur = connect._get_connection()
+        con.set_trace_callback(print)
+        sqlstr = ('update hvhnonc_out set({settings}) where ID=?')
+        d = {}
+        d['settings'] = ''
+        # BUG: not working properly
+        fields = ['in_ID', 'unregister_date', 'amount', 'reason',
+                  'unregister_place', 'unregister_remark']
+        params = [str(self.iid), self.unregister_date.date().toPyDate(),
+                  self.unregister_amount.text(), self.reason.currentText(),
+                  self.unregister_place.currentText(),
+                  self.unregister_remark.text()]
+        for f, p in zip(fields, params):
+            d['settings'] += '{} = {}, '.format(f, p)
+        d['settings'] = d['settings'][:-2]
+        print(str(self.unregisgerIdDict[self.unregisterIdIndex]))
+        params = (str(self.unregisgerIdDict[self.unregisterIdIndex]),)
+        cur.execute(sqlstr.format(**d), params)
+        con.commit()
+        con.close()
+        self.update_cache()
+        QtWidgets.QMessageBox.information(self, '成功', '已覆蓋一筆資料')
 
     def on_deleteBtn_clicked(self):
         print('on_deleteBtn_clicked')
@@ -112,7 +190,6 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         self.unregisterIdIndex = -1
         self.update_field_by_id(returnID)
 
-
     def on_searchBtn_clicked(self):
         # open a search box
         self.sb = QtWidgets.QDialog()
@@ -135,8 +212,10 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
             # return id has no unregister record
             oid = -1
             iid = returnID
+            self.unregisterIdIndex = -1
+        self.iid = iid
         self.load_inRecord(iid)
-        self.load_history_record(iid, oid)
+        self.load_history_record(iid)
         self.load_outRecord(oid)
         self.enable_some_fields()
         self.amount_initialize()
@@ -147,7 +226,10 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         # get total amount
         totalAmount = int(self.amount.text())
         # get unregistered amount
-        unregisteredAmount = int(self.unregistered_amount.text())
+        try:
+            unregisteredAmount = int(self.unregistered_amount.text())
+        except ValueError:
+            unregisteredAmount = 0
         # calculate remain
         remain = totalAmount - unregisteredAmount
         self.remain_amount.setText(str(remain))
@@ -158,9 +240,18 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         # get total amount
         totalAmount = int(self.amount.text())
         # get unregistered amount
-        unregisteredAmount = int(self.unregistered_amount.text())
+        if self.unregisterIdIndex == -1:
+            unregisteredAmount = 0
+        else:
+            unregisteredAmount = int(self.unregistered_amount.text())
         # get editingAmount
-        editingAmount  = int(self.unregister_amount.text())
+        try:
+            editingAmount  = int(self.unregister_amount.text())
+        except ValueError:
+            QtWidgets.QMessageBox.warning(self, '錯誤', '數量需為正整數!')
+            self.unregister_amount.setText(
+                    str(totalAmount - unregisteredAmount))
+            return
         # calculate remain
         remain = totalAmount - unregisteredAmount - editingAmount
         if remain < 0:
@@ -240,7 +331,7 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
                 date = QtCore.QDate(y, m, d)
                 widget.setDate(date)
 
-    def load_history_record(self, iid: int, oid: int = 0):
+    def load_history_record(self, iid: int):
         con, cursor = connect._get_connection()
         con.row_factory = sqlite3.Row
         cursor = con.cursor()
@@ -254,7 +345,7 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         params = (iid,)
         cursor.execute(sqlstr, params)
         row = cursor.fetchone()
-        if oid < 0:
+        if not row or None in row:
             self.clear_history_record()
             return
         con.close()
@@ -305,9 +396,10 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
             elif isinstance(widget, QtWidgets.QComboBox):
                 widget.clearEditText()
             elif isinstance(widget, QtWidgets.QDateEdit):
-                (y, m, d) = (1800, 1, 1)
-                date = QtCore.QDate(y, m, d)
+                date = QtCore.QDate()
+                date = QtCore.QDate.currentDate()
                 widget.setDate(date)
+        self.unregister_amount.setText('0')
 
     def load_outRecord(self, oid: int):
         if oid == -1:

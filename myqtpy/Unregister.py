@@ -116,6 +116,23 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
             return False
         return True
 
+    def update_cache(self):
+        """ Update the user input into cache. """
+        con, cur = connect._get_connection()
+        sqlstr = ('insert or ignore into hvhnonc_cache ({columns}) '
+                  'values ({questionmarks})')
+        d = {}
+        columns = ['this_ID', 'this_value', 'change_ID', 'change_value']
+        d['columns'] = (', '.join(columns))
+        d['questionmarks'] = ('?, ' * len(columns))[:-2]
+        widgetsToUpdate = ['reason', 'unregister_place']
+        for w in widgetsToUpdate:
+            params = ['0', '', connect.get_field_id(w),
+                      getattr(self, w).currentText()]
+            cur.execute(sqlstr.format(**d), params)
+        con.commit()
+        con.close()
+
     def save_as_new(self):
         """ Save users input to database as a new row via sqlite."""
         print('save_as_new')
@@ -135,9 +152,6 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         self.update_cache()
         QtWidgets.QMessageBox.information(self, '成功', '已存入一筆資料')
 
-    def update_cache(self):
-        pass
-
     def write_over(self):
         """ Write over old record with the user input via sqlite.
 
@@ -145,22 +159,19 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         self.unregisgerIdDict[self.unregisterIdIndex])."""
         print('write_over')
         con, cur = connect._get_connection()
-        con.set_trace_callback(print)
-        sqlstr = ('update hvhnonc_out set({settings}) where ID=?')
+        sqlstr = ('update hvhnonc_out set {settings} where ID=?')
         d = {}
         d['settings'] = ''
-        # BUG: not working properly
         fields = ['in_ID', 'unregister_date', 'amount', 'reason',
                   'unregister_place', 'unregister_remark']
         params = [str(self.iid), self.unregister_date.date().toPyDate(),
                   self.unregister_amount.text(), self.reason.currentText(),
                   self.unregister_place.currentText(),
                   self.unregister_remark.text()]
-        for f, p in zip(fields, params):
-            d['settings'] += '{} = {}, '.format(f, p)
+        for f in fields:
+            d['settings'] += '{} = ?, '.format(f)
         d['settings'] = d['settings'][:-2]
-        print(str(self.unregisgerIdDict[self.unregisterIdIndex]))
-        params = (str(self.unregisgerIdDict[self.unregisterIdIndex]),)
+        params += (str(self.unregisgerIdDict[self.unregisterIdIndex]),)
         cur.execute(sqlstr.format(**d), params)
         con.commit()
         con.close()

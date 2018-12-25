@@ -34,7 +34,7 @@ def get_ch_name(name: str):
             print(e, name, 'get_ch_name')
         return name
 
-def get_field_id(name: str):
+def get_field_id(name: str) -> int:
     con, cur = _get_connection()
     sqlstr = ('select ID '
               'from hvhnonc_fields '

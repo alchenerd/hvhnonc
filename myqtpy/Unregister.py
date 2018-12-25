@@ -62,7 +62,6 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         # update unregisgerIdDict
         self.unregisgerIdDict = self.get_id_dict('unregister')
 
-    #TODO: finish the 4 saving methods below
     def ask_confirm(self) -> bool:
         """ Asks user 'Are you sure?'. """
         mb = QtWidgets.QMessageBox()
@@ -179,7 +178,27 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         QtWidgets.QMessageBox.information(self, '成功', '已覆蓋一筆資料')
 
     def on_deleteBtn_clicked(self):
+        if not self.isEnabled:
+            return
+        if self.unregisterIdIndex < 0:
+            return
         print('on_deleteBtn_clicked')
+        mb = QtWidgets.QMessageBox()
+        mb.setWindowTitle('確認刪除')
+        mb.setText('確定刪除這筆資料?')
+        mb.addButton('取消', QtWidgets.QMessageBox.RejectRole)
+        mb.addButton('確認', QtWidgets.QMessageBox.AcceptRole)
+        ret = mb.exec_()
+        if ret == 0:
+            return
+        con, cur = connect._get_connection()
+        sqlstr = ('delete from hvhnonc_out where ID = ?')
+        params = (str(self.unregisgerIdDict[self.unregisterIdIndex]),)
+        cur.execute(sqlstr, params)
+        con.commit()
+        con.close()
+        QtWidgets.QMessageBox.information(self, '已刪除', '已刪除一筆資料')
+        self.clear_all_fields()
 
     def on_selectRecordBtn_clicked(self):
         # open a search box
@@ -229,7 +248,26 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         self.load_history_record(iid)
         self.load_outRecord(oid)
         self.enable_some_fields()
+        self.load_cache()
         self.amount_initialize()
+
+    def load_cache(self):
+        # enabled comboboxes:
+        enabledComboboxes = ['reason', 'unregister_place']
+        con, cur = connect._get_connection()
+        sqlstr = ('select change_value '
+                  'from hvhnonc_cache '
+                  'where this_ID = 0 '
+                  'and this_value = "" '
+                  'and change_ID = ?;')
+        for cb in enabledComboboxes:
+            params = (connect.get_field_id(cb),)
+            cur.execute(sqlstr, params)
+            rows = cur.fetchall()
+            for row in rows:
+                getattr(self, cb).addItem(row[0])
+            getattr(self, cb).setCurrentText('')
+        con.close()
 
     def amount_initialize(self):
         if self.unregister_amount.text() in (None, ''):

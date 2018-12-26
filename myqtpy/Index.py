@@ -8,6 +8,7 @@ from myqtpy._index_skeleton import Ui_MainWindow as IndexUi
 from myqtpy.Dummy import Dummy
 from myqtpy.Register import Register
 from myqtpy.Unregister import Unregister
+from myqtpy.PrintMenu import PrintMenu
 
 
 class Index(QtWidgets.QMainWindow, IndexUi):
@@ -33,6 +34,8 @@ class Index(QtWidgets.QMainWindow, IndexUi):
             ui = Register(self.childWindow)
         elif type_ == 'unregister':
             ui = Unregister(self.childWindow)
+        elif type_ == 'print':
+            ui = PrintMenu(self.childWindow)
         else:
             ui = Dummy(self.childWindow)
             self.childWindow.setWindowTitle(type_)

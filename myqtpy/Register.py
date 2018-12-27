@@ -566,7 +566,6 @@ class Register(QtWidgets.QDialog, RegisterDialog):
             elif isinstance(i, QtWidgets.QLineEdit):
                 i.clear()
             elif isinstance(i, QtWidgets.QDateEdit):
-                date = QtCore.QDate()
                 date = QtCore.QDate.currentDate()
                 i.setDate(date)
 

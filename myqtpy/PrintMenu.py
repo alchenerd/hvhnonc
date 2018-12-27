@@ -39,8 +39,10 @@ class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
         self.clearBtn.clicked.connect(self.on_clearBtn_clicked)
         self.previewBtn.clicked.connect(self.on_previewBtn_clicked)
 
+    # QUESTION: When to create the document?
     def on_previewBtn_clicked(self):
         # TODO: finish this
+        # find out what kind of document to create
         # Create the document(docx)
         # Convert into pdf
         # Open a preview dialog showing the pdf

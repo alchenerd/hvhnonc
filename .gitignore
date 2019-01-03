@@ -110,4 +110,4 @@ pylintReport.txt
 
 *.docx
 *.pdf
-*qrc
+*.qrc

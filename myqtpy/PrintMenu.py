@@ -4,7 +4,7 @@
 """
 
 from PyQt5 import QtWidgets, QtCore
-from typing import Dict
+from typing import Dict, Tuple
 import sys
 # These are mine
 if __name__ == '__main__':
@@ -13,6 +13,7 @@ else:
     sys.path.append('./myqtpy/')
 from _print_menu_skeleton import Ui_Dialog as PrintMenuDialog
 from myconnect import connect
+from mydocbuilder.DocBuilder import DocBuilder
 
 class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
     def __init__(self, dialog):
@@ -38,15 +39,67 @@ class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
         # Connect button callbacks
         self.clearBtn.clicked.connect(self.on_clearBtn_clicked)
         self.previewBtn.clicked.connect(self.on_previewBtn_clicked)
+        self._radio_choices = {
+                'rb1': 'register_list',
+                'rb2': 'monthly_report',
+                'rb3': 'full_report',
+                'rb4': 'unregister_list',
+                'rb5': 'property_card',
+                'rb6': 'added_list',
+                'rb7': 'change_list',
+                'rb8': 'property_tag',
+                'rb9': 'counting_record',
+                'rb10': 'counting_record',
+                'rb11': 'property_keeper_guide',
+                }
 
-    # QUESTION: When to create the document?
     def on_previewBtn_clicked(self):
         # TODO: finish this
-        # find out what kind of document to create
-        # Create the document(docx)
+        # find out what kind of document to create(crb = checked radio btn)
+        crbName, crbWidget = self.get_checked_radio_button()
+        doctype = self._radio_choices.get(crbName, None)
+        filledFields = self.get_form_brief()
+        # Create the document(docx) as result.docx
+        mydc = DocBuilder(type_=doctype, kwargs=filledFields)
+        mydc.construct()
         # Convert into pdf
         # Open a preview dialog showing the pdf
         print('on_previewBtn_clicked')
+
+    def get_form_brief(self):
+        """Returns brief(filled only) information of the form.
+
+        Not using typehint because too abstract...?"""
+        d = {}
+        # special case: enabled dates
+        if self.edit_date_chk.isChecked():
+            d['edit_date_min'] = self.edit_date_min.date().toPyDate()
+            d['edit_date_max'] = self.edit_date_max.date().toPyDate()
+        if self.purchase_date_chk.isChecked():
+            d['purchase_date_min'] = self.purchase_date_min.date().toPyDate()
+            d['purchase_date_max'] = self.purchase_date_max.date().toPyDate()
+        # comboboxes and lineedits
+        for k, v in self.__dict__.items():
+            line = None
+            if isinstance(v, QtWidgets.QComboBox):
+                line = v.currentText()
+            elif isinstance(v, QtWidgets.QLineEdit):
+                line = v.text()
+            elif isinstance(v, QtWidgets.QSpinBox):
+                line = str(v.value())
+            if line:
+                d[k] = line
+        return d
+
+    def get_checked_radio_button(self) -> Tuple[str, QtWidgets.QRadioButton]:
+        """Finds the checked radio button and return it."""
+        rbs = {k: v for k, v in self.__dict__.items()
+                if isinstance(v, QtWidgets.QRadioButton)}
+        for k, v in rbs.items():
+            if v.isChecked():
+                return (k, v)
+        else:
+            raise Exception('no button checked?!')
 
     def init_date_edits(self):
         """Initalizes the date edits."""

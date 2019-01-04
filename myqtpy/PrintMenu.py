@@ -73,11 +73,14 @@ class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
         d = {}
         # special case: enabled dates
         if self.edit_date_chk.isChecked():
-            d['edit_date_min'] = self.edit_date_min.date().toPyDate()
-            d['edit_date_max'] = self.edit_date_max.date().toPyDate()
+            minDate = self.edit_date_min.date().toPyDate()
+            maxDate = self.edit_date_max.date().toPyDate()
+            # edit date is acquire date, useing this acquire_date for db
+            d['acquire_date'] = (minDate, maxDate)
         if self.purchase_date_chk.isChecked():
-            d['purchase_date_min'] = self.purchase_date_min.date().toPyDate()
-            d['purchase_date_max'] = self.purchase_date_max.date().toPyDate()
+            minDate = self.purchase_date_min.date().toPyDate()
+            maxDate = self.purchase_date_max.date().toPyDate()
+            d['purchase_date'] = (minDate, maxDate)
         # comboboxes and lineedits
         for k, v in self.__dict__.items():
             line = None

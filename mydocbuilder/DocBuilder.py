@@ -206,8 +206,50 @@ class DocBuilder():
         # TODO: next page: report details
         targetDoc.add_page_break()
         targetDoc.add_paragraph()
+        # new reference document
+        filePath = ('./mydocbuilder/monthly_report_detail_template.docx')
+        sourceDoc = Document(filePath)
+        replaceParagraph = {}
+        signatureParagraph = {}
+        for paragraph in sourceDoc.paragraphs:
+            p = targetDoc.add_paragraph()
+            for run in paragraph.runs:
+                r = p.add_run(run.text)
+                r.font.name = run.font.name
+                r.font.size = run.font.size
+                r._element.rPr.rFonts.set(qn('w:eastAsia'), u'標楷體')
+            p.paragraph_format.alignment = \
+                paragraph.paragraph_format.alignment
+            if '{' in p.text:
+                replaceParagraph['source'] = paragraph
+                replaceParagraph['target'] = p
+            elif '製表' in p.text:
+                signatureParagraph['source'] = paragraph
+                signatureParagraph['target'] = p
+        # fill in date and such
+        d = {}
+        day = datetime.date(theYear, theMonth, 1)
+        dayE = self.last_day_of_month(day)
+        d['ys'], d['ms'], d['ds'] = \
+                str(day.year), str(day.month).zfill(2), str(day.day)
+        d['ye'], d['me'], d['de'] = \
+                str(dayE.year), str(dayE.month).zfill(2), str(dayE.day)
+        d['page'] = str(1).zfill(3)
+        # reset font
+        replaceParagraph.get('target').text = \
+                replaceParagraph.get('target').text.format(**d)
+        r = replaceParagraph.get('target').runs[0]
+        run = replaceParagraph.get('source').runs[0]
+        r.font.name = run.font.name
+        r.font.size = run.font.size
+        r._element.rPr.rFonts.set(qn('w:eastAsia'), u'標楷體')
+        #TODO: copy table after replaceParagraph.get('target')
         # save doc
         targetDoc.save('result.docx')
+
+    def last_day_of_month(self, anyday):
+        nextMonth = anyday.replace(day=28) + datetime.timedelta(days=4)
+        return nextMonth - datetime.timedelta(days=nextMonth.day)
 
     def unregister_list(self):
         """Opens a copy of retire template, then modify and save it."""

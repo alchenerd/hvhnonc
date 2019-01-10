@@ -8,7 +8,7 @@ from docx import Document
 from docx.shared import Pt
 from docx.oxml.ns import qn
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-from docx.enum.style import WD_STYLE
+from docx.enum.style import WD_STYLE_TYPE
 import datetime
 import sys
 
@@ -59,47 +59,153 @@ class DocBuilder():
                 qn('w:eastAsia'), u'標楷體')
 
     def monthly_report(self):
-        """Opens a copy of retire template, then modify and save it."""
+        """Opens monthly report template, then modify and save it."""
         print('monthly_report_summary')
         filePath = ('./mydocbuilder/monthly_report_summary_template.docx')
         targetDoc = Document(filePath)
+        # get the month
+        edmin, edmax = self.kwargs.get('acquire_date', (None, None))
+        if edmin:
+            theYear, theMonth = edmin.year, edmin.month
+        elif edmax:
+            theYear, theMonth = edmax.year, edmax.month
+        else:
+            today = datetime.datetime.today()
+            theYear, theMonth = today.year, today.month
         # fill in the date
         replacements = {}
-        today = datetime.datetime.today().strftime('%Y-%m-%d').split('-')
-        today[0] = str(int(today[0]) - 1911) # in ROC year
-        replacements['y'], replacements['m'], __ = today
+        replacements['y'] = str(theYear - 1911) # in ROC year
+        replacements['m'] = str(theMonth).zfill(2)
         for p in targetDoc.paragraphs:
             if '{' in p.text:
                 p.text = p.text.format(**replacements)
-                break
-        # fill in the categories
+                for run in p.runs:
+                    font = run.font
+                    font.name = u'標楷體'
+                    font.size = Pt(16)
+                    run._element.rPr.rFonts.set(
+                    qn('w:eastAsia'), u'標楷體')
+                    break
+        # init connection (tag: $$$)
         con, cur = connect._get_connection()
-        sqlstr = ('select description from hvhnonc_category')
-        cur.execute(sqlstr)
-        rows = cur.fetchall()
-        rows = rows + [(u'合計',),]
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        # get registered $ before the month
+        sqlstr = ('select amount, price, category '
+                  'from hvhnonc_in '
+                  'where acquire_date < ?')
+        params = ('-'.join((str(theYear).zfill(4), str(theMonth).zfill(2),
+                            '01')),)
+        inPreMonth = cur.execute(sqlstr, params).fetchall()
+        pricePreMonth = {}
+        for row in inPreMonth:
+            # init if category not in keys
+            if row['category'] not in pricePreMonth.keys():
+                pricePreMonth[row['category']] = 0
+            pricePreMonth[row['category']] += row['price'] * row['amount']
+        sqlstr = ('select '
+                      'o.amount as amount, '
+                      'i.price as price, '
+                      'i.category as category '
+                  'from hvhnonc_in as i '
+                  'inner join hvhnonc_out as o '
+                  'on i.id = o.in_id '
+                  'and o.unregister_date < ?')
+        outPreMonth = cur.execute(sqlstr, params).fetchall()
+        for row in outPreMonth:
+            # init if category not in keys
+            if row['category'] not in pricePreMonth.keys():
+                pricePreMonth[row['category']] = 0
+            pricePreMonth[row['category']] -= row['price'] * row['amount']
+        # get registered $ in the month
+        sqlstr = ('select amount, price, category '
+                  'from hvhnonc_in '
+                  'where acquire_date '
+                  'between date(:d, "start of month") '
+                  'and date(:d, "start of month", "+1 month", "-1 day")')
+        params = {'d': '-'.join((str(theYear).zfill(2), str(theMonth).zfill(2),
+                                 '15'))}
+        dataInMonth = cur.execute(sqlstr, params).fetchall()
+        priceInMonth = {}
+        for row in dataInMonth:
+            # init if category not in keys
+            if row['category'] not in priceInMonth.keys():
+                priceInMonth[row['category']] = 0
+            priceInMonth[row['category']] += row['price'] * row['amount']
+        # get unregistered $ in the month
+        sqlstr = ('select '
+                      'o.amount as amount, '
+                      'i.price as price, '
+                      'i.category as category '
+                  'from hvhnonc_in as i '
+                  'inner join hvhnonc_out as o '
+                  'on ((i.id = o.in_id) '
+                  'and (o.unregister_date '
+                  'between date(:d, "start of month") '
+                  'and date(:d, "start of month", "+1 month", "-1 day")))')
+        params = {'d': '-'.join((str(theYear).zfill(2), str(theMonth).zfill(2),
+                                 '15'))}
+        dataOutMonth = cur.execute(sqlstr, params).fetchall()
+        priceOutMonth = {}
+        for row in dataOutMonth:
+            # init if category not in keys
+            if row['category'] not in priceOutMonth.keys():
+                priceOutMonth[row['category']] = 0
+            priceOutMonth[row['category']] += row['price'] * row['amount']
+        # teardown connection (tag: $$$)
+        con.close()
+        # fill in data
         table = targetDoc.tables[0]
-        for i, dataRow in enumerate(rows):
-            try:
-                tableRow = table.rows[i + 1]
-            except IndexError:
-                tableRow = table.add_row()
-            tableRow.cells[0].text = dataRow[0]
+        for rc, row in enumerate(table.rows):
+            if rc == 0:
+                continue
+            category = row.cells[0].text
+            # cells[1]: price pre month
+            ppm = pricePreMonth.get(category, None)
+            row.cells[1].text = str(ppm) if ppm else ''
+            # cells[2]: price in month
+            pim = priceInMonth.get(category, None)
+            row.cells[2].text = str(pim) if pim else ''
+            # cells[3]: price out month
+            pom = priceOutMonth.get(category, None)
+            row.cells[3].text = str(pom) if pom else ''
+            # cells[4]: sum
+            sum_ = ppm if ppm else 0
+            sum_ += pim if pim else 0
+            sum_ -= pom if pom else 0
+            row.cells[4].text = str(sum_) if sum_ else ''
+            # last row: sum
+            if rc == len(table.rows) - 1:
+                for cc, cell in enumerate(row.cells):
+                    if cc in (0, 5):
+                        continue
+                    toSum = \
+                        [table.rows[x].cells[cc].text for x in range(1, rc)]
+                    toSum = [int(x) for x in toSum if x]
+                    if not len(toSum):
+                        cell.text = ''
+                    else:
+                        cell.text = str(sum(toSum))
         # set table font
         table = targetDoc.tables[0]
-        for row in table.rows:
-            for cell in row.cells:
+        for rc, row in enumerate(table.rows):
+            for cc, cell in enumerate(row.cells):
                 for paragraph in cell.paragraphs:
-                    paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+                    if rc == 0 or cc  == 5:
+                        paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+                    elif cc == 0:
+                        paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+                    else:
+                        paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
                     for run in paragraph.runs:
                         font = run.font
                         font.name = u'標楷體'
                         font.size = Pt(18)
                         run._element.rPr.rFonts.set(
                                 qn('w:eastAsia'), u'標楷體')
-        # set table style
-        # TODO: line below not working
-        #table.style = targetDoc.styles[WD_STYLE.TABLE_LIGHT_GRID]
+        # TODO: next page: report details
+        targetDoc.add_page_break()
+        targetDoc.add_paragraph()
         # save doc
         targetDoc.save('result.docx')
 

@@ -204,6 +204,9 @@ class DocBuilder():
                         run._element.rPr.rFonts.set(
                                 qn('w:eastAsia'), u'標楷體')
         # TODO: next page: report details
+        # fetch the in and out record within the month
+        records = self.construct_record_rows(theYear, theMonth)
+        # calculate the page needed
         targetDoc.add_page_break()
         targetDoc.add_paragraph()
         # new reference document
@@ -244,8 +247,78 @@ class DocBuilder():
         r.font.size = run.font.size
         r._element.rPr.rFonts.set(qn('w:eastAsia'), u'標楷體')
         #TODO: copy table after replaceParagraph.get('target')
+        table = sourceDoc.tables[0]
+        tbl = table._tbl
+        new_tbl = deepcopy(tbl)
+        replaceParagraph.get('target')._p.addnext(new_tbl)
         # save doc
         targetDoc.save('result.docx')
+
+    def construct_record_rows(self, y, m):
+        first_day_of_month = datetime.date(y, m, 1)
+        last_day_of_month = self.last_day_of_month(first_day_of_month)
+        records = []
+        con, cur = connect._get_connection()
+        con.set_trace_callback(print)
+        # fetch all categories
+        cur.execute('select description from hvhnonc_category')
+        rows = cur.fetchall()
+        categories = []
+        for row in rows:
+            for column in row:
+                categories.append(column)
+        # fill in data for each category
+        for category in categories:
+            # fetch from db
+            # select register data
+            selIn = (
+                    'select '
+                        '"i" as type, name, brand, spec, unit, price, '
+                        'amount, acquire_date as date, place, remark '
+                    'from '
+                        'hvhnonc_in '
+                    'where '
+                        'category = :category '
+                        'and acquire_date '
+                            'between :first_day_of_month '
+                            'and :last_day_of_month ')
+            # select unregister data
+            selOut = (
+                    'select '
+                        '"o" as type, i.name as name, i.brand as brand, '
+                        'i.spec as spec, i.unit as unit, i.price as price, '
+                        'o.amount as amount, o.unregister_date as date, '
+                        'o.unregister_place as place, '
+                        'o.unregister_remark as remark '
+                    'from '
+                        'hvhnonc_out as o '
+                    'inner join '
+                        'hvhnonc_in as i '
+                    'on '
+                        '(o.in_id = i.id) '
+                        'and i.category = :category '
+                        'and o.unregister_date '
+                            'between :first_day_of_month '
+                            'and :last_day_of_month ')
+            # what we want is union all order by date
+            sqlstr = (selIn + 'union all ' + selOut + 'order by date asc')
+            # dictionary
+            params = {
+                    'category': category,
+                    'first_day_of_month': str(first_day_of_month),
+                    'last_day_of_month': str(last_day_of_month)}
+            cur.execute(sqlstr, params)
+            rows = cur.fetchall()
+            if len(rows):
+                # 1st row: category as title
+                records.append([category, '', '', '', '', '', '', '', '', '',
+                                ''])
+                # TODO: parse the row
+            print(len(rows))
+            for row in rows:
+                print(',\t'.join(map(str, row)))
+        con.close()
+        return records
 
     def last_day_of_month(self, anyday):
         nextMonth = anyday.replace(day=28) + datetime.timedelta(days=4)

@@ -3,7 +3,7 @@
 @author: alchenerd (alchenerd@gmail.com)
 """
 import sqlite3
-from copy import deepcopy
+from copy import copy, deepcopy
 from docx import Document
 from docx.shared import Pt
 from docx.oxml.ns import qn
@@ -85,7 +85,7 @@ class DocBuilder():
                     font.size = Pt(16)
                     run._element.rPr.rFonts.set(
                     qn('w:eastAsia'), u'標楷體')
-                    break
+                break
         # init connection (tag: $$$)
         con, cur = connect._get_connection()
         con.row_factory = sqlite3.Row
@@ -203,33 +203,15 @@ class DocBuilder():
                         font.size = Pt(18)
                         run._element.rPr.rFonts.set(
                                 qn('w:eastAsia'), u'標楷體')
-        # TODO: next page: report details
+        # next page: report details
         # fetch the in and out record within the month
         records = self.construct_record_rows(theYear, theMonth)
         # calculate the page needed
-        targetDoc.add_page_break()
-        targetDoc.add_paragraph()
-        # new reference document
-        filePath = ('./mydocbuilder/monthly_report_detail_template.docx')
-        sourceDoc = Document(filePath)
-        replaceParagraph = {}
-        signatureParagraph = {}
-        for paragraph in sourceDoc.paragraphs:
-            p = targetDoc.add_paragraph()
-            for run in paragraph.runs:
-                r = p.add_run(run.text)
-                r.font.name = run.font.name
-                r.font.size = run.font.size
-                r._element.rPr.rFonts.set(qn('w:eastAsia'), u'標楷體')
-            p.paragraph_format.alignment = \
-                paragraph.paragraph_format.alignment
-            if '{' in p.text:
-                replaceParagraph['source'] = paragraph
-                replaceParagraph['target'] = p
-            elif '製表' in p.text:
-                signatureParagraph['source'] = paragraph
-                signatureParagraph['target'] = p
-        # fill in date and such
+        ROW_PER_PAGE = 17
+        pageNeeded = len(records) // ROW_PER_PAGE \
+                   + (len(records) % ROW_PER_PAGE > 0)
+        print('appending', pageNeeded, 'pages.')
+        # dictionary for replacement
         d = {}
         day = datetime.date(theYear, theMonth, 1)
         dayE = self.last_day_of_month(day)
@@ -237,20 +219,44 @@ class DocBuilder():
                 str(day.year), str(day.month).zfill(2), str(day.day)
         d['ye'], d['me'], d['de'] = \
                 str(dayE.year), str(dayE.month).zfill(2), str(dayE.day)
-        d['page'] = str(1).zfill(3)
-        # reset font
-        replaceParagraph.get('target').text = \
-                replaceParagraph.get('target').text.format(**d)
-        r = replaceParagraph.get('target').runs[0]
-        run = replaceParagraph.get('source').runs[0]
-        r.font.name = run.font.name
-        r.font.size = run.font.size
-        r._element.rPr.rFonts.set(qn('w:eastAsia'), u'標楷體')
-        #TODO: copy table after replaceParagraph.get('target')
-        table = sourceDoc.tables[0]
-        tbl = table._tbl
-        new_tbl = deepcopy(tbl)
-        replaceParagraph.get('target')._p.addnext(new_tbl)
+        # construct pages
+        refPath = ('./mydocbuilder/monthly_report_detail_template.docx')
+        refDoc = Document(refPath)
+        for pg in range(pageNeeded):
+            targetDoc.add_page_break()
+            for paragraph in refDoc.paragraphs:
+                if '{' in paragraph.text:
+                    d['page'] = str(pg + 1).zfill(3)
+                    tempText = paragraph.text.format(**d)
+                    p = targetDoc.add_paragraph(tempText)
+                    # copy table
+                    table = refDoc.tables[0]
+                    tbl = table._tbl
+                    new_tbl = deepcopy(tbl)
+                    p._p.addnext(new_tbl)
+                elif pg != pageNeeded - 1 and '製表' in paragraph.text:
+                    continue
+                else:
+                    p = targetDoc.add_paragraph(paragraph.text)
+                for r in p.runs:
+                    run = paragraph.runs[0]
+                    r.font.name = run.font.name
+                    r.font.size = run.font.size
+                    r._element.rPr.rFonts.set(qn('w:eastAsia'), u'標楷體')
+                p.paragraph_format.alignment = \
+                    paragraph.paragraph_format.alignment
+        for i, record in enumerate(records):
+            # fetch table and row count
+            tableCount = i // ROW_PER_PAGE
+            rowCount = i % ROW_PER_PAGE
+            # get table and row
+            table = targetDoc.tables[tableCount + 1] # 0 is used in summary
+            row = table.rows[rowCount + 2] # 0 and 1 are title rows
+            for j, column in enumerate(record):
+                r = row.cells[j].paragraphs[0].add_run(column)
+                r.font.name = u'標楷體'
+                r.font.size = Pt(12)
+                r._element.rPr.rFonts.set(qn('w:eastAsia'), u'標楷體')
         # save doc
         targetDoc.save('result.docx')
 
@@ -259,7 +265,9 @@ class DocBuilder():
         last_day_of_month = self.last_day_of_month(first_day_of_month)
         records = []
         con, cur = connect._get_connection()
-        con.set_trace_callback(print)
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        #con.set_trace_callback(print)
         # fetch all categories
         cur.execute('select description from hvhnonc_category')
         rows = cur.fetchall()
@@ -268,12 +276,13 @@ class DocBuilder():
             for column in row:
                 categories.append(column)
         # fill in data for each category
+        totalRow = [u'總計', '', '', '', '', '0', '', '0', '', '', '']
         for category in categories:
             # fetch from db
             # select register data
             selIn = (
                     'select '
-                        '"i" as type, name, brand, spec, unit, price, '
+                        '"i" as type_, name, brand, spec, unit, price, '
                         'amount, acquire_date as date, place, remark '
                     'from '
                         'hvhnonc_in '
@@ -285,7 +294,7 @@ class DocBuilder():
             # select unregister data
             selOut = (
                     'select '
-                        '"o" as type, i.name as name, i.brand as brand, '
+                        '"o" as type_, i.name as name, i.brand as brand, '
                         'i.spec as spec, i.unit as unit, i.price as price, '
                         'o.amount as amount, o.unregister_date as date, '
                         'o.unregister_place as place, '
@@ -309,14 +318,48 @@ class DocBuilder():
                     'last_day_of_month': str(last_day_of_month)}
             cur.execute(sqlstr, params)
             rows = cur.fetchall()
+            titleRow = [category, '', '', '', '', '', '', '', '', '', '']
+            subtotalRow = [u'小計', '', '', '', '', '0', '', '0', '', '', '']
             if len(rows):
                 # 1st row: category as title
-                records.append([category, '', '', '', '', '', '', '', '', '',
-                                ''])
-                # TODO: parse the row
-            print(len(rows))
-            for row in rows:
-                print(',\t'.join(map(str, row)))
+                records.append(titleRow)
+                # parse the row
+                for row in rows:
+                    dataRow = []
+                    dataRow.append(row['name'])
+                    desc = ' '.join((row['brand'], row['spec']))
+                    dataRow.append(desc)
+                    dataRow.append(row['unit'])
+                    dataRow.append(str(row['price']))
+                    if row['type_'] == 'i':
+                        tp = row['amount'] * row['price']
+                        dataRow.append(str(row['amount']))
+                        dataRow.append(str(tp))
+                        dataRow.append('')
+                        dataRow.append('')
+                        subtotalRow[5] = str(int(subtotalRow[5]) + tp)
+                        totalRow[5] = str(int(totalRow[5]) + tp)
+                    elif row['type_'] == 'o':
+                        tp = row['amount'] * row['price']
+                        dataRow.append('')
+                        dataRow.append('')
+                        dataRow.append(str(row['amount']))
+                        dataRow.append(str(tp))
+                        totalRow[5] = str(int(totalRow[5]) + tp)
+                    else:
+                        dataRow.append('')
+                        dataRow.append('')
+                        dataRow.append('')
+                        dataRow.append('')
+                    datestr = row['date'].split('-')
+                    datestr[0] = str(int(datestr[0]) - 1911)  # ROC years
+                    datestr = '-'.join(datestr)
+                    dataRow.append(datestr)
+                    dataRow.append(row['place'])
+                    dataRow.append(row['remark'])
+                    records.append(copy(dataRow))
+                records.append(subtotalRow)
+        records.append(totalRow)
         con.close()
         return records
 

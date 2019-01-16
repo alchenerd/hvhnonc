@@ -72,7 +72,6 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         mb.addButton(u'確定', QtWidgets.QMessageBox.AcceptRole)
         return mb.exec_()
 
-
     def ask_new_or_writeover(self) -> str:
         """ Asks user if save as new or writeover with a messagebox.
 
@@ -347,6 +346,8 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
             return -1
 
     def onclick_next(self):
+        if not len(self.unregisgerIdDict):
+            return
         if self.unregisterIdIndex == -1:
             self.unregisterIdIndex = 0
         elif self.unregisterIdIndex == len(self.unregisgerIdDict) - 1:
@@ -357,6 +358,8 @@ class Unregister(QtWidgets.QDialog, UnregisterDialog):
         self.update_field_by_id(-oid) # negative value for unregister record
 
     def onclick_prev(self):
+        if not len(self.unregisgerIdDict):
+            return
         if self.unregisterIdIndex == -1:
             self.unregisterIdIndex = len(self.unregisgerIdDict) - 1
         elif self.unregisterIdIndex == 0:

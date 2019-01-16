@@ -136,6 +136,7 @@ CREATE TABLE IF NOT EXISTS `hvhnonc_in` (
 	`use_department`	TEXT NOT NULL,
 	`keeper`	TEXT NOT NULL,
 	`remark`	TEXT NOT NULL,
+	`page`		INTEGER NOT NULL DEFAULT '',
 	PRIMARY KEY(`ID`),
 	FOREIGN KEY(`category`) REFERENCES `hvhnonc_category`(`description`) on update cascade on delete set null,
 	FOREIGN KEY(`subcategory`) REFERENCES `hvhnonc_subcategory`(`description`) on update cascade on delete set null

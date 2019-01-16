@@ -348,6 +348,8 @@ class Register(QtWidgets.QDialog, RegisterDialog):
 
     def onclick_previous_record(self):
         self.idDict = self.get_id_dict()
+        if not len(self.idDict):
+            return
         # modify idIndex
         if self.idIndex == -1:
             self.idIndex = len(self.idDict) - 1
@@ -362,6 +364,8 @@ class Register(QtWidgets.QDialog, RegisterDialog):
 
     def onclick_next_record(self):
         self.idDict = self.get_id_dict()
+        if not len(self.idDict):
+            return
         # modify idIndex
         if self.idIndex == -1:
             self.idIndex = 0
@@ -390,7 +394,7 @@ class Register(QtWidgets.QDialog, RegisterDialog):
                     date = QtCore.QDate(year, month, day)
                     x.setDate(date)
             except Exception as e:
-                if k not in ('ID', 'old_ID'):
+                if k not in ('ID', 'old_ID', 'page'):
                     print(e)
 
     def get_record(self, index: int):

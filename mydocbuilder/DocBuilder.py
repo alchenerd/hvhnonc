@@ -24,7 +24,8 @@ class DocBuilder():
                 'default': self.hello_docx,
                 'register_list': self.register_list,
                 'unregister_list': self.unregister_list,
-                'monthly_report': self.monthly_report}
+                'monthly_report': self.monthly_report,
+                'full_report': self.full_report}
         if self.actions.get(type_, None):
             self.type_ = type_
         else:
@@ -51,6 +52,17 @@ class DocBuilder():
             rowCells[2].text = str(z)
             document.save('result.docx')
 
+    def full_report(self):
+        """Opens full report template, then modify and save it."""
+        print('full_report')
+        doc = Document('./mydocbuilder/full_report_template.docx')
+        # get data to print
+        con, cur = connect._get_connection()
+        # COMBAK: here
+        sqlstr = ('')
+        con.close()
+        doc.save('result.docx')
+
     def setMyFont(self, doc):
         """Set normal font of doc as my font."""
         doc.styles['Normal'].font.name = u'標楷體'
@@ -60,7 +72,7 @@ class DocBuilder():
 
     def monthly_report(self):
         """Opens monthly report template, then modify and save it."""
-        print('monthly_report_summary')
+        print('monthly_report')
         filePath = ('./mydocbuilder/monthly_report_summary_template.docx')
         targetDoc = Document(filePath)
         # get the month
@@ -519,6 +531,15 @@ class DocBuilder():
     def register_list(self):
         """Opens a copy of add template, then modify and save it."""
         print('register_list')
+        # get the month
+        edmin, edmax = self.kwargs.get('acquire_date', (None, None))
+        if edmin:
+            theYear, theMonth = edmin.year, edmin.month
+        elif edmax:
+            theYear, theMonth = edmax.year, edmax.month
+        else:
+            today = datetime.datetime.today()
+            theYear, theMonth = today.year, today.month
         sourceDoc = Document('./mydocbuilder/add_template.docx')
         targetDoc = Document('./mydocbuilder/add_template.docx')
         self.setMyFont(targetDoc)
@@ -533,7 +554,11 @@ class DocBuilder():
         # fill in 1st pages' line
         for paragraph in targetDoc.paragraphs:
             if '{' in paragraph.text:
-                replacements['srl'] = '001'
+                # srl = date(ROC) + page
+                monthStr = ''.join((str(theYear - 1911),
+                                    str(theMonth).zfill(2)))
+                replacements['srl'] = monthStr
+                replacements['srl'] += '-01'
                 paragraph.text = paragraph.text.format(**replacements)
         # get data from sqlite db
         con, cur = connect._get_connection()
@@ -544,7 +569,8 @@ class DocBuilder():
         sqlstr = (
                 'select '
                     'object_id, serial_id, name, spec, unit, amount, price, '
-                    'acquire_date, keep_year, place, keep_department, keeper '
+                    'acquire_date, keep_year, place, keep_department, '
+                    'keeper, id '
                 'from '
                     'hvhnonc_in '
                 'where '
@@ -570,8 +596,10 @@ class DocBuilder():
         print(rowCount, 'rows, ', pageCount, 'pages.')
         # page copying
         for i in range(1, pageCount): # from page 2 to pageCount
-            # serial(dynamically changes each page)
-            replacements['srl'] = str(i + 1).zfill(3)
+            # serial(year(ROC), month, page)
+            monthStr = ''.join((str(theYear - 1911), str(theMonth).zfill(2)))
+            replacements['srl'] = monthStr
+            replacements['srl'] += '-' + str(i + 1).zfill(2)
             if i < pageCount:
                 targetDoc.add_page_break()
             for paragraph in sourceDoc.paragraphs:
@@ -628,6 +656,12 @@ class DocBuilder():
             rowList.append(str(row['place']))
             rowList.append(str(row['keep_department']))
             rowList.append(str(row['keeper']))
+            # at (i // rowPerPage + 1)th page
+            pageIndex = i // rowPerPage + 1
+            # update column `page` in hvhnonc_in
+            con, cur = connect._get_connection()
+            cur.execute('update hvhnonc_in set page = ? where id = ?',
+                        (pageIndex, row['id']))
             # using the (i // rowPerPage * 2)th table
             tableIndex = i // rowPerPage * 2
             table = targetDoc.tables[tableIndex]
@@ -646,8 +680,12 @@ class DocBuilder():
                 print(output)
                 input('error occured')
                 raise IndexError
+            con.commit()
             print()
-            print('table[', tableIndex, '], row[', rowIndex, '] done!')
+            print('page:', pageIndex,
+                  ', table:', tableIndex,
+                  ', row:', rowIndex, ' done!')
+        con.close()
         targetDoc.save('result.docx')
 
 

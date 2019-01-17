@@ -55,13 +55,87 @@ class DocBuilder():
     def full_report(self):
         """Opens full report template, then modify and save it."""
         print('full_report')
+        ref = Document('./mydocbuilder/full_report_template.docx')
         doc = Document('./mydocbuilder/full_report_template.docx')
-        # get data to print
-        con, cur = connect._get_connection()
-        # COMBAK: here
-        sqlstr = ('')
-        con.close()
+        # fetch data
+        data = self.get_remain_items()
+        # populate pages
+        ROW_PER_PAGE = 8
+        pageNeeded = len(data) // ROW_PER_PAGE \
+                      + (len(data) % ROW_PER_PAGE > 0)
+        # remove last line
+        p = doc.paragraphs[-1]
+        p.text = ''
+        # insert pages
+        for i in range(1, pageNeeded):
+            # page break
+            doc.add_page_break()
+            p = doc.add_paragraph()
+            # copy table
+            table = ref.tables[0]
+            tbl = table._tbl
+            new_tbl = deepcopy(tbl)
+            p._p.addnext(new_tbl)
+        # add last line with style
+        p = doc.add_paragraph(ref.paragraphs[-1].text)
+        r = p.runs[0]
+        r.font.name = u'標楷體'
+        r.font.size = Pt(16)
+        r._element.rPr.rFonts.set(qn('w:eastAsia'), u'標楷體')
+        # save
         doc.save('result.docx')
+
+    def get_remain_items(self):
+        """Get the hvhnonc_in - hvhnonc_out items in a list."""
+        con, cur = connect._get_connection()
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        # fetch ID and amount only
+        # conditions and params from self.kwargs
+        d = {'conditions': ''}
+        params = []
+        for k, v in self.kwargs.items():
+            if 'date' in k:
+                # date string tuple
+                d['conditions'] += '({} between ? and ?) and '.format(k)
+                params.extend(v)
+            else:
+                d['conditions'] += ('{} like ? and '.format(k))
+                params.append(v)
+        # hvhnonc_in
+        sqlstr = (
+                'select id, amount '
+                'from hvhnonc_in '
+                'where {conditions}1')
+        cur.execute(sqlstr.format(**d), params)
+        rows = cur.fetchall()
+        inData = {row['id']: row['amount'] for row in rows}
+        print('IN:', len(inData), 'rows.')
+        # hvhnonc_out, all unregister records
+        sqlstr = (
+                'select hvhnonc_out.in_id as id, hvhnonc_out.amount '
+                'from hvhnonc_out '
+                'inner join hvhnonc_in '
+                'on hvhnonc_in.id = hvhnonc_out.in_id')
+        cur.execute(sqlstr)
+        rows = cur.fetchall()
+        outData = {row['id']: row['amount'] for row in rows}
+        print('OUT:', len(outData), 'rows.')
+        # data substraction
+        result = deepcopy(inData)
+        for id, amt in outData.items():
+            if result.get(id, None):
+                result[id] -= amt
+                if result[id] == 0:
+                    result.pop(id)
+                elif result[id] < 0:
+                    print('delisted too much: {0}'.format((id)))
+                    result.pop(id)
+        for k in result.keys():
+            print(k, result[k])
+        # TODO: fetch detail of the remainders
+        con.close()
+        return list(range(148))
 
     def setMyFont(self, doc):
         """Set normal font of doc as my font."""

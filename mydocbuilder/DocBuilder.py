@@ -58,11 +58,11 @@ class DocBuilder():
         ref = Document('./mydocbuilder/full_report_template.docx')
         doc = Document('./mydocbuilder/full_report_template.docx')
         # fetch data
-        data = self.get_remain_items()
+        dataCount = sum(1 for i in self.get_remain_items())
         # populate pages
         ROW_PER_PAGE = 8
-        pageNeeded = len(data) // ROW_PER_PAGE \
-                      + (len(data) % ROW_PER_PAGE > 0)
+        pageNeeded = dataCount // ROW_PER_PAGE \
+                      + (dataCount % ROW_PER_PAGE > 0)
         # remove last line
         p = doc.paragraphs[-1]
         p.text = ''
@@ -82,6 +82,39 @@ class DocBuilder():
         r.font.name = u'標楷體'
         r.font.size = Pt(16)
         r._element.rPr.rFonts.set(qn('w:eastAsia'), u'標楷體')
+        # print into table
+        for i, row in enumerate(self.get_remain_items()):
+            tableIndex = i // ROW_PER_PAGE
+            rowIndex = i % ROW_PER_PAGE + 1  # skip title row
+            cells = doc.tables[tableIndex].rows[rowIndex].cells
+            # cells[0]: outlist id(date + page)
+            cells[0].text = str(row['acquire_date']).strip('-') + \
+                            str(row['page']).zfill(2)
+            # cells[1]: objid + serial
+            cells[1].text = ' - '.join(map(str, (row['object_ID'],
+                                                 row['serial_ID'])))
+            # cells[2]: name
+            cells[2].text = row['name']
+            # cells[3]: spec
+            cells[3].text = row['spec']
+            # cells[4]: unit
+            cells[4].text = row['unit']
+            # cells[5]: amount
+            cells[5].text = str(row['amount'])
+            # cells[6]: price
+            cells[6].text = str(row['price'])
+            # cells[7]: total price
+            cells[7].text = str(row['price'] * row['amount'])
+            # cells[8]: acquire date
+            cells[8].text = str(row['acquire_date']).replace('-', '/')
+            # cells[9]: keep_year
+            cells[9].text = str(row['keep_year'])
+            # cells[10]: place
+            cells[10].text = row['place']
+            # cells[11]: keep_department
+            cells[11].text = row['keep_department']
+            # cells[12]: keeper
+            cells[12].text = row['keeper']
         # save
         doc.save('result.docx')
 
@@ -131,11 +164,19 @@ class DocBuilder():
                 elif result[id] < 0:
                     print('delisted too much: {0}'.format((id)))
                     result.pop(id)
-        for k in result.keys():
-            print(k, result[k])
-        # TODO: fetch detail of the remainders
+        # fetch detail of the remainders
+        for i, (id, amount) in enumerate(result.items()):
+            sqlstr = (
+                    'select page, object_id, serial_id, name, spec, unit, '
+                    'price, acquire_date, keep_year, place, '
+                    'keep_department, keeper from hvhnonc_in where id = ?')
+            params = (str(id),)
+            cur.execute(sqlstr, params)
+            row = deepcopy(dict(cur.fetchone()))
+            row['amount'] = amount
+            yield row
         con.close()
-        return list(range(148))
+        return
 
     def setMyFont(self, doc):
         """Set normal font of doc as my font."""
@@ -509,8 +550,8 @@ class DocBuilder():
         con.close()
         # copy page by result row count(fill in dept, date and page serial)
         rowCount = len(rows)
-        rowPerPage = 7
-        pageCount = rowCount // rowPerPage + (rowCount % rowPerPage > 0)
+        ROW_PER_PAGE = 7
+        pageCount = rowCount // ROW_PER_PAGE + (rowCount % ROW_PER_PAGE > 0)
         print(rowCount, 'rows, ', pageCount, 'pages.')
         # page copying
         for i in range(1, pageCount): # from page 2 to pageCount
@@ -579,11 +620,11 @@ class DocBuilder():
             rowList.append(str(row['reason']))
             rowList.append('')
             rowList.append(str(row['unregister_remark']))
-            # using the (i // rowPerPage * 2)th table
-            tableIndex = i // rowPerPage * 2
+            # using the (i // ROW_PER_PAGE * 2)th table
+            tableIndex = i // ROW_PER_PAGE * 2
             table = targetDoc.tables[tableIndex]
-            # using the (i % rowPerPage + 1)th row (1st row is title)
-            rowIndex = i % rowPerPage + 1
+            # using the (i % ROW_PER_PAGE + 1)th row (1st row is title)
+            rowIndex = i % ROW_PER_PAGE + 1
             try:
                 tableRow = table.rows[rowIndex]
                 for j, c in enumerate(tableRow.cells):
@@ -665,8 +706,8 @@ class DocBuilder():
         con.close()
         # copy page by result row count(fill in dept, date and page serial)
         rowCount = len(rows)
-        rowPerPage = 7
-        pageCount = rowCount // rowPerPage + (rowCount % rowPerPage > 0)
+        ROW_PER_PAGE = 7
+        pageCount = rowCount // ROW_PER_PAGE + (rowCount % ROW_PER_PAGE > 0)
         print(rowCount, 'rows, ', pageCount, 'pages.')
         # page copying
         for i in range(1, pageCount): # from page 2 to pageCount
@@ -730,17 +771,17 @@ class DocBuilder():
             rowList.append(str(row['place']))
             rowList.append(str(row['keep_department']))
             rowList.append(str(row['keeper']))
-            # at (i // rowPerPage + 1)th page
-            pageIndex = i // rowPerPage + 1
+            # at (i // ROW_PER_PAGE + 1)th page
+            pageIndex = i // ROW_PER_PAGE + 1
             # update column `page` in hvhnonc_in
             con, cur = connect._get_connection()
             cur.execute('update hvhnonc_in set page = ? where id = ?',
                         (pageIndex, row['id']))
-            # using the (i // rowPerPage * 2)th table
-            tableIndex = i // rowPerPage * 2
+            # using the (i // ROW_PER_PAGE * 2)th table
+            tableIndex = i // ROW_PER_PAGE * 2
             table = targetDoc.tables[tableIndex]
-            # using the (i % rowPerPage + 1)th row (1st row is title)
-            rowIndex = i % rowPerPage + 1
+            # using the (i % ROW_PER_PAGE + 1)th row (1st row is title)
+            rowIndex = i % ROW_PER_PAGE + 1
             try:
                 tableRow = table.rows[rowIndex]
                 for j, c in enumerate(tableRow.cells):
@@ -765,6 +806,7 @@ class DocBuilder():
 
 def main():
     myDocBuilder = DocBuilder()
+    myDocBuilder.construct()
 
 
 if __name__ == '__main__':

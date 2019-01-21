@@ -50,8 +50,7 @@ class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
                 'rb8': 'property_tag',
                 'rb9': 'counting_record',
                 'rb10': 'counting_record',
-                'rb11': 'property_keeper_guide',
-                }
+                'rb11': 'property_keeper_guide',}
 
     def on_previewBtn_clicked(self):
         # TODO: finish this

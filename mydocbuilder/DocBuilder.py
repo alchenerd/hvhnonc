@@ -60,14 +60,14 @@ class DocBuilder():
         # fetch data
         dataCount = sum(1 for i in self.get_remain_items())
         # populate pages
-        ROW_PER_PAGE = 8
+        ROW_PER_PAGE = 12
         pageNeeded = dataCount // ROW_PER_PAGE \
                       + (dataCount % ROW_PER_PAGE > 0)
-        # remove last line
+        # replace last line woth empty string
         p = doc.paragraphs[-1]
         p.text = ''
         # insert pages
-        for i in range(1, pageNeeded):
+        for i in range(1, pageNeeded):  # page 0 is in tamplate
             # page break
             doc.add_page_break()
             p = doc.add_paragraph()
@@ -76,13 +76,13 @@ class DocBuilder():
             tbl = table._tbl
             new_tbl = deepcopy(tbl)
             p._p.addnext(new_tbl)
-        # add last line with style
+        # add last line with font in reference
         p = doc.add_paragraph(ref.paragraphs[-1].text)
         r = p.runs[0]
         r.font.name = u'標楷體'
         r.font.size = Pt(16)
         r._element.rPr.rFonts.set(qn('w:eastAsia'), u'標楷體')
-        # print into table
+        # write data to table
         for i, row in enumerate(self.get_remain_items()):
             tableIndex = i // ROW_PER_PAGE
             rowIndex = i % ROW_PER_PAGE + 1  # skip title row
@@ -115,6 +115,15 @@ class DocBuilder():
             cells[11].text = row['keep_department']
             # cells[12]: keeper
             cells[12].text = row['keeper']
+        # set data texts to small font(Pt 10)
+        for table in doc.tables:
+            for row_i, row in enumerate(table.rows):
+                if row_i == 0:  # skip title row
+                    continue
+                for cell in row.cells:
+                    for paragraph in cell.paragraphs:
+                        for run in paragraph.runs:
+                            run.font.size = Pt(10)
         # save
         doc.save('result.docx')
 
@@ -129,7 +138,9 @@ class DocBuilder():
         params = []
         for k, v in self.kwargs.items():
             if 'date' in k:
-                # date string tuple
+                # date string tuple, skip acquire_date
+                if k == 'acquire_date':
+                    continue
                 d['conditions'] += '({} between ? and ?) and '.format(k)
                 params.extend(v)
             else:
@@ -392,6 +403,7 @@ class DocBuilder():
         last_day_of_month = self.last_day_of_month(first_day_of_month)
         records = []
         con, cur = connect._get_connection()
+        con.set_trace_callback(print)
         con.row_factory = sqlite3.Row
         cur = con.cursor()
         #con.set_trace_callback(print)
@@ -407,6 +419,19 @@ class DocBuilder():
         for category in categories:
             # fetch from db
             # select register data
+            # conditions from the form
+            d = {'conditions': ''}
+            params = []
+            for k, v in self.kwargs.items():
+                if 'date' in k:
+                    # date string tuple, skip acquire date
+                    if k == 'acquire_date':
+                        continue
+                    d['conditions'] += '({} between ? and ?) and '.format(k)
+                    params.extend(v)
+                else:
+                    d['conditions'] += ('{} like ? and '.format(k))
+                    params.append(v)
             selIn = (
                     'select '
                         '"i" as type_, name, brand, spec, unit, price, '
@@ -415,9 +440,11 @@ class DocBuilder():
                         'hvhnonc_in '
                     'where '
                         'category = :category '
+                        'and {conditions}1 '
                         'and acquire_date '
                             'between :first_day_of_month '
                             'and :last_day_of_month ')
+            selIn = selIn.format(**d)
             # select unregister data
             selOut = (
                     'select '
@@ -432,11 +459,16 @@ class DocBuilder():
                         'hvhnonc_in as i '
                     'on '
                         '(o.in_id = i.id) '
+                        'and {conditions}1 '
                         'and i.category = :category '
                         'and o.unregister_date '
                             'between :first_day_of_month '
                             'and :last_day_of_month ')
+            selOut = selOut.format(**d)
             # what we want is union all order by date
+            print('__SELIN__: ' + selIn)
+            print('__SELOUT__: ' + selOut)
+            params = params + params
             sqlstr = (selIn + 'union all ' + selOut + 'order by date asc')
             # dictionary
             params = {

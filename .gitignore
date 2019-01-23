@@ -109,5 +109,6 @@ kaiba.gif
 pylintReport.txt
 
 *.docx
+*.xls
 *.pdf
 *.qrc

@@ -11,6 +11,7 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.enum.style import WD_STYLE_TYPE
 import datetime
 import sys
+import xlwt
 
 if __name__ == '__main__': # at mydocbuilder
     sys.path.append('../')
@@ -35,7 +36,7 @@ class DocBuilder():
 
     def construct(self):
         """Constructs a docx and save it."""
-        #see self.actions for individual construct functions
+        # see self.actions for individual construct functions
         self.actions[self.type_]()
 
     def hello_docx(self):
@@ -43,14 +44,14 @@ class DocBuilder():
         document = Document()
         document.add_heading('Hello .docx!', 0)
         p = document.add_paragraph('This is my test paragraph!')
-        records = ((2,9,4),(7,5,3),(6,1,8))
+        records = ((2, 9, 4), (7, 5, 3), (6, 1, 8))
         table = document.add_table(rows=0, cols=3)
         for x, y, z in records:
             rowCells = table.add_row().cells
             rowCells[0].text = str(x)
             rowCells[1].text = str(y)
             rowCells[2].text = str(z)
-            document.save('result.docx')
+        document.save('result.docx')
 
     def full_report(self):
         """Opens full report template, then modify and save it."""
@@ -58,16 +59,17 @@ class DocBuilder():
         ref = Document('./mydocbuilder/full_report_template.docx')
         doc = Document('./mydocbuilder/full_report_template.docx')
         # fetch data
-        dataCount = sum(1 for i in self.get_remain_items())
+        rows = self.get_remain_items()
+        dataCount = sum(1 for i in rows)
         # populate pages
         ROW_PER_PAGE = 12
         pageNeeded = dataCount // ROW_PER_PAGE \
                       + (dataCount % ROW_PER_PAGE > 0)
-        # replace last line woth empty string
+        # replace last line with empty string
         p = doc.paragraphs[-1]
         p.text = ''
         # insert pages
-        for i in range(1, pageNeeded):  # page 0 is in tamplate
+        for i in range(1, pageNeeded):  # page 0 is in template
             # page break
             doc.add_page_break()
             p = doc.add_paragraph()
@@ -83,13 +85,15 @@ class DocBuilder():
         r.font.size = Pt(16)
         r._element.rPr.rFonts.set(qn('w:eastAsia'), u'標楷體')
         # write data to table
-        for i, row in enumerate(self.get_remain_items()):
+        for i, row in enumerate(rows):
             tableIndex = i // ROW_PER_PAGE
             rowIndex = i % ROW_PER_PAGE + 1  # skip title row
             cells = doc.tables[tableIndex].rows[rowIndex].cells
             # cells[0]: outlist id(date + page)
-            cells[0].text = str(row['acquire_date']).strip('-') + \
-                            str(row['page']).zfill(2)
+            tmp = row['acquire_date'].split('-')
+            ymstring = ''.join(tmp[:-1])
+            tmp = ymstring + str(row['page']).zfill(2)
+            cells[0].text = tmp
             # cells[1]: objid + serial
             cells[1].text = ' - '.join(map(str, (row['object_ID'],
                                                  row['serial_ID'])))
@@ -126,9 +130,11 @@ class DocBuilder():
                             run.font.size = Pt(10)
         # save
         doc.save('result.docx')
+        # convert to excel
+        self.docx_tables_to_excel()
 
     def get_remain_items(self):
-        """Get the hvhnonc_in - hvhnonc_out items in a list."""
+        """Get the hvhnonc_in exclude hvhnonc_out items in a list."""
         con, cur = connect._get_connection()
         con.row_factory = sqlite3.Row
         cur = con.cursor()
@@ -397,6 +403,8 @@ class DocBuilder():
                 r._element.rPr.rFonts.set(qn('w:eastAsia'), u'標楷體')
         # save doc
         targetDoc.save('result.docx')
+        # convert tables to excel
+        self.docx_tables_to_excel()
 
     def construct_record_rows(self, y, m):
         first_day_of_month = datetime.date(y, m, 1)
@@ -522,7 +530,14 @@ class DocBuilder():
         con.close()
         return records
 
+    def get_todays_ROC_date_str(self):
+        """Returns today's month string in ROC date e.g. 1010101"""
+        today = datetime.date.today()
+        thestr = [str(today.year - 1911), str(today.month).zfill(2)]
+        return ''.join(thestr)
+
     def last_day_of_month(self, anyday):
+        """Return the last day of month of a given day."""
         nextMonth = anyday.replace(day=28) + datetime.timedelta(days=4)
         return nextMonth - datetime.timedelta(days=nextMonth.day)
 
@@ -541,7 +556,8 @@ class DocBuilder():
         # replace 1st pages' line
         for paragraph in targetDoc.paragraphs:
             if '{' in paragraph.text:
-                replacements['srl'] = '001'
+                mstr = self.get_todays_ROC_date_str()
+                replacements['srl'] = mstr + '-01'
                 paragraph.text = paragraph.text.format(**replacements)
         # get data from sqlite db
         con, cur = connect._get_connection()
@@ -588,7 +604,9 @@ class DocBuilder():
         # page copying
         for i in range(1, pageCount): # from page 2 to pageCount
             # serial(dynamically changes each page)
-            replacements['srl'] = str(i + 1).zfill(3)
+            mstr = self.get_todays_ROC_date_str()
+            replacements['srl'] = mstr + '-'
+            replacements['srl'] += str(i + 1).zfill(2)
             if i < pageCount:
                 targetDoc.add_page_break()
             for paragraph in sourceDoc.paragraphs:
@@ -662,6 +680,21 @@ class DocBuilder():
                 for j, c in enumerate(tableRow.cells):
                     print('[{0}]:{1}'.format(j, rowList[j]), end='')
                     c.text = str(rowList[j])
+                    strwidth = self.count_string_width(c.text)
+                    # width to fontsize
+                    if strwidth >= 24:
+                        fontsize = 8
+                    elif strwidth >= 20:
+                        fontsize = 9
+                    elif strwidth >= 16:
+                        fontsize = 10
+                    elif strwidth >= 13:
+                        fontsize = 11
+                    else:
+                        fontsize = 12
+                    for p in c.paragraphs:
+                        for r in p.runs:
+                            r.font.size = Pt(fontsize)
             except IndexError:
                 output = {'i': i, 'j': j, 'rowIndex': rowIndex,
                           'len(tableRow)': len(table.rows),
@@ -674,6 +707,46 @@ class DocBuilder():
             print('table[', tableIndex, '], row[', rowIndex, '] done!')
         # save doc
         targetDoc.save('result.docx')
+        # convert to excel
+        self.docx_tables_to_excel()
+
+    def count_string_width(self, s):
+        """Count the width of a string, w=1 for ascii, w=2 for others."""
+        return sum([1 if 0 <= ord(x) and ord(x) <= 127 else 2 for x in s])
+
+    def rows_to_excel(self, rows):
+        """Save sqlite3.Rows rows to result.excel."""
+        assert all([isinstance(row, sqlite3.Row) for row in rows]), 'bad rows'
+        wb = xlwt.Workbook()
+        ws = wb.add_sheet('result')
+        titles = list(rows[0].keys())
+        # write in titles
+        for i, title in enumerate(titles):
+            ws.write(r=0, c=i, label=title)
+        # write in values
+        for rc, row in enumerate(rows):
+            for tc, title in enumerate(titles):
+                try:
+                    tmp = str(row[title])
+                except Exception:
+                    # pass if something went wrong
+                    continue
+                ws.write(r=(rc + 1), c=tc, label=tmp)
+        wb.save('result.xls')
+
+    def docx_tables_to_excel(self):
+        """For some doc, it is faster to just read tables from docx."""
+        docx = Document('result.docx')
+        wb = xlwt.Workbook()
+        ws = wb.add_sheet('result')
+        xlsrow = 0
+        for table in docx.tables:
+            for row in table.rows:
+                for cc, cell in enumerate(row.cells):
+                    ws.write(xlsrow, cc, cell.text)
+                xlsrow += 1
+            xlsrow += 1
+        wb.save('result.xls')
 
     def register_list(self):
         """Opens a copy of add template, then modify and save it."""
@@ -702,9 +775,8 @@ class DocBuilder():
         for paragraph in targetDoc.paragraphs:
             if '{' in paragraph.text:
                 # srl = date(ROC) + page
-                monthStr = ''.join((str(theYear - 1911),
-                                    str(theMonth).zfill(2)))
-                replacements['srl'] = monthStr
+                mstr = self.get_todays_ROC_date_str()
+                replacements['srl'] = mstr
                 replacements['srl'] += '-01'
                 paragraph.text = paragraph.text.format(**replacements)
         # get data from sqlite db
@@ -744,9 +816,9 @@ class DocBuilder():
         # page copying
         for i in range(1, pageCount): # from page 2 to pageCount
             # serial(year(ROC), month, page)
-            monthStr = ''.join((str(theYear - 1911), str(theMonth).zfill(2)))
-            replacements['srl'] = monthStr
-            replacements['srl'] += '-' + str(i + 1).zfill(2)
+            mstr = self.get_todays_ROC_date_str()
+            replacements['srl'] = mstr + '-'
+            replacements['srl'] += str(i + 1).zfill(2)
             if i < pageCount:
                 targetDoc.add_page_break()
             for paragraph in sourceDoc.paragraphs:
@@ -834,6 +906,8 @@ class DocBuilder():
                   ', row:', rowIndex, ' done!')
         con.close()
         targetDoc.save('result.docx')
+        # convert to excel
+        self.docx_tables_to_excel()
 
 
 def main():

@@ -17,9 +17,11 @@ from mydocbuilder.DocBuilder import DocBuilder
 
 class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
     def __init__(self, dialog):
+        """Constructs ui, init form, then make a builder."""
         super(self.__class__, self).__init__(dialog)
         self.setupUi(dialog)
         self.init_fields()
+        self.builder = DocBuilder()
 
     def init_fields(self):
         """This function is called once when the dialog ui is created."""
@@ -59,8 +61,9 @@ class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
         doctype = self._radio_choices.get(crbName, None)
         filledFields = self.get_form_brief()
         # Create the document(docx) as result.docx
-        mydc = DocBuilder(type_=doctype, kwargs=filledFields)
-        mydc.construct()
+        self.builder.set_type(doctype)
+        self.builder.set_kwargs(**filledFields)
+        self.builder.construct()
         # Convert into pdf
         # Open a preview dialog showing the pdf
         print('on_previewBtn_clicked')
@@ -118,6 +121,8 @@ class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
         self.edit_date_min.setDate(date)
         self.edit_date_max.setDate(date)
 
+    # QUESTION: should on_pdchk_change() and on_edchk_change() \
+    #           be merged together?
     def on_pdchk_change(self):
         """When checkbox is checked, enable purchase_date, vice versa."""
         self.purchase_date_min.setEnabled(self.purchase_date_chk.isChecked())

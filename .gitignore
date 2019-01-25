@@ -107,6 +107,7 @@ venv.bak/
 *.db
 kaiba.gif
 pylintReport.txt
+pyinstaller_command.txt
 
 *.docx
 *.xls

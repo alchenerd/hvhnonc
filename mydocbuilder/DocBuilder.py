@@ -9,9 +9,14 @@ from docx.shared import Pt
 from docx.oxml.ns import qn
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.enum.style import WD_STYLE_TYPE
+import os
+import comtypes.client
 import datetime
 import sys
 import xlwt
+import deprecation
+
+wdFormatPDF = 17
 
 if __name__ == '__main__': # at mydocbuilder
     sys.path.append('../')
@@ -23,16 +28,24 @@ class DocBuilder():
     def __init__(self, type_: str = 'default', **kwargs):
         self.actions = {
                 'default': self.hello_docx,
-                'register_list': self.register_list,
-                'unregister_list': self.unregister_list,
-                'monthly_report': self.monthly_report,
-                'full_report': self.full_report}
+                'register_list': self.create_register_list,
+                'unregister_list': self.create_unregister_list,
+                'monthly_report': self.create_monthly_report,
+                'full_report': self.create_full_report}
         if self.actions.get(type_, None):
             self.type_ = type_
         else:
-            raise Exception('No such doc type.')
             self.type_ = 'default'
+            self.kwargs.clear()
         self.kwargs = kwargs.get('kwargs')
+
+    def set_type(self, type_: str = 'default'):
+        """Sets the which type of the document to build."""
+        self.type_ = type_
+
+    def set_kwargs(self, **kwargs):
+        """Sets the form info into the doc builder."""
+        self.kwargs = deepcopy(kwargs)
 
     def construct(self):
         """Constructs a docx and save it."""
@@ -53,6 +66,7 @@ class DocBuilder():
             rowCells[2].text = str(z)
         document.save('result.docx')
 
+    @deprecation.deprecated()
     def full_report(self):
         """Opens full report template, then modify and save it."""
         print('full_report')
@@ -128,10 +142,13 @@ class DocBuilder():
                     for paragraph in cell.paragraphs:
                         for run in paragraph.runs:
                             run.font.size = Pt(10)
-        # save
+        # save file
         doc.save('result.docx')
         # convert to excel
         self.docx_tables_to_excel()
+        # convert to PDF
+        cwd = os.getcwd()
+        self.docx_to_pdf(cwd + '\\\\result.docx', cwd + '\\\\result.pdf')
 
     def get_remain_items(self):
         """Get the hvhnonc_in exclude hvhnonc_out items in a list."""
@@ -202,6 +219,7 @@ class DocBuilder():
         doc.styles['Normal']._element.rPr.rFonts.set(
                 qn('w:eastAsia'), u'標楷體')
 
+    @deprecation.deprecated()
     def monthly_report(self):
         """Opens monthly report template, then modify and save it."""
         print('monthly_report')
@@ -401,10 +419,13 @@ class DocBuilder():
                 r.font.name = u'標楷體'
                 r.font.size = Pt(12)
                 r._element.rPr.rFonts.set(qn('w:eastAsia'), u'標楷體')
-        # save doc
+        # save file
         targetDoc.save('result.docx')
         # convert tables to excel
         self.docx_tables_to_excel()
+        # convert to PDF
+        cwd = os.getcwd()
+        self.docx_to_pdf(cwd + '\\\\result.docx', cwd + '\\\\result.pdf')
 
     def construct_record_rows(self, y, m):
         first_day_of_month = datetime.date(y, m, 1)
@@ -541,6 +562,7 @@ class DocBuilder():
         nextMonth = anyday.replace(day=28) + datetime.timedelta(days=4)
         return nextMonth - datetime.timedelta(days=nextMonth.day)
 
+    @deprecation.deprecated()
     def unregister_list(self):
         """Opens a copy of retire template, then modify and save it."""
         print('unregister_list')
@@ -705,10 +727,13 @@ class DocBuilder():
                 raise IndexError
             print()
             print('table[', tableIndex, '], row[', rowIndex, '] done!')
-        # save doc
+        # save file
         targetDoc.save('result.docx')
         # convert to excel
         self.docx_tables_to_excel()
+        # convert to PDF
+        cwd = os.getcwd()
+        self.docx_to_pdf(cwd + '\\\\result.docx', cwd + '\\\\result.pdf')
 
     def count_string_width(self, s):
         """Count the width of a string, w=1 for ascii, w=2 for others."""
@@ -748,6 +773,7 @@ class DocBuilder():
             xlsrow += 1
         wb.save('result.xls')
 
+    @deprecation.deprecated()
     def register_list(self):
         """Opens a copy of add template, then modify and save it."""
         print('register_list')
@@ -905,10 +931,171 @@ class DocBuilder():
                   ', table:', tableIndex,
                   ', row:', rowIndex, ' done!')
         con.close()
+        # save file
         targetDoc.save('result.docx')
         # convert to excel
         self.docx_tables_to_excel()
+        # convert to PDF
+        cwd = os.getcwd()
+        self.docx_to_pdf(cwd + '\\\\result.docx', cwd + '\\\\result.pdf')
 
+    def docx_to_pdf(self, in_file, out_file):
+        word = comtypes.client.CreateObject('Word.Application')
+        docx = word.Documents.Open(in_file)
+        docx.SaveAs(out_file, FileFormat=wdFormatPDF)
+        docx.Close()
+        word.Quit()
+
+    def create_register_list(self):
+        """Creates a register list, saves data as excel, docx, and pdf."""
+
+        def fetch_from_database(d):
+            """Returns a list of sqlite3.Row as data"""
+            print(d)
+            con, cur = connect._get_connection(useSQL3Row=True)
+            con.set_trace_callback(print)
+            sqlstr = ('select {columns} from {table} where {conditions}')
+            replacements = {}
+            # columns: object_ID, serial_ID, name, spec, unit, amount, price,
+            #          acquire_date, keep_year, keep_department, place, keeper
+            replacements['columns'] = ', '.join((
+                    'object_ID', 'serial_ID', 'name', 'spec', 'unit', 'amount',
+                    'price', 'acquire_date', 'keep_year', 'keep_department',
+                    'place', 'keeper'))
+            # table: hvhnonc_in
+            replacements['table'] = 'hvhnonc_in'
+            # conditions: determined by d
+            replacements['conditions'] = ''
+            params = []
+            for k, v in d.items():
+                if 'date' in k:
+                    # date string tuple
+                    replacements['conditions'] += \
+                            '({} between ? and ?) and '.format(k)
+                    params.extend(v)
+                else:
+                    replacements['conditions'] += \
+                            ('{0} like ? and '.format(k))
+                    params.append('%' + v + '%')
+            replacements['conditions'] += '1'
+            # fill in the blanks
+            sqlstr = sqlstr.format(**replacements)
+            cur.execute(sqlstr, params)
+            data = cur.fetchall()
+            con.close()
+            for row in data:
+                print(', '.join([str(row[k]) for k in row.keys()]))
+            return data
+
+        def parse_for_document(rows):
+            """Parse sqlite3 rows to list of list for document table uses."""
+            if len(rows) == 0:
+                return [[]]
+            result = []
+            colTitle = ['物品編號', '物品名稱', '規格', '單位', '數量', '單價',
+                        '總價', '取得日期', '使用年限', '存置地點',
+                        '保管或使用單位', '保管或使用人']
+            result.append(colTitle)
+            # data
+            for row in rows:
+                # result row
+                rrow = []
+                # rrow[0]: objid + serial
+                obj_ID = row['object_ID'].replace(' ', '')
+                s = '-'.join((obj_ID, row['serial_ID']))
+                rrow.append(s)
+                # rrow[1:6]: name, spec, unit, amount, price
+                rrow.append(str(row['name']))
+                rrow.append(str(row['spec']))
+                rrow.append(str(row['unit']))
+                rrow.append(str(row['amount']))
+                rrow.append(str(row['price']))
+                # rrow[6]: total price
+                rrow.append(str(row['amount'] * row['price']))
+                # rrow[7]: acquire_date(EE/mm/dd)
+                date = list(map(int, row['acquire_date'].split('-')))
+                date[0] = date[0] - 1911
+                date = list(map(lambda x: str(x).zfill(2), date))
+                rrow.append('/'.join(date))
+                # rrow[8:12]: keep_year, keep_department, place, keeper
+                rrow.append(str(row['keep_year']))
+                rrow.append(str(row['place']))
+                rrow.append(str(row['keep_department']))
+                rrow.append(str(row['keeper']))
+                result.append(rrow)
+            print(result)
+            return result
+
+        def write_to_excel(arr, fn):
+            """Save 2d list to result.excel."""
+            wb = xlwt.Workbook()
+            ws = wb.add_sheet('result')
+            for rc, row in enumerate(arr):
+                for cc, column in enumerate(row):
+                    try:
+                        ws.write(r=rc, c=cc, label=column)
+                    except:
+                        # skip if encounter problems
+                        continue
+            wb.save(fn)
+
+        def construct_docx(data):
+            """Open template, then modify according to rowCount."""
+            doc = Document('./mydocbuilder/register_list_template.docx')
+            # set font to 標楷體(16)
+            self.setMyFont(doc)
+            # fill in the header
+            header = doc.sections[0].header
+            replaceRow = header.tables[0].rows[0]
+            # fill in department
+            target_paragraph = replaceRow.cells[0].paragraphs[0]
+            target_paragraph.text = \
+                    target_paragraph.text.format(**{'dept': '秘書室'})
+            target_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+            # fill in the date
+            target_paragraph = replaceRow.cells[1].paragraphs[0]
+            today = datetime.date.today()
+            s = [str(today.year - 1911), str(today.month).zfill(2),
+                 str(today.day).zfill(2)]
+            s = '中華民國{0}年{1}月{2}日'.format(*s)
+            target_paragraph.text = s
+            target_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+            for i, datum in enumerate(data[1:]):
+                row = doc.tables[0].add_row()
+                for cc, cell in enumerate(row.cells):
+                    cell.paragraphs[0].text = datum[cc]
+                print('row', i, '/', len(data) - 1, 'appended!')
+            return doc
+
+        # indicate entry
+        print('create_register_list')
+        # fetch data from database
+        data = fetch_from_database(self.kwargs)
+        # parse data for xls, docx
+        data = parse_for_document(data)
+        # write data and save to excel
+        write_to_excel(data, 'result.xls')
+        # write to docx template
+        document = construct_docx(data)
+        # save .docx
+        document.save('result.docx')
+        """
+        # convert to pdf and save (using current working directory)
+        cwd = os.getcwd()
+        self.docx_to_pdf(cwd + '\\\\result.docx', cwd + '\\\\result.pdf')
+        """
+
+    def create_unregister_list(self):
+        # TODO:  finish this method
+        pass
+
+    def create_monthly_report(self):
+        # TODO:  finish this method
+        pass
+
+    def create_full_report(self):
+        # TODO:  finish this method
+        pass
 
 def main():
     myDocBuilder = DocBuilder()

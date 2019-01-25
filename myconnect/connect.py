@@ -7,8 +7,11 @@ import sqlite3
 _default_database = "HVHNONC.db"
 
 
-def _get_connection(databaseName: str = _default_database):
+def _get_connection(
+        databaseName: str = _default_database, useSQL3Row: bool = False):
     connect = sqlite3.connect(databaseName)
+    if useSQL3Row:
+        connect.row_factory = sqlite3.Row
     cursor = connect.cursor()
     return connect, cursor
     row = cur.execute(sqlstr, params).fetchone()

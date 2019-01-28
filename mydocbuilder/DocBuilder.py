@@ -1064,7 +1064,7 @@ class DocBuilder():
                 row = doc.tables[0].add_row()
                 for cc, cell in enumerate(row.cells):
                     cell.paragraphs[0].text = datum[cc]
-                print('row', i, '/', len(data) - 1, 'appended!')
+                print('row', i, '/', len(data) - 2, 'appended!')
             return doc
 
         # indicate entry
@@ -1079,15 +1079,166 @@ class DocBuilder():
         document = construct_docx(data)
         # save .docx
         document.save('result.docx')
-        """
         # convert to pdf and save (using current working directory)
         cwd = os.getcwd()
         self.docx_to_pdf(cwd + '\\\\result.docx', cwd + '\\\\result.pdf')
-        """
 
     def create_unregister_list(self):
-        # TODO:  finish this method
-        pass
+        """Creates an unregister list, saves data as excel, docx, and pdf."""
+
+        def fetch_from_database(d):
+            """Returns a list of sqlite3.Row as data"""
+            print(d)
+            con, cur = connect._get_connection(useSQL3Row=True)
+            con.set_trace_callback(print)
+            sqlstr = (
+                    'select {columns} '
+                    'from {intable} as i '
+                    'inner join {outtable} as o '
+                    'on i.ID=o.in_ID '
+                    'and {conditions}')
+            replacements = {}
+            # columns: object_ID, serial_ID, name, spec, unit,
+            #          unregister amount, date, keep year, used year, reason,
+            #          remark
+            replacements['columns'] = (
+                    'i.object_ID as object_ID, i.serial_ID, as serial_ID, '
+                    'i.name as name, i.spec as spec, i.unit as unit, '
+                    'o.amount as amount, o.unregister_date as unregister_date, '
+                    'i.keep_year as keep_year, i.acquire_date as acquire_date, '
+                    'o.reason as reason, o.remark as remark')
+            replacements['intable'] = 'hvhnonc_in'
+            replacements['outtable'] = 'hvhnonc_out'
+            # conditions: determined by d
+            replacements['conditions'] = ''
+            params = []
+            for k, v in d.items():
+                if 'date' in k:
+                    # date string tuple
+                    replacements['conditions'] += \
+                            '({} between ? and ?) and '.format(k)
+                    params.extend(v)
+                else:
+                    replacements['conditions'] += \
+                            ('{0} like ? and '.format(k))
+                    params.append('%' + v + '%')
+            replacements['conditions'] += '1'
+            # fill in the blanks
+            sqlstr = sqlstr.format(**replacements)
+            cur.execute(sqlstr, params)
+            data = cur.fetchall()
+            con.close()
+            for row in data:
+                print(', '.join([str(row[k]) for k in row.keys()]))
+            return data
+
+        def parse_for_document(rows):
+            """Parse sqlite3 rows to list of list for document table uses."""
+            if len(rows) == 0:
+                return [[]]
+            result = []
+            colTitle = ['物品編號', '物品名稱', '規格', '單位', '數量', '取得日期',
+                        '使用年限', '已使用期間', '報廢原因', '審核意見', '備註']
+            result.append(colTitle)
+            # data
+            for row in rows:
+                # result row
+                rrow = []
+                # rrow[0]: objid + serial
+                obj_ID = row['object_ID'].replace(' ', '')
+                s = '-'.join((obj_ID, row['serial_ID']))
+                rrow.append(s)
+                # rrow[1:5]: name, spec, unit, amount
+                rrow.append(str(row['name']))
+                rrow.append(str(row['spec']))
+                rrow.append(str(row['unit']))
+                rrow.append(str(row['amount']))
+                # rrow[5]: acquire_date(EE/mm/dd)
+                date = list(map(int, row['acquire_date'].split('-')))
+                date[0] = date[0] - 1911
+                date = list(map(lambda x: str(x).zfill(2), date))
+                rrow.append('/'.join(date))
+                # rrow[6]: keep_year
+                rrow.append(str(row['keep_year']))
+                # rrow[7]: time used: '(y/m)'
+                # used time(in months) calculate in acquire and retire date
+                acqY, acqM, acqD = map(int, row['acquire_date'].split('-'))
+                retY, retM, retD = map(int, row['unregister_date'].split('-'))
+                hasRemain = int(retD - acqD > 0)
+                detY = retY - acqY
+                detM = retM - acqM + hasRemain
+                if detM < 0:
+                    detY -= 1
+                    detM += 12
+                delta = (str(detY), str(detM))
+                delta = '(' + '/'.join(delta) + ')'
+                rrow.append(delta)
+                # rrow[8]: reason
+                rrow.append(str(row['reason']))
+                # rrow[9]: approval remarks, left blank
+                rrow.append('')
+                # rrow[10]: remark
+                rrow.append(str(row['remark']))
+                result.append(rrow)
+            print(result)
+            return result
+
+        def write_to_excel(arr, fn):
+            """Save 2d list to result.xls."""
+            wb = xlwt.Workbook()
+            ws = wb.add_sheet('result')
+            for rc, row in enumerate(arr):
+                for cc, column in enumerate(row):
+                    try:
+                        ws.write(r=rc, c=cc, label=column)
+                    except:
+                        # skip if encounter problems
+                        continue
+            wb.save(fn)
+
+        def construct_docx(data):
+            """Open template, then modify according to rowCount."""
+            doc = Document('./mydocbuilder/unregister_list_template.docx')
+            # set font to 標楷體(12)
+            self.setMyFont(doc)
+            # fill in the header
+            header = doc.sections[0].header
+            replaceRow = header.tables[0].rows[0]
+            # fill in department
+            target_paragraph = replaceRow.cells[0].paragraphs[0]
+            target_paragraph.text = \
+                    target_paragraph.text.format(**{'dept': '秘書室'})
+            target_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+            # fill in the date
+            target_paragraph = replaceRow.cells[1].paragraphs[0]
+            today = datetime.date.today()
+            s = [str(today.year - 1911), str(today.month).zfill(2),
+                 str(today.day).zfill(2)]
+            s = '中華民國{0}年{1}月{2}日'.format(*s)
+            target_paragraph.text = s
+            target_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+            for i, datum in enumerate(data[1:]):
+                row = doc.tables[0].add_row()
+                for cc, cell in enumerate(row.cells):
+                    cell.paragraphs[0].text = datum[cc]
+                print('row', i, '/', len(data) - 2, 'appended!')
+            return doc
+
+        # indicate entry
+        print('create_unregister_list')
+        # fetch data from database
+        data = fetch_from_database(self.kwargs)
+        # parse data for xls, docx
+        data = parse_for_document(data)
+        # write data and save to excel
+        write_to_excel(data, 'result.xls')
+        # write to docx template
+        document = construct_docx(data)
+        # save .docx
+        document.save('result.docx')
+        # convert to pdf and save (using current working directory)
+        cwd = os.getcwd()
+        self.docx_to_pdf(cwd + '\\\\result.docx', cwd + '\\\\result.pdf')
 
     def create_monthly_report(self):
         # TODO:  finish this method

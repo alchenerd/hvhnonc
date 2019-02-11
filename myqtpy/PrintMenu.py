@@ -56,7 +56,7 @@ class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
 
     def on_previewBtn_clicked(self):
         # TODO: finish this
-        # find out what kind of document to create(crb = checked radio btn)
+        # find out what kind of document to create (crb = checked radio btn)
         crbName, crbWidget = self.get_checked_radio_button()
         doctype = self._radio_choices.get(crbName, None)
         filledFields = self.get_form_brief()

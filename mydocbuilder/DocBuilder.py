@@ -1102,11 +1102,11 @@ class DocBuilder():
             #          unregister amount, date, keep year, used year, reason,
             #          remark
             replacements['columns'] = (
-                    'i.object_ID as object_ID, i.serial_ID, as serial_ID, '
+                    'i.object_ID as object_ID, i.serial_ID as serial_ID, '
                     'i.name as name, i.spec as spec, i.unit as unit, '
                     'o.amount as amount, o.unregister_date as unregister_date, '
                     'i.keep_year as keep_year, i.acquire_date as acquire_date, '
-                    'o.reason as reason, o.remark as remark')
+                    'o.reason as reason, o.unregister_remark as remark')
             replacements['intable'] = 'hvhnonc_in'
             replacements['outtable'] = 'hvhnonc_out'
             # conditions: determined by d
@@ -1114,10 +1114,16 @@ class DocBuilder():
             params = []
             for k, v in d.items():
                 if 'date' in k:
-                    # date string tuple
-                    replacements['conditions'] += \
-                            '({} between ? and ?) and '.format(k)
-                    params.extend(v)
+                    if k == 'acquire_date':  # special case
+                        # date string tuple
+                        replacements['conditions'] += \
+                                '(unregister_date between ? and ?) and '
+                        params.extend(v)
+                    else:
+                        # date string tuple
+                        replacements['conditions'] += \
+                                '({} between ? and ?) and '.format(k)
+                        params.extend(v)
                 else:
                     replacements['conditions'] += \
                             ('{0} like ? and '.format(k))
@@ -1125,6 +1131,7 @@ class DocBuilder():
             replacements['conditions'] += '1'
             # fill in the blanks
             sqlstr = sqlstr.format(**replacements)
+            print(sqlstr)
             cur.execute(sqlstr, params)
             data = cur.fetchall()
             con.close()
@@ -1241,8 +1248,160 @@ class DocBuilder():
         self.docx_to_pdf(cwd + '\\\\result.docx', cwd + '\\\\result.pdf')
 
     def create_monthly_report(self):
-        # TODO:  finish this method
-        pass
+        """Creates an monthly report, saves data as excel, docx, and pdf."""
+
+        def fetch_from_database(d):
+            """fetch p1 and detail data from database.
+
+            Args:
+                d: The dictionary which is useful in forging sql conditions
+            """
+            yield fetch_p1(d)
+            yield fetch_details(d)
+
+        def get_year_month_int(d):
+            try:
+                _, magicDate = d.get('acquire_date')
+                return(magicDate.year, magicDate.month)
+            except (TypeError, ValueError, IndexError, NameError):
+                today = datetime.datetime.today()
+                return (today.year, today.month)
+
+        def get_sql_conditions(d):
+            # conditions: determined by d
+            replacements = {'conditions': ''}
+            params = []
+            for k, v in d.items():
+                # date string tuple
+                if 'date' in k:
+                    if k == 'acquire_date':  # ignore acquire date
+                        pass
+                    else:
+                        replacements['conditions'] += \
+                                '({} between ? and ?) and '.format(k)
+                        params.extend(v)
+                else:
+                    replacements['conditions'] += \
+                            ('{0} like ? and '.format(k))
+                    params.append('%' + v + '%')
+            replacements['conditions'] += '1'
+            return replacements, params
+
+        def fetch_p1(d):
+            """The sql rows for the 1st page.
+
+            Yields: income before month,
+                    expense before month,
+                    income in month,
+                    expense in month
+                    """
+            # income before
+            con, cur = connect._get_connection(useSQL3Row=True)
+            sqlstr = ('select coalesce(sum(price*amount), 0) as income_before '
+                      'from hvhnonc_in '
+                      'where acquire_date < ? and {conditions};')
+            replacements, params = get_sql_conditions(d)
+            params.insert(0, datetime.date(*get_year_month_int(d), 1).strftime('%Y-%m-%d'))
+            cur.execute(sqlstr.format(**replacements), params)
+            yield cur.fetchall()
+            # expense before
+            sqlstr = ('select coalesce(sum(price*hvhnonc_out.amount), 0) '
+                      'as expense_before '
+                      'from hvhnonc_out '
+                      'inner join hvhnonc_in '
+                      'on hvhnonc_out.in_ID = hvhnonc_in.ID '
+                      'and hvhnonc_out.unregister_date < ? '
+                      'and {conditions};')
+            replacements, params = get_sql_conditions(d)
+            params.insert(0, datetime.date(*get_year_month_int(d), 1).strftime('%Y-%m-%d'))
+            cur.execute(sqlstr.format(**replacements), params)
+            yield cur.fetchall()
+            # income in month
+            sqlstr = ('select coalesce(sum(price*amount), 0) '
+                      'as income_in_month '
+                      'from hvhnonc_in '
+                      'where acquire_date between ? and ? '
+                      'and {conditions};')
+            replacements, params = get_sql_conditions(d)
+            magicDate = datetime.date(*get_year_month_int(d), 15)
+            params.insert(0, magicDate.replace(day=1).strftime('%Y-%m-%d'))
+            magicDate = magicDate.replace(day=28) + datetime.timedelta(days=4)
+            magicDate -= datetime.timedelta(days=magicDate.day)
+            params.insert(1, magicDate.strftime('%Y-%m-%d'))
+            cur.execute(sqlstr.format(**replacements),params)
+            yield cur.fetchall()
+            # expenses in month
+            sqlstr = ('select coalesce(sum(price*hvhnonc_out.amount), 0) '
+                      'as expense_in_month '
+                      'from hvhnonc_out '
+                      'inner join hvhnonc_in '
+                      'on hvhnonc_out.in_ID = hvhnonc_in.ID '
+                      'and unregister_date between ? and ? '
+                      'and {conditions};')
+            replacements, params = get_sql_conditions(d)
+            magicDate = datetime.date(*get_year_month_int(d), 15)
+            params.insert(0, magicDate.replace(day=1).strftime('%Y-%m-%d'))
+            magicDate = magicDate.replace(day=28) + datetime.timedelta(days=4)
+            magicDate -= datetime.timedelta(days=magicDate.day)
+            params.insert(1, magicDate.strftime('%Y-%m-%d'))
+            cur.execute(sqlstr.format(**replacements), params)
+            yield cur.fetchall()
+            con.close()
+
+        def fetch_details(d):
+            """The rows of the details for monthly report."""
+            con, cur = connect._get_connection(useSQL3Row=True)
+            queryIn = ('select name, brand, spec, unit, price, '
+                       'amount as register_amount, '
+                       "'' as unregister_amount, "
+                       'purchase_date as date, '
+                       'place, remark '
+                       'from hvhnonc_in '
+                       'where date between ? and ? '
+                       'and {conditions} ')
+            queryOut = ('select name, brand, spec, unit, price, '
+                        "'' as register_amount, "
+                        'hvhnonc_out.amount as unregister_amount, '
+                        'unregister_date as date, unregister_place as place, '
+                        'unregister_remark as remark '
+                        'from hvhnonc_out '
+                        'inner join hvhnonc_in '
+                        'on hvhnonc_out.in_ID = hvhnonc_in.ID '
+                        'and unregister_date between ? and ? '
+                        'and {conditions} ')
+            sqlstr = queryIn + 'union all ' + queryOut + 'order by date desc'
+            conditions, tempParams = get_sql_conditions(d)
+            params = []
+            magicMinDate = datetime.date(*get_year_month_int(d), 1)
+            params.append(magicMinDate.strftime('%Y-%m-%d'))
+            magicMaxDate = magicMinDate.replace(day=28) + datetime.timedelta(days=4)
+            magicMaxDate -= datetime.timedelta(days=magicMaxDate.day)
+            params.append(magicMaxDate.strftime('%Y-%m-%d'))
+            params += list(tempParams)
+            params.append(magicMinDate.strftime('%Y-%m-%d'))
+            params.append(magicMaxDate.strftime('%Y-%m-%d'))
+            params += list(tempParams)
+            cur.execute(sqlstr.format(**conditions), params)
+            yield cur.fetchall()
+            con.close()
+
+        # TODO: finish me
+        print('create_monthly_report')
+        data_p1, data_details = fetch_from_database(self.kwargs)
+        
+        """A test fetch for the data needed, parse these for excel writing.
+
+        print('p1 data:')
+        for block in data_p1:
+            for row in block:
+                for k in row.keys():
+                    print(k, row[k])
+        print('details data:')
+        for block in data_details:
+            for row in block:
+                for k in row.keys():
+                    print(k, row[k])
+        """
 
     def create_full_report(self):
         # TODO:  finish this method

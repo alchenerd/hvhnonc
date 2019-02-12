@@ -16,7 +16,7 @@ import sys
 import xlwt
 import deprecation
 
-wdFormatPDF = 17
+wdFormatPDF = 17  # magic
 
 if __name__ == '__main__': # at mydocbuilder
     sys.path.append('../')
@@ -951,9 +951,7 @@ class DocBuilder():
 
         def fetch_from_database(d):
             """Returns a list of sqlite3.Row as data"""
-            print(d)
             con, cur = connect._get_connection(useSQL3Row=True)
-            con.set_trace_callback(print)
             sqlstr = ('select {columns} from {table} where {conditions}')
             replacements = {}
             # columns: object_ID, serial_ID, name, spec, unit, amount, price,
@@ -983,8 +981,6 @@ class DocBuilder():
             cur.execute(sqlstr, params)
             data = cur.fetchall()
             con.close()
-            for row in data:
-                print(', '.join([str(row[k]) for k in row.keys()]))
             return data
 
         def parse_for_document(rows):
@@ -1297,31 +1293,53 @@ class DocBuilder():
                     """
             # income before
             con, cur = connect._get_connection(useSQL3Row=True)
-            sqlstr = ('select coalesce(sum(price*amount), 0) as income_before '
-                      'from hvhnonc_in '
-                      'where acquire_date < ? and {conditions};')
+            sqlstr = (
+                    'select '
+                        'description as key, '
+                        'coalesce(sum(price * amount), 0) as value '
+                    'from hvhnonc_category '
+                    'left join hvhnonc_in '
+                        'on description = category '
+                        'and acquire_date < ? '
+                        'and {conditions} '
+                    'group by description;')
             replacements, params = get_sql_conditions(d)
             params.insert(0, datetime.date(*get_year_month_int(d), 1).strftime('%Y-%m-%d'))
             cur.execute(sqlstr.format(**replacements), params)
             yield cur.fetchall()
             # expense before
-            sqlstr = ('select coalesce(sum(price*hvhnonc_out.amount), 0) '
-                      'as expense_before '
-                      'from hvhnonc_out '
-                      'inner join hvhnonc_in '
-                      'on hvhnonc_out.in_ID = hvhnonc_in.ID '
-                      'and hvhnonc_out.unregister_date < ? '
-                      'and {conditions};')
+            sqlstr = (
+                    'select '
+                        'description as key, '
+                        'coalesce(sum(price * amount), 0) as value '
+                    'from hvhnonc_category '
+                    'left join ('
+                        'select '
+                            'price, '
+                            'hvhnonc_out.amount as amount, '
+                            'category '
+                        'from hvhnonc_out '
+                        'inner join hvhnonc_in '
+                            'on hvhnonc_out.in_ID = hvhnonc_in.ID '
+                            'and hvhnonc_out.unregister_date < ? '
+                            'and {conditions}) '
+                    'on description = category '
+                    'group by description;')
             replacements, params = get_sql_conditions(d)
             params.insert(0, datetime.date(*get_year_month_int(d), 1).strftime('%Y-%m-%d'))
             cur.execute(sqlstr.format(**replacements), params)
             yield cur.fetchall()
             # income in month
-            sqlstr = ('select coalesce(sum(price*amount), 0) '
-                      'as income_in_month '
-                      'from hvhnonc_in '
-                      'where acquire_date between ? and ? '
-                      'and {conditions};')
+            sqlstr = (
+                    'select '
+                        'description as key, '
+                        'coalesce(sum(price * amount), 0) as value '
+                    'from hvhnonc_category '
+                    'left join hvhnonc_in '
+                        'on description = category '
+                        'and acquire_date between ? and ? '
+                        'and {conditions} '
+                    'group by description;')
             replacements, params = get_sql_conditions(d)
             magicDate = datetime.date(*get_year_month_int(d), 15)
             params.insert(0, magicDate.replace(day=1).strftime('%Y-%m-%d'))
@@ -1331,13 +1349,23 @@ class DocBuilder():
             cur.execute(sqlstr.format(**replacements),params)
             yield cur.fetchall()
             # expenses in month
-            sqlstr = ('select coalesce(sum(price*hvhnonc_out.amount), 0) '
-                      'as expense_in_month '
-                      'from hvhnonc_out '
-                      'inner join hvhnonc_in '
-                      'on hvhnonc_out.in_ID = hvhnonc_in.ID '
-                      'and unregister_date between ? and ? '
-                      'and {conditions};')
+            sqlstr = (
+                    'select '
+                        'description as key, '
+                        'coalesce(sum(price * amount), 0) as value '
+                    'from hvhnonc_category '
+                    'left join ('
+                        'select '
+                            'price, '
+                            'hvhnonc_out.amount as amount, '
+                            'category '
+                        'from hvhnonc_out '
+                        'inner join hvhnonc_in '
+                        'on hvhnonc_out.in_ID = hvhnonc_in.ID '
+                        'and unregister_date between ? and ? '
+                        'and {conditions}) '
+                    'on description = category '
+                    'group by description;')
             replacements, params = get_sql_conditions(d)
             magicDate = datetime.date(*get_year_month_int(d), 15)
             params.insert(0, magicDate.replace(day=1).strftime('%Y-%m-%d'))
@@ -1353,23 +1381,26 @@ class DocBuilder():
             con, cur = connect._get_connection(useSQL3Row=True)
             queryIn = ('select name, brand, spec, unit, price, '
                        'amount as register_amount, '
-                       "'' as unregister_amount, "
-                       'purchase_date as date, '
+                       "0 as unregister_amount, "
+                       'acquire_date as date, '
+                       'purchase_date, '
                        'place, remark '
                        'from hvhnonc_in '
                        'where date between ? and ? '
                        'and {conditions} ')
             queryOut = ('select name, brand, spec, unit, price, '
-                        "'' as register_amount, "
+                        "0 as register_amount, "
                         'hvhnonc_out.amount as unregister_amount, '
-                        'unregister_date as date, unregister_place as place, '
+                        'unregister_date as date, purchase_date, '
+                        'unregister_place as place, '
                         'unregister_remark as remark '
                         'from hvhnonc_out '
                         'inner join hvhnonc_in '
                         'on hvhnonc_out.in_ID = hvhnonc_in.ID '
                         'and unregister_date between ? and ? '
                         'and {conditions} ')
-            sqlstr = queryIn + 'union all ' + queryOut + 'order by date desc'
+            sqlstr = (queryIn + 'union all ' + queryOut +
+                      'order by purchase_date asc')
             conditions, tempParams = get_sql_conditions(d)
             params = []
             magicMinDate = datetime.date(*get_year_month_int(d), 1)
@@ -1385,23 +1416,73 @@ class DocBuilder():
             yield cur.fetchall()
             con.close()
 
+        def parse_data(data):
+            """Parses data for excel use."""
+            parsed = []
+            data_p1, data_detail = data
+            # income before month, expense before month,
+            # income in month, expense in month
+            ibm, ebm, iim, eim = data_p1
+            # 1st row: title of data_p1
+            parsed.append(['科目', '上月結存金額', '本月增加', '本月減少',
+                           '本月結存金額'])
+            # next line: the data_p1
+            for r_ibm, r_ebm, r_iim, r_eim in zip(ibm, ebm, iim, eim):
+                parsed.append([
+                        r_ibm['key'], r_ibm['value'] - r_ebm['value'],
+                        r_iim['value'], r_eim['value'],
+                        r_ibm['value'] - r_ebm['value'] + r_iim['value'] - r_eim['value']])
+            # insert an empty line
+            parsed.append([])
+            # next: title of data_details
+            parsed.append(['物品名稱', '廠牌及說明', '計量單位', '單價',
+                          '本月增加數量', '本月增加總價', '本月減少數量',
+                          '本月減少總價', '購置日期', '存置地點', '備註事項'])
+            # next line: parsed data_detail
+            temp_row = []
+            for data_list in data_detail:
+                for row in data_list:
+                    temp_row = []
+                    temp_row.append(row['name'])
+                    temp_row.append(row['brand'] + row['spec'])
+                    temp_row.append(row['unit'])
+                    temp_row.append(row['price'])
+                    if not row['register_amount']:
+                        temp_row.append(0)
+                        temp_row.append(0)
+                    else:
+                        temp_row.append(row['register_amount'])
+                        temp_row.append(row['register_amount'] * row['price'])
+                    if not row['unregister_amount']:
+                        temp_row.append(0)
+                        temp_row.append(0)
+                    else:
+                        temp_row.append(row['unregister_amount'])
+                        temp_row.append(row['unregister_amount'] * row['price'])
+                    temp_row.append(row['purchase_date'])
+                    temp_row.append(row['place'])
+                    temp_row.append(row['remark'])
+                    parsed.append(temp_row)
+            return parsed
+
+        def write_to_excel(arr, fn):
+            """Save 2d list to result.xls."""
+            wb = xlwt.Workbook()
+            ws = wb.add_sheet('result')
+            for rc, row in enumerate(arr):
+                for cc, column in enumerate(row):
+                    try:
+                        ws.write(r=rc, c=cc, label=column)
+                    except:
+                        # skip if encounter problems
+                        continue
+            wb.save(fn)
+
         # TODO: finish me
         print('create_monthly_report')
         data_p1, data_details = fetch_from_database(self.kwargs)
-        
-        """A test fetch for the data needed, parse these for excel writing.
-
-        print('p1 data:')
-        for block in data_p1:
-            for row in block:
-                for k in row.keys():
-                    print(k, row[k])
-        print('details data:')
-        for block in data_details:
-            for row in block:
-                for k in row.keys():
-                    print(k, row[k])
-        """
+        data_parsed = parse_data((data_p1, data_details))
+        write_to_excel(data_parsed, 'result.xls')
 
     def create_full_report(self):
         # TODO:  finish this method

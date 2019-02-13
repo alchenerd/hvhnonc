@@ -1,37 +1,42 @@
 # -*- coding: utf-8 -*-
-"""
-@author: alchenerd (alchenerd@gmail.com)
-"""
-import sqlite3
-from copy import copy, deepcopy
-from docx import Document
-from docx.shared import Pt
-from docx.oxml.ns import qn
-from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-from docx.enum.style import WD_STYLE_TYPE
-import os
-import comtypes.client
 import datetime
+import os
+import sqlite3
 import sys
-import xlwt
+from copy import copy, deepcopy
+
+import comtypes.client
 import deprecation
-
-wdFormatPDF = 17  # magic
-
-if __name__ == '__main__': # at mydocbuilder
-    sys.path.append('../')
+import xlwt
+from docx import Document
+from docx.enum.style import WD_STYLE_TYPE
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+from docx.oxml.ns import qn
+from docx.shared import Pt
 
 from myconnect import connect
 
+"""
+@author: alchenerd (alchenerd@gmail.com)
+"""
+
+if __name__ == '__main__':  # at mydocbuilder
+    sys.path.append('../')
+
+
+wdFormatPDF = 17  # magic constant but I'm too lazy to change case
+
+
 class DocBuilder():
     """DocBuilder is a customized docx creator exclusively for hvhnonc."""
+
     def __init__(self, type_: str = 'default', **kwargs):
         self.actions = {
-                'default': self.hello_docx,
-                'register_list': self.create_register_list,
-                'unregister_list': self.create_unregister_list,
-                'monthly_report': self.create_monthly_report,
-                'full_report': self.create_full_report}
+            'default': self.hello_docx,
+            'register_list': self.create_register_list,
+            'unregister_list': self.create_unregister_list,
+            'monthly_report': self.create_monthly_report,
+            'full_report': self.create_full_report}
         if self.actions.get(type_, None):
             self.type_ = type_
         else:
@@ -78,7 +83,7 @@ class DocBuilder():
         # populate pages
         ROW_PER_PAGE = 12
         pageNeeded = dataCount // ROW_PER_PAGE \
-                      + (dataCount % ROW_PER_PAGE > 0)
+            + (dataCount % ROW_PER_PAGE > 0)
         # replace last line with empty string
         p = doc.paragraphs[-1]
         p.text = ''
@@ -171,19 +176,19 @@ class DocBuilder():
                 params.append(v)
         # hvhnonc_in
         sqlstr = (
-                'select id, amount '
-                'from hvhnonc_in '
-                'where {conditions}1')
+            'select id, amount '
+            'from hvhnonc_in '
+            'where {conditions}1')
         cur.execute(sqlstr.format(**d), params)
         rows = cur.fetchall()
         inData = {row['id']: row['amount'] for row in rows}
         print('IN:', len(inData), 'rows.')
         # hvhnonc_out, all unregister records
         sqlstr = (
-                'select hvhnonc_out.in_id as id, hvhnonc_out.amount '
-                'from hvhnonc_out '
-                'inner join hvhnonc_in '
-                'on hvhnonc_in.id = hvhnonc_out.in_id')
+            'select hvhnonc_out.in_id as id, hvhnonc_out.amount '
+            'from hvhnonc_out '
+            'inner join hvhnonc_in '
+            'on hvhnonc_in.id = hvhnonc_out.in_id')
         cur.execute(sqlstr)
         rows = cur.fetchall()
         outData = {row['id']: row['amount'] for row in rows}
@@ -201,9 +206,9 @@ class DocBuilder():
         # fetch detail of the remainders
         for i, (id, amount) in enumerate(result.items()):
             sqlstr = (
-                    'select page, object_id, serial_id, name, spec, unit, '
-                    'price, acquire_date, keep_year, place, '
-                    'keep_department, keeper from hvhnonc_in where id = ?')
+                'select page, object_id, serial_id, name, spec, unit, '
+                'price, acquire_date, keep_year, place, '
+                'keep_department, keeper from hvhnonc_in where id = ?')
             params = (str(id),)
             cur.execute(sqlstr, params)
             row = deepcopy(dict(cur.fetchone()))
@@ -217,7 +222,7 @@ class DocBuilder():
         doc.styles['Normal'].font.name = u'標楷體'
         doc.styles['Normal'].font.size = Pt(12)
         doc.styles['Normal']._element.rPr.rFonts.set(
-                qn('w:eastAsia'), u'標楷體')
+            qn('w:eastAsia'), u'標楷體')
 
     @deprecation.deprecated()
     def monthly_report(self):
@@ -236,7 +241,7 @@ class DocBuilder():
             theYear, theMonth = today.year, today.month
         # fill in the date
         replacements = {}
-        replacements['y'] = str(theYear - 1911) # in ROC year
+        replacements['y'] = str(theYear - 1911)  # in ROC year
         replacements['m'] = str(theMonth).zfill(2)
         for p in targetDoc.paragraphs:
             if '{' in p.text:
@@ -246,7 +251,7 @@ class DocBuilder():
                     font.name = u'標楷體'
                     font.size = Pt(16)
                     run._element.rPr.rFonts.set(
-                    qn('w:eastAsia'), u'標楷體')
+                        qn('w:eastAsia'), u'標楷體')
                 break
         # init connection (tag: $$$)
         con, cur = connect._get_connection()
@@ -266,9 +271,9 @@ class DocBuilder():
                 pricePreMonth[row['category']] = 0
             pricePreMonth[row['category']] += row['price'] * row['amount']
         sqlstr = ('select '
-                      'o.amount as amount, '
-                      'i.price as price, '
-                      'i.category as category '
+                  'o.amount as amount, '
+                  'i.price as price, '
+                  'i.category as category '
                   'from hvhnonc_in as i '
                   'inner join hvhnonc_out as o '
                   'on i.id = o.in_id '
@@ -296,9 +301,9 @@ class DocBuilder():
             priceInMonth[row['category']] += row['price'] * row['amount']
         # get unregistered $ in the month
         sqlstr = ('select '
-                      'o.amount as amount, '
-                      'i.price as price, '
-                      'i.category as category '
+                  'o.amount as amount, '
+                  'i.price as price, '
+                  'i.category as category '
                   'from hvhnonc_in as i '
                   'inner join hvhnonc_out as o '
                   'on ((i.id = o.in_id) '
@@ -353,7 +358,7 @@ class DocBuilder():
         for rc, row in enumerate(table.rows):
             for cc, cell in enumerate(row.cells):
                 for paragraph in cell.paragraphs:
-                    if rc == 0 or cc  == 5:
+                    if rc == 0 or cc == 5:
                         paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
                     elif cc == 0:
                         paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
@@ -364,23 +369,23 @@ class DocBuilder():
                         font.name = u'標楷體'
                         font.size = Pt(18)
                         run._element.rPr.rFonts.set(
-                                qn('w:eastAsia'), u'標楷體')
+                            qn('w:eastAsia'), u'標楷體')
         # next page: report details
         # fetch the in and out record within the month
         records = self.construct_record_rows(theYear, theMonth)
         # calculate the page needed
         ROW_PER_PAGE = 17
         pageNeeded = len(records) // ROW_PER_PAGE \
-                   + (len(records) % ROW_PER_PAGE > 0)
+            + (len(records) % ROW_PER_PAGE > 0)
         print('appending', pageNeeded, 'pages.')
         # dictionary for replacement
         d = {}
         day = datetime.date(theYear, theMonth, 1)
         dayE = self.last_day_of_month(day)
         d['ys'], d['ms'], d['ds'] = \
-                str(day.year), str(day.month).zfill(2), str(day.day)
+            str(day.year), str(day.month).zfill(2), str(day.day)
         d['ye'], d['me'], d['de'] = \
-                str(dayE.year), str(dayE.month).zfill(2), str(dayE.day)
+            str(dayE.year), str(dayE.month).zfill(2), str(dayE.day)
         # construct pages
         refPath = ('./mydocbuilder/monthly_report_detail_template.docx')
         refDoc = Document(refPath)
@@ -412,8 +417,8 @@ class DocBuilder():
             tableCount = i // ROW_PER_PAGE
             rowCount = i % ROW_PER_PAGE
             # get table and row
-            table = targetDoc.tables[tableCount + 1] # 0 is used in summary
-            row = table.rows[rowCount + 2] # 0 and 1 are title rows
+            table = targetDoc.tables[tableCount + 1]  # 0 is used in summary
+            row = table.rows[rowCount + 2]  # 0 and 1 are title rows
             for j, column in enumerate(record):
                 r = row.cells[j].paragraphs[0].add_run(column)
                 r.font.name = u'標楷體'
@@ -435,7 +440,7 @@ class DocBuilder():
         con.set_trace_callback(print)
         con.row_factory = sqlite3.Row
         cur = con.cursor()
-        #con.set_trace_callback(print)
+        # con.set_trace_callback(print)
         # fetch all categories
         cur.execute('select description from hvhnonc_category')
         rows = cur.fetchall()
@@ -462,37 +467,37 @@ class DocBuilder():
                     d['conditions'] += ('{} like ? and '.format(k))
                     params.append(v)
             selIn = (
-                    'select '
-                        '"i" as type_, name, brand, spec, unit, price, '
-                        'amount, acquire_date as date, place, remark '
-                    'from '
-                        'hvhnonc_in '
-                    'where '
-                        'category = :category '
-                        'and {conditions}1 '
-                        'and acquire_date '
-                            'between :first_day_of_month '
-                            'and :last_day_of_month ')
+                'select '
+                '"i" as type_, name, brand, spec, unit, price, '
+                'amount, acquire_date as date, place, remark '
+                'from '
+                'hvhnonc_in '
+                'where '
+                'category = :category '
+                'and {conditions}1 '
+                'and acquire_date '
+                'between :first_day_of_month '
+                'and :last_day_of_month ')
             selIn = selIn.format(**d)
             # select unregister data
             selOut = (
-                    'select '
-                        '"o" as type_, i.name as name, i.brand as brand, '
-                        'i.spec as spec, i.unit as unit, i.price as price, '
-                        'o.amount as amount, o.unregister_date as date, '
-                        'o.unregister_place as place, '
-                        'o.unregister_remark as remark '
-                    'from '
-                        'hvhnonc_out as o '
-                    'inner join '
-                        'hvhnonc_in as i '
-                    'on '
-                        '(o.in_id = i.id) '
-                        'and {conditions}1 '
-                        'and i.category = :category '
-                        'and o.unregister_date '
-                            'between :first_day_of_month '
-                            'and :last_day_of_month ')
+                'select '
+                '"o" as type_, i.name as name, i.brand as brand, '
+                'i.spec as spec, i.unit as unit, i.price as price, '
+                'o.amount as amount, o.unregister_date as date, '
+                'o.unregister_place as place, '
+                'o.unregister_remark as remark '
+                'from '
+                'hvhnonc_out as o '
+                'inner join '
+                'hvhnonc_in as i '
+                'on '
+                '(o.in_id = i.id) '
+                'and {conditions}1 '
+                'and i.category = :category '
+                'and o.unregister_date '
+                'between :first_day_of_month '
+                'and :last_day_of_month ')
             selOut = selOut.format(**d)
             # what we want is union all order by date
             print('__SELIN__: ' + selIn)
@@ -501,9 +506,9 @@ class DocBuilder():
             sqlstr = (selIn + 'union all ' + selOut + 'order by date asc')
             # dictionary
             params = {
-                    'category': category,
-                    'first_day_of_month': str(first_day_of_month),
-                    'last_day_of_month': str(last_day_of_month)}
+                'category': category,
+                'first_day_of_month': str(first_day_of_month),
+                'last_day_of_month': str(last_day_of_month)}
             cur.execute(sqlstr, params)
             rows = cur.fetchall()
             titleRow = [category, '', '', '', '', '', '', '', '', '', '']
@@ -573,7 +578,7 @@ class DocBuilder():
         replacements = {}
         replacements['dept'] = '秘書室'
         today = datetime.datetime.today().strftime('%Y-%m-%d').split('-')
-        today[0] = str(int(today[0]) - 1911) # in ROC year
+        today[0] = str(int(today[0]) - 1911)  # in ROC year
         replacements['y'], replacements['m'], replacements['d'] = today
         # replace 1st pages' line
         for paragraph in targetDoc.paragraphs:
@@ -588,22 +593,22 @@ class DocBuilder():
         # columns: id, name, spec, unit, amount, acq date, keep year,
         #          used time, reason, comment, remark
         sqlstr = (
-                'select '
-                        'i.object_id as object_id, i.serial_id as serial_id, '
-                        'i.name as name, i.spec as spec, i.unit as unit, '
-                        'i.amount as amount, i.acquire_date as acquire_date, '
-                        'i.keep_year as keep_year, '
-                        'o.unregister_date as unregister_date, '
-                        'o.reason as reason, '
-                        'o.unregister_remark as unregister_remark '
-                'from '
-                        'hvhnonc_in as i '
-                'inner join '
-                        'hvhnonc_out as o '
-                'on '
-                        'i.id = o.in_id '
-                'and '
-                        '({conditions}1)') # e.g. '{cond1 and cond2 and }1'
+            'select '
+            'i.object_id as object_id, i.serial_id as serial_id, '
+            'i.name as name, i.spec as spec, i.unit as unit, '
+            'i.amount as amount, i.acquire_date as acquire_date, '
+            'i.keep_year as keep_year, '
+            'o.unregister_date as unregister_date, '
+            'o.reason as reason, '
+            'o.unregister_remark as unregister_remark '
+            'from '
+            'hvhnonc_in as i '
+            'inner join '
+            'hvhnonc_out as o '
+            'on '
+            'i.id = o.in_id '
+            'and '
+            '({conditions}1)')  # e.g. '{cond1 and cond2 and }1'
         d = {'conditions': ''}
         params = []
         for k, v in self.kwargs.items():
@@ -624,7 +629,7 @@ class DocBuilder():
         pageCount = rowCount // ROW_PER_PAGE + (rowCount % ROW_PER_PAGE > 0)
         print(rowCount, 'rows, ', pageCount, 'pages.')
         # page copying
-        for i in range(1, pageCount): # from page 2 to pageCount
+        for i in range(1, pageCount):  # from page 2 to pageCount
             # serial(dynamically changes each page)
             mstr = self.get_todays_ROC_date_str()
             replacements['srl'] = mstr + '-'
@@ -638,7 +643,7 @@ class DocBuilder():
                     continue
                 if '{' in paragraph.text:
                     p = targetDoc.add_paragraph(
-                            paragraph.text.format(**replacements))
+                        paragraph.text.format(**replacements))
                     # insert table[0] (data table)
                     table = targetDoc.tables[0]
                     tbl = table._tbl
@@ -654,7 +659,7 @@ class DocBuilder():
                 else:
                     p = targetDoc.add_paragraph(paragraph.text)
                 p.paragraph_format.alignment = \
-                        paragraph.paragraph_format.alignment
+                    paragraph.paragraph_format.alignment
         # write in the data
         for i, row in enumerate(rows):
             # prepare list
@@ -671,7 +676,7 @@ class DocBuilder():
             rowList.append(str(row['amount']))
             # acq date
             y, m, d = map(int, row['acquire_date'].split('-'))
-            y -= 1911 # in ROC years
+            y -= 1911  # in ROC years
             y, m, d = map(str, (y, m, d))
             date = '/'.join((y, m, d))
             rowList.append(str(date))
@@ -795,7 +800,7 @@ class DocBuilder():
         replacements['dept'] = '秘書室'
         # date
         today = datetime.datetime.today().strftime('%Y-%m-%d').split('-')
-        today[0] = str(int(today[0]) - 1911) # in ROC year
+        today[0] = str(int(today[0]) - 1911)  # in ROC year
         replacements['y'], replacements['m'], replacements['d'] = today
         # fill in 1st pages' line
         for paragraph in targetDoc.paragraphs:
@@ -812,14 +817,14 @@ class DocBuilder():
         # columns: id, name, spec, unit, amount, price, total price, acq date,
         #          keep year, place, use department or keep department, keeper
         sqlstr = (
-                'select '
-                    'object_id, serial_id, name, spec, unit, amount, price, '
-                    'acquire_date, keep_year, place, keep_department, '
-                    'keeper, id '
-                'from '
-                    'hvhnonc_in '
-                'where '
-                    '({conditions}1)') # e.g. '{cond1 and cond2 and }1'
+            'select '
+            'object_id, serial_id, name, spec, unit, amount, price, '
+            'acquire_date, keep_year, place, keep_department, '
+            'keeper, id '
+            'from '
+            'hvhnonc_in '
+            'where '
+            '({conditions}1)')  # e.g. '{cond1 and cond2 and }1'
         d = {'conditions': ''}
         params = []
         for k, v in self.kwargs.items():
@@ -840,7 +845,7 @@ class DocBuilder():
         pageCount = rowCount // ROW_PER_PAGE + (rowCount % ROW_PER_PAGE > 0)
         print(rowCount, 'rows, ', pageCount, 'pages.')
         # page copying
-        for i in range(1, pageCount): # from page 2 to pageCount
+        for i in range(1, pageCount):  # from page 2 to pageCount
             # serial(year(ROC), month, page)
             mstr = self.get_todays_ROC_date_str()
             replacements['srl'] = mstr + '-'
@@ -854,7 +859,7 @@ class DocBuilder():
                     continue
                 if u'中華民國' in paragraph.text:
                     p = targetDoc.add_paragraph(
-                            paragraph.text.format(**replacements))
+                        paragraph.text.format(**replacements))
                     # insert table[0] (data table)
                     table = targetDoc.tables[0]
                     tbl = table._tbl
@@ -870,7 +875,7 @@ class DocBuilder():
                 else:
                     p = targetDoc.add_paragraph(paragraph.text)
                 p.paragraph_format.alignment = \
-                        paragraph.paragraph_format.alignment
+                    paragraph.paragraph_format.alignment
         # write in the data
         for i, row in enumerate(rows):
             # prepare list
@@ -892,9 +897,9 @@ class DocBuilder():
             rowList.append(str(totalPrice))
             # acq date
             y, m, d = map(int, row['acquire_date'].split('-'))
-            y -= 1911 # in ROC years
-            y, m, d = map(str, (y,m,d))
-            date = '/'.join((y,m,d))
+            y -= 1911  # in ROC years
+            y, m, d = map(str, (y, m, d))
+            date = '/'.join((y, m, d))
             rowList.append(str(date))
             # keep year, place, use department or keep department, keeper
             rowList.append(str(row['keep_year']))
@@ -957,9 +962,9 @@ class DocBuilder():
             # columns: object_ID, serial_ID, name, spec, unit, amount, price,
             #          acquire_date, keep_year, keep_department, place, keeper
             replacements['columns'] = ', '.join((
-                    'object_ID', 'serial_ID', 'name', 'spec', 'unit', 'amount',
-                    'price', 'acquire_date', 'keep_year', 'keep_department',
-                    'place', 'keeper'))
+                'object_ID', 'serial_ID', 'name', 'spec', 'unit', 'amount',
+                'price', 'acquire_date', 'keep_year', 'keep_department',
+                'place', 'keeper'))
             # table: hvhnonc_in
             replacements['table'] = 'hvhnonc_in'
             # conditions: determined by d
@@ -969,11 +974,11 @@ class DocBuilder():
                 if 'date' in k:
                     # date string tuple
                     replacements['conditions'] += \
-                            '({} between ? and ?) and '.format(k)
+                        '({} between ? and ?) and '.format(k)
                     params.extend(v)
                 else:
                     replacements['conditions'] += \
-                            ('{0} like ? and '.format(k))
+                        ('{0} like ? and '.format(k))
                     params.append('%' + v + '%')
             replacements['conditions'] += '1'
             # fill in the blanks
@@ -1046,7 +1051,7 @@ class DocBuilder():
             # fill in department
             target_paragraph = replaceRow.cells[0].paragraphs[0]
             target_paragraph.text = \
-                    target_paragraph.text.format(**{'dept': '秘書室'})
+                target_paragraph.text.format(**{'dept': '秘書室'})
             target_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
             # fill in the date
             target_paragraph = replaceRow.cells[1].paragraphs[0]
@@ -1063,7 +1068,6 @@ class DocBuilder():
                 print('row', i, '/', len(data) - 2, 'appended!')
             return doc
 
-        # indicate entry
         print('create_register_list')
         # fetch data from database
         data = fetch_from_database(self.kwargs)
@@ -1088,21 +1092,21 @@ class DocBuilder():
             con, cur = connect._get_connection(useSQL3Row=True)
             con.set_trace_callback(print)
             sqlstr = (
-                    'select {columns} '
-                    'from {intable} as i '
-                    'inner join {outtable} as o '
-                    'on i.ID=o.in_ID '
-                    'and {conditions}')
+                'select {columns} '
+                'from {intable} as i '
+                'inner join {outtable} as o '
+                'on i.ID=o.in_ID '
+                'and {conditions}')
             replacements = {}
             # columns: object_ID, serial_ID, name, spec, unit,
             #          unregister amount, date, keep year, used year, reason,
             #          remark
             replacements['columns'] = (
-                    'i.object_ID as object_ID, i.serial_ID as serial_ID, '
-                    'i.name as name, i.spec as spec, i.unit as unit, '
-                    'o.amount as amount, o.unregister_date as unregister_date, '
-                    'i.keep_year as keep_year, i.acquire_date as acquire_date, '
-                    'o.reason as reason, o.unregister_remark as remark')
+                'i.object_ID as object_ID, i.serial_ID as serial_ID, '
+                'i.name as name, i.spec as spec, i.unit as unit, '
+                'o.amount as amount, o.unregister_date as unregister_date, '
+                'i.keep_year as keep_year, i.acquire_date as acquire_date, '
+                'o.reason as reason, o.unregister_remark as remark')
             replacements['intable'] = 'hvhnonc_in'
             replacements['outtable'] = 'hvhnonc_out'
             # conditions: determined by d
@@ -1113,16 +1117,16 @@ class DocBuilder():
                     if k == 'acquire_date':  # special case
                         # date string tuple
                         replacements['conditions'] += \
-                                '(unregister_date between ? and ?) and '
+                            '(unregister_date between ? and ?) and '
                         params.extend(v)
                     else:
                         # date string tuple
                         replacements['conditions'] += \
-                                '({} between ? and ?) and '.format(k)
+                            '({} between ? and ?) and '.format(k)
                         params.extend(v)
                 else:
                     replacements['conditions'] += \
-                            ('{0} like ? and '.format(k))
+                        ('{0} like ? and '.format(k))
                     params.append('%' + v + '%')
             replacements['conditions'] += '1'
             # fill in the blanks
@@ -1210,7 +1214,7 @@ class DocBuilder():
             # fill in department
             target_paragraph = replaceRow.cells[0].paragraphs[0]
             target_paragraph.text = \
-                    target_paragraph.text.format(**{'dept': '秘書室'})
+                target_paragraph.text.format(**{'dept': '秘書室'})
             target_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
             # fill in the date
             target_paragraph = replaceRow.cells[1].paragraphs[0]
@@ -1227,7 +1231,6 @@ class DocBuilder():
                 print('row', i, '/', len(data) - 2, 'appended!')
             return doc
 
-        # indicate entry
         print('create_unregister_list')
         # fetch data from database
         data = fetch_from_database(self.kwargs)
@@ -1274,11 +1277,11 @@ class DocBuilder():
                         pass
                     else:
                         replacements['conditions'] += \
-                                '({} between ? and ?) and '.format(k)
+                            '({} between ? and ?) and '.format(k)
                         params.extend(v)
                 else:
                     replacements['conditions'] += \
-                            ('{0} like ? and '.format(k))
+                        ('{0} like ? and '.format(k))
                     params.append('%' + v + '%')
             replacements['conditions'] += '1'
             return replacements, params
@@ -1294,78 +1297,80 @@ class DocBuilder():
             # income before
             con, cur = connect._get_connection(useSQL3Row=True)
             sqlstr = (
-                    'select '
-                        'description as key, '
-                        'coalesce(sum(price * amount), 0) as value '
-                    'from hvhnonc_category '
-                    'left join hvhnonc_in '
-                        'on description = category '
-                        'and acquire_date < ? '
-                        'and {conditions} '
-                    'group by description;')
+                'select '
+                'description as key, '
+                'coalesce(sum(price * amount), 0) as value '
+                'from hvhnonc_category '
+                'left join hvhnonc_in '
+                'on description = category '
+                'and acquire_date < ? '
+                'and {conditions} '
+                'group by description;')
             replacements, params = get_sql_conditions(d)
-            params.insert(0, datetime.date(*get_year_month_int(d), 1).strftime('%Y-%m-%d'))
+            params.insert(0, datetime.date(
+                *get_year_month_int(d), 1).strftime('%Y-%m-%d'))
             cur.execute(sqlstr.format(**replacements), params)
             yield cur.fetchall()
             # expense before
             sqlstr = (
-                    'select '
-                        'description as key, '
-                        'coalesce(sum(price * amount), 0) as value '
-                    'from hvhnonc_category '
-                    'left join ('
-                        'select '
-                            'price, '
-                            'hvhnonc_out.amount as amount, '
-                            'category '
-                        'from hvhnonc_out '
-                        'inner join hvhnonc_in '
-                            'on hvhnonc_out.in_ID = hvhnonc_in.ID '
-                            'and hvhnonc_out.unregister_date < ? '
-                            'and {conditions}) '
-                    'on description = category '
-                    'group by description;')
+                'select '
+                'description as key, '
+                'coalesce(sum(price * amount), 0) as value '
+                'from hvhnonc_category '
+                'left join ('
+                'select '
+                'price, '
+                'hvhnonc_out.amount as amount, '
+                'category '
+                'from hvhnonc_out '
+                'inner join hvhnonc_in '
+                'on hvhnonc_out.in_ID = hvhnonc_in.ID '
+                'and hvhnonc_out.unregister_date < ? '
+                'and {conditions}) '
+                'on description = category '
+                'group by description;')
             replacements, params = get_sql_conditions(d)
-            params.insert(0, datetime.date(*get_year_month_int(d), 1).strftime('%Y-%m-%d'))
+            params.insert(0, datetime.date(
+                *get_year_month_int(d), 1).strftime('%Y-%m-%d'))
             cur.execute(sqlstr.format(**replacements), params)
             yield cur.fetchall()
             # income in month
             sqlstr = (
-                    'select '
-                        'description as key, '
-                        'coalesce(sum(price * amount), 0) as value '
-                    'from hvhnonc_category '
-                    'left join hvhnonc_in '
-                        'on description = category '
-                        'and acquire_date between ? and ? '
-                        'and {conditions} '
-                    'group by description;')
+                'select '
+                'description as key, '
+                'coalesce(sum(price * amount), 0) as value '
+                'from hvhnonc_category '
+                'left join hvhnonc_in '
+                'on description = category '
+                'and acquire_date between ? and ? '
+                'and {conditions} '
+                'group by description;')
             replacements, params = get_sql_conditions(d)
             magicDate = datetime.date(*get_year_month_int(d), 15)
             params.insert(0, magicDate.replace(day=1).strftime('%Y-%m-%d'))
             magicDate = magicDate.replace(day=28) + datetime.timedelta(days=4)
             magicDate -= datetime.timedelta(days=magicDate.day)
             params.insert(1, magicDate.strftime('%Y-%m-%d'))
-            cur.execute(sqlstr.format(**replacements),params)
+            cur.execute(sqlstr.format(**replacements), params)
             yield cur.fetchall()
             # expenses in month
             sqlstr = (
-                    'select '
-                        'description as key, '
-                        'coalesce(sum(price * amount), 0) as value '
-                    'from hvhnonc_category '
-                    'left join ('
-                        'select '
-                            'price, '
-                            'hvhnonc_out.amount as amount, '
-                            'category '
-                        'from hvhnonc_out '
-                        'inner join hvhnonc_in '
-                        'on hvhnonc_out.in_ID = hvhnonc_in.ID '
-                        'and unregister_date between ? and ? '
-                        'and {conditions}) '
-                    'on description = category '
-                    'group by description;')
+                'select '
+                'description as key, '
+                'coalesce(sum(price * amount), 0) as value '
+                'from hvhnonc_category '
+                'left join ('
+                'select '
+                'price, '
+                'hvhnonc_out.amount as amount, '
+                'category '
+                'from hvhnonc_out '
+                'inner join hvhnonc_in '
+                'on hvhnonc_out.in_ID = hvhnonc_in.ID '
+                'and unregister_date between ? and ? '
+                'and {conditions}) '
+                'on description = category '
+                'group by description;')
             replacements, params = get_sql_conditions(d)
             magicDate = datetime.date(*get_year_month_int(d), 15)
             params.insert(0, magicDate.replace(day=1).strftime('%Y-%m-%d'))
@@ -1377,43 +1382,52 @@ class DocBuilder():
             con.close()
 
         def fetch_details(d):
-            """The rows of the details for monthly report."""
+            """The rows of the details for monthly report.
+
+            group by category, sort by purchase date ascended."""
             con, cur = connect._get_connection(useSQL3Row=True)
-            queryIn = ('select name, brand, spec, unit, price, '
-                       'amount as register_amount, '
-                       "0 as unregister_amount, "
-                       'acquire_date as date, '
-                       'purchase_date, '
-                       'place, remark '
-                       'from hvhnonc_in '
-                       'where date between ? and ? '
-                       'and {conditions} ')
-            queryOut = ('select name, brand, spec, unit, price, '
-                        "0 as register_amount, "
-                        'hvhnonc_out.amount as unregister_amount, '
-                        'unregister_date as date, purchase_date, '
-                        'unregister_place as place, '
-                        'unregister_remark as remark '
-                        'from hvhnonc_out '
-                        'inner join hvhnonc_in '
-                        'on hvhnonc_out.in_ID = hvhnonc_in.ID '
-                        'and unregister_date between ? and ? '
-                        'and {conditions} ')
-            sqlstr = (queryIn + 'union all ' + queryOut +
-                      'order by purchase_date asc')
+            # get all categories
+            sqlstr = ('select description from hvhnonc_category;')
+            cur.execute(sqlstr)
+            categories = cur.fetchall()  # a list of sqlite3.Rows
+            categories = [x['description'] for x in categories if x]
+            # preconstruct params for sql
             conditions, tempParams = get_sql_conditions(d)
-            params = []
             magicMinDate = datetime.date(*get_year_month_int(d), 1)
-            params.append(magicMinDate.strftime('%Y-%m-%d'))
-            magicMaxDate = magicMinDate.replace(day=28) + datetime.timedelta(days=4)
+            magicMaxDate = magicMinDate.replace(
+                day=28) + datetime.timedelta(days=4)
             magicMaxDate -= datetime.timedelta(days=magicMaxDate.day)
-            params.append(magicMaxDate.strftime('%Y-%m-%d'))
-            params += list(tempParams)
-            params.append(magicMinDate.strftime('%Y-%m-%d'))
-            params.append(magicMaxDate.strftime('%Y-%m-%d'))
-            params += list(tempParams)
-            cur.execute(sqlstr.format(**conditions), params)
-            yield cur.fetchall()
+            params = [None, magicMinDate, magicMaxDate] + list(tempParams)
+            # for every category, fetch in data and out data order by pchd
+            for category in categories:
+                # in_data union all out_data inner join in data
+                sqlstr = (
+                    'select * '
+                    'from ('
+                    'select '
+                    'category, name, brand, spec, unit, price, '
+                    'amount as register_amount, '
+                    '0 as unregister_amount, purchase_date, '
+                    'place, remark '
+                    'from hvhnonc_in '
+                    'union all '
+                    'select '
+                    'category, name, brand, spec, unit, price, '
+                    '0 as register_amount, '
+                    'hvhnonc_out.amount as unregister_amount, '
+                    'purchase_date, place, remark '
+                    'from hvhnonc_out '
+                    'inner join hvhnonc_in '
+                    'on hvhnonc_out.in_ID = hvhnonc_in.ID)'
+                    'where category = ?'
+                    'and purchase_date between ? and ? '
+                    'and {conditions} '
+                    'order by purchase_date asc;')
+                params[0] = category
+                cur.execute(sqlstr.format(**conditions), params)
+                ret = cur.fetchall()
+                if ret:
+                    yield category, ret
             con.close()
 
         def parse_data(data):
@@ -1427,24 +1441,39 @@ class DocBuilder():
             parsed.append(['科目', '上月結存金額', '本月增加', '本月減少',
                            '本月結存金額'])
             # next line: the data_p1
+            accumulated = ['合計', 0, 0, 0, 0]
             for r_ibm, r_ebm, r_iim, r_eim in zip(ibm, ebm, iim, eim):
-                parsed.append([
-                        r_ibm['key'], r_ibm['value'] - r_ebm['value'],
-                        r_iim['value'], r_eim['value'],
-                        r_ibm['value'] - r_ebm['value'] + r_iim['value'] - r_eim['value']])
+                balance_before_month = r_ibm['value'] - r_ebm['value']
+                income_in_month = r_iim['value']
+                expense_in_month = r_eim['value']
+                total_balance = (r_ibm['value'] - r_ebm['value']
+                                 + r_iim['value'] - r_eim['value'])
+                # put data in the parsed row
+                parsed.append([r_ibm['key'], balance_before_month,
+                               income_in_month, expense_in_month,
+                               total_balance])
+                # do the accumulation
+                to_add = (balance_before_month, income_in_month,
+                          expense_in_month, total_balance)
+                accumulated[1:] = [sum(x)
+                                   for x in zip(accumulated[1:], to_add)]
+            parsed.append(accumulated)
             # insert an empty line
             parsed.append([])
             # next: title of data_details
             parsed.append(['物品名稱', '廠牌及說明', '計量單位', '單價',
-                          '本月增加數量', '本月增加總價', '本月減少數量',
-                          '本月減少總價', '購置日期', '存置地點', '備註事項'])
+                           '本月增加數量', '本月增加總價', '本月減少數量',
+                           '本月減少總價', '購置日期', '存置地點', '備註事項'])
             # next line: parsed data_detail
-            temp_row = []
-            for data_list in data_detail:
-                for row in data_list:
+            for category, list_grouped_by_category in data_detail:
+                # insert header for category
+                parsed.append([category, ])
+                # accumulate quantity and total price
+                accu = {'qty_in': 0, 'tp_in': 0, 'qty_out': 0, 'tp_out': 0}
+                for row in list_grouped_by_category:
                     temp_row = []
                     temp_row.append(row['name'])
-                    temp_row.append(row['brand'] + row['spec'])
+                    temp_row.append(row['brand'] + ' ' + row['spec'])
                     temp_row.append(row['unit'])
                     temp_row.append(row['price'])
                     if not row['register_amount']:
@@ -1453,40 +1482,133 @@ class DocBuilder():
                     else:
                         temp_row.append(row['register_amount'])
                         temp_row.append(row['register_amount'] * row['price'])
+                        accu['qty_in'] += int(row['register_amount'])
+                        accu['tp_in'] += int(row['register_amount']
+                                             * row['price'])
                     if not row['unregister_amount']:
                         temp_row.append(0)
                         temp_row.append(0)
                     else:
                         temp_row.append(row['unregister_amount'])
-                        temp_row.append(row['unregister_amount'] * row['price'])
-                    temp_row.append(row['purchase_date'])
+                        temp_row.append(
+                            row['unregister_amount'] * row['price'])
+                        accu['qty_out'] += int(row['unregister_amount'])
+                        accu['tp_out'] += int(row['unregister_amount']
+                                              * row['price'])
+                    temp_date = row['purchase_date'].split('-')
+                    temp_date = [int(x) for x in temp_date]
+                    temp_date[0] -= 1911  # in ROC years
+                    temp_date = [str(x).zfill(2) for x in temp_date]
+                    temp_date = '-'.join(temp_date)
+                    temp_row.append(temp_date)
                     temp_row.append(row['place'])
                     temp_row.append(row['remark'])
                     parsed.append(temp_row)
+                # partial sum row (in column 4,5,6,7)
+                parsed.append(['小計', '', '', '', ] + [accu[k]
+                                                      for k in accu.keys()])
             return parsed
 
-        def write_to_excel(arr, fn):
-            """Save 2d list to result.xls."""
+        def write_excel(array_2d, filename):
+            """Save 2d array to .xls file."""
             wb = xlwt.Workbook()
             ws = wb.add_sheet('result')
-            for rc, row in enumerate(arr):
+            for rc, row in enumerate(array_2d):
                 for cc, column in enumerate(row):
                     try:
                         ws.write(r=rc, c=cc, label=column)
                     except:
                         # skip if encounter problems
                         continue
-            wb.save(fn)
+            wb.save(filename)
+
+        def split_data_for_docx(data):
+            """splits data into 2, exclusively for this document."""
+            for i, row in enumerate(data):
+                if not row:
+                    return(data[:i], data[i + 1:])
+
+        def write_docx(array_2d, filename, d):
+            """Open template and modify and save."""
+            # open template
+            template = Document('./mydocbuilder/monthly_report_template.docx')
+            self.setMyFont(template)
+            # fill in header
+            header_p1 = template.sections[0].first_page_header
+            header = template.sections[0].header
+            # header_p1: year {y} and month {m}
+            year, month = map(str, get_year_month_int(d))
+            for p in header_p1.paragraphs:
+                if '{' in p.text:
+                    # fill in
+                    p.text = p.text.format(**{'y': year, 'm': month})
+            # header:
+            row = header.tables[0].rows[0]
+            # prepare the date for filling
+            date_fill = {}
+            date_fill['ys'], date_fill['ms'] = str(year), str(month)
+            date_fill['ye'], date_fill['me'] = str(year), str(month)
+            date_fill['ds'] = '1'
+            # tricky part: the last day of month
+            magic_date = datetime.date(*get_year_month_int(d), 28)
+            magic_date += datetime.timedelta(days=4)
+            magic_date -= datetime.timedelta(magic_date.day)
+            date_fill['de'] = str(magic_date.day)
+            # fill in the blanks
+            for cell in row.cells:
+                for p in cell.paragraphs:
+                    if '{dept}' in p.text:
+                        p.text = p.text.format(**{'dept': '秘書室'})
+                    elif '{' in p.text:
+                        p.text = p.text.format(**date_fill)
+                        # this paragraph should be in center
+                        p.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+            # split parsed data into 2
+            data_p1, data_details = split_data_for_docx(data_parsed)
+            # write into the tables: table_p1
+            table = template.tables[0]
+            for data_row in data_p1[1:]:  # skip title row
+                table_row = table.add_row()
+                for i, cell in enumerate(table_row.cells):
+                    try:
+                        cell.text = str(data_row[i])
+                        if i == 0:
+                            cell.paragraphs[0].alignment = \
+                                    WD_PARAGRAPH_ALIGNMENT.CENTER
+                        else:
+                            cell.paragraphs[0].alignment = \
+                                    WD_PARAGRAPH_ALIGNMENT.RIGHT
+                    except IndexError:
+                        pass  # ignore sparse data_row
+            # write into the tables: table_details
+            table = template.tables[2]
+            # skip title row
+            for row_count, data_row in enumerate(data_details[1:]):
+                if row_count != 0:
+                    table_row = table.add_row()
+                else:
+                    table_row = table.rows[-1]
+                for i, cell in enumerate(table_row.cells):
+                    try:
+                        cell.text = str(data_row[i])
+                        cell.paragraphs[0].alignment = \
+                                WD_PARAGRAPH_ALIGNMENT.CENTER
+                    except IndexError:
+                        pass  # ignore sparse data_row
+            # save file
+            template.save(filename)
 
         # TODO: finish me
         print('create_monthly_report')
         data_p1, data_details = fetch_from_database(self.kwargs)
         data_parsed = parse_data((data_p1, data_details))
-        write_to_excel(data_parsed, 'result.xls')
+        write_excel(data_parsed, 'result.xls')
+        write_docx(data_parsed, 'result.docx', self.kwargs)
 
     def create_full_report(self):
         # TODO:  finish this method
         pass
+
 
 def main():
     myDocBuilder = DocBuilder()

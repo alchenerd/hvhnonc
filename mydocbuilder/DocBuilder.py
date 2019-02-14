@@ -962,9 +962,9 @@ class DocBuilder():
             # columns: object_ID, serial_ID, name, spec, unit, amount, price,
             #          acquire_date, keep_year, keep_department, place, keeper
             replacements['columns'] = ', '.join((
-                'object_ID', 'serial_ID', 'name', 'spec', 'unit', 'amount',
-                'price', 'acquire_date', 'keep_year', 'keep_department',
-                'place', 'keeper'))
+                'ID', 'object_ID', 'serial_ID', 'name', 'spec', 'unit',
+                'amount', 'price', 'acquire_date', 'keep_year',
+                'keep_department', 'place', 'keeper'))
             # table: hvhnonc_in
             replacements['table'] = 'hvhnonc_in'
             # conditions: determined by d
@@ -1040,6 +1040,22 @@ class DocBuilder():
                         continue
             wb.save(fn)
 
+        def update_add_list_id(data):
+            """Write add_list_ID to database.
+            For now we use document creation date(today)."""
+            today = datetime.date.today()
+            today_str_zfill = (str(today.year), str(today.month).zfill(2),
+                                str(today.day).zfill(2))
+            string_today = '-'.join(today_str_zfill)
+            con, cur = connect._get_connection()
+            for row in data:
+                id = row['ID']
+                sqlstr = ('update hvhnonc_in set add_list_ID = ? where ID = ?')
+                params = (string_today, id)
+                cur.execute(sqlstr, params)
+            con.commit()
+            con.close()
+
         def construct_docx(data):
             """Open template, then modify according to rowCount."""
             doc = Document('./mydocbuilder/register_list_template.docx')
@@ -1072,16 +1088,18 @@ class DocBuilder():
         # fetch data from database
         data = fetch_from_database(self.kwargs)
         # parse data for xls, docx
-        data = parse_for_document(data)
+        data_parsed = parse_for_document(data)
         # write data and save to excel
-        write_to_excel(data, 'result.xls')
+        write_to_excel(data_parsed, 'result.xls')
         # write to docx template
-        document = construct_docx(data)
+        document = construct_docx(data_parsed)
         # save .docx
         document.save('result.docx')
         # convert to pdf and save (using current working directory)
         cwd = os.getcwd()
         self.docx_to_pdf(cwd + '\\\\result.docx', cwd + '\\\\result.pdf')
+        # update add_list_ID using sql Row data
+        update_add_list_id(data)
 
     def create_unregister_list(self):
         """Creates an unregister list, saves data as excel, docx, and pdf."""
@@ -1408,19 +1426,19 @@ class DocBuilder():
                     'category, name, brand, spec, unit, price, '
                     'amount as register_amount, '
                     '0 as unregister_amount, purchase_date, '
-                    'place, remark '
+                    'acquire_date as date, place, remark '
                     'from hvhnonc_in '
                     'union all '
                     'select '
                     'category, name, brand, spec, unit, price, '
                     '0 as register_amount, '
                     'hvhnonc_out.amount as unregister_amount, '
-                    'purchase_date, place, remark '
+                    'purchase_date, unregister_date as date, place, remark '
                     'from hvhnonc_out '
                     'inner join hvhnonc_in '
                     'on hvhnonc_out.in_ID = hvhnonc_in.ID)'
                     'where category = ?'
-                    'and purchase_date between ? and ? '
+                    'and date between ? and ? '
                     'and {conditions} '
                     'order by purchase_date asc;')
                 params[0] = category
@@ -1465,6 +1483,7 @@ class DocBuilder():
                            '本月增加數量', '本月增加總價', '本月減少數量',
                            '本月減少總價', '購置日期', '存置地點', '備註事項'])
             # next line: parsed data_detail
+            total = {'qty_in': 0, 'tp_in': 0, 'qty_out': 0, 'tp_out': 0}
             for category, list_grouped_by_category in data_detail:
                 # insert header for category
                 parsed.append([category, ])
@@ -1507,6 +1526,10 @@ class DocBuilder():
                 # partial sum row (in column 4,5,6,7)
                 parsed.append(['小計', '', '', '', ] + [accu[k]
                                                       for k in accu.keys()])
+                total = {k : total[k] + accu[k] for k in total.keys()}
+            # total sum
+            parsed.append(['合計', '', '', '', ] + [total[k]
+                                                  for k in total.keys()])
             return parsed
 
         def write_excel(array_2d, filename):
@@ -1598,16 +1621,39 @@ class DocBuilder():
             # save file
             template.save(filename)
 
-        # TODO: finish me
         print('create_monthly_report')
         data_p1, data_details = fetch_from_database(self.kwargs)
         data_parsed = parse_data((data_p1, data_details))
         write_excel(data_parsed, 'result.xls')
         write_docx(data_parsed, 'result.docx', self.kwargs)
+        # convert to pdf and save (using current working directory)
+        cwd = os.getcwd()
+        self.docx_to_pdf(cwd + '\\\\result.docx', cwd + '\\\\result.pdf')
 
     def create_full_report(self):
-        # TODO:  finish this method
-        pass
+        """Creates full report, saves data as excel, docx, and pdf."""
+        def fetch_from_database(d):
+            """Fetch data from database for full report construction.
+
+            return:
+                2 lists if sqlite3.Row: in and out.
+            columns to fetch:
+                add_list_ID, object_ID, serial_ID, name, spec, unit, amount,
+                price, acquire date, keep_year, place,
+                keep_department, keeper
+            """
+            columns = ['add_list_ID', 'object_ID', 'serial_ID', 'name', 'spec',
+                       'unit', 'amount', 'price', 'acquire_date', 'keep_year',
+                       'place', 'keep_department', 'keeper']
+            # COMBAK: finish me
+            yield data_in
+            yield data_out
+
+        # TODO:  finish me
+        print('create_full_report')
+        data = fetch_from_database(self.kwargs)
+        for bulk in data:
+            print(bulk)
 
 
 def main():

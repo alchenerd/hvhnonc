@@ -1632,28 +1632,116 @@ class DocBuilder():
 
     def create_full_report(self):
         """Creates full report, saves data as excel, docx, and pdf."""
+
+        def forge_conditions_and_params(d):
+            """returns the {conditions} and according params for a table"""
+            # conditions: determined by d
+            replacements = {'conditions': ''}
+            params = []
+            for k, v in d.items():
+                if 'date' in k:  # date string tuple
+                    if k == 'acquire_date':  # ignore acquire date
+                        pass
+                    else:
+                        replacements['conditions'] += \
+                            '({} between ? and ?) and '.format(k)
+                        params.extend(v)
+                else:
+                    replacements['conditions'] += \
+                        ('{0} like ? and '.format(k))
+                    params.append('%' + v + '%')
+            replacements['conditions'] += '1'  # (cond1 and )(cond2 and )(1)
+            return replacements, params
+
         def fetch_from_database(d):
             """Fetch data from database for full report construction.
 
             return:
                 2 lists if sqlite3.Row: in and out.
-            columns to fetch:
-                add_list_ID, object_ID, serial_ID, name, spec, unit, amount,
-                price, acquire date, keep_year, place,
-                keep_department, keeper
             """
-            columns = ['add_list_ID', 'object_ID', 'serial_ID', 'name', 'spec',
-                       'unit', 'amount', 'price', 'acquire_date', 'keep_year',
-                       'place', 'keep_department', 'keeper']
+            # first fetch: all rows where conditions are met,
+            #              but only type, amount and ID
+            con, cur = connect._get_connection(useSQL3Row=True)
+            conditions, params = forge_conditions_and_params(d)
+            sqlstr = (
+                    'select '
+                        "'in' as type, ID, amount "
+                    'from hvhnonc_in '
+                    'where acquire_date between ? and ? '
+                        'and {conditions} '
+                    'union all '
+                    'select '
+                        "'out' as type, hvhnonc_in.ID as ID, "
+                        'hvhnonc_out.amount as amount '
+                    'from hvhnonc_out '
+                    'inner join hvhnonc_in '
+                        'on hvhnonc_out.in_ID = hvhnonc_in.ID '
+                        'and unregister_date between ? and ? '
+                        'and {conditions}')
+            try:
+                _, date_max = d['acquire_date']
+                magic_date = (str(date_max.year), str(date_max.month).zfill(2),
+                        str(date_max.day).zfill(2))
+            except KeyError:
+                date_temp = datetime.date.today()
+                magic_date = (str(date_temp.year),
+                              str(date_temp.month).zfill(2),
+                              str(date_temp.day).zfill(2))
+            magic_date = '-'.join(magic_date)
+            params.insert(0, '1911-01-01')
+            params.insert(1, magic_date)
+            params.insert(2, '1911-01-01')
+            params.insert(3, magic_date)
+            cur.execute(sqlstr.format(**conditions), params)
+            data = cur.fetchall()
+            return data
+
+        def substract_data(data):
+            """The data of the difference of 'in' data and 'out' data."""
+            # make a {`ID`: `amount`} dictionary for both in_data and out_data
+            in_data = {}
+            out_data = {}
+            # record those row of data
+            for row in data:
+                if row['type'] == 'in':
+                    if not in_data.get(row['ID'], None):
+                        in_data[row['ID']] = row['amount']
+                    else:
+                        in_data[row['ID']] += row['amount']
+                elif row['type'] == 'out':
+                    if not out_data.get(row['ID'], None):
+                        out_data[row['ID']] = row['amount']
+                    else:
+                        out_data[row['ID']] += row['amount']
+            delta_data = {}
+            for key in out_data.keys():
+                try:
+                    delta_data[key] = in_data[key] - out_data[key]
+                    if return_data[key] <= 0:
+                        delta_data.pop(key)
+                except:
+                    pass  # ignore everything wrong
+            # fetch detailed delta data
+            sqlstr = (
+                    'select '
+                        'add_list_ID, object_ID, serial_ID, name, spec, unit, '
+                        'price, acquire_date, keep_year, place, '
+                        'keep_department, keeper '
+                    'from hvhnonc_in '
+                    'where ID = {id_list_query}')
+            replacement = {'id_list_query': ''}
+            for i, row in enumerate(delta_data):
+                if i == len(delta_data) - 1:
+                    id_list_query += row['ID']
+                else:
+                    id_list_query += row['ID'] + ' or '
             # COMBAK: finish me
-            yield data_in
-            yield data_out
+            return None
 
         # TODO:  finish me
         print('create_full_report')
         data = fetch_from_database(self.kwargs)
-        for bulk in data:
-            print(bulk)
+        data = substract_data(data)
 
 
 def main():

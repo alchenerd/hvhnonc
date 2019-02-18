@@ -1688,9 +1688,9 @@ class DocBuilder():
                               str(date_temp.month).zfill(2),
                               str(date_temp.day).zfill(2))
             magic_date = '-'.join(magic_date)
-            params.insert(0, '1911-01-01')
+            params.insert(0, '1910-12-31')
             params.insert(1, magic_date)
-            params.insert(2, '1911-01-01')
+            params.insert(2, '1910-12-31')
             params.insert(3, magic_date)
             cur.execute(sqlstr.format(**conditions), params)
             data = cur.fetchall()
@@ -1699,50 +1699,96 @@ class DocBuilder():
         def substract_data(data):
             """The data of the difference of 'in' data and 'out' data."""
             # make a {`ID`: `amount`} dictionary for both in_data and out_data
-            in_data = {}
-            out_data = {}
-            # record those row of data
-            for row in data:
-                if row['type'] == 'in':
-                    if not in_data.get(row['ID'], None):
-                        in_data[row['ID']] = row['amount']
-                    else:
-                        in_data[row['ID']] += row['amount']
-                elif row['type'] == 'out':
-                    if not out_data.get(row['ID'], None):
-                        out_data[row['ID']] = row['amount']
-                    else:
-                        out_data[row['ID']] += row['amount']
-            delta_data = {}
-            for key in out_data.keys():
-                try:
-                    delta_data[key] = in_data[key] - out_data[key]
-                    if return_data[key] <= 0:
-                        delta_data.pop(key)
-                except:
-                    pass  # ignore everything wrong
+            in_data = {row['ID']: row['amount'] for row in data if row['type'] == 'in'}
+            out_data = {row['ID']: row['amount'] for row in data if row['type'] == 'out'}
+            delta_data = in_data.copy()
+            for id in out_data.keys():
+                delta_data[id] -= out_data[id]
+                if delta_data[id] <= 0:
+                    delta_data.pop(id)
+            return delta_data
+
+        def fetch_detail_data(data):
+            """Get the required details of the reduced id list."""
             # fetch detailed delta data
+            delta_details = []
+            con, cur = connect._get_connection(useSQL3Row=True)
             sqlstr = (
                     'select '
-                        'add_list_ID, object_ID, serial_ID, name, spec, unit, '
-                        'price, acquire_date, keep_year, place, '
+                        'ID, add_list_ID, object_ID, serial_ID, name, spec, '
+                        'unit, price, acquire_date, keep_year, place, '
                         'keep_department, keeper '
                     'from hvhnonc_in '
-                    'where ID = {id_list_query}')
-            replacement = {'id_list_query': ''}
-            for i, row in enumerate(delta_data):
-                if i == len(delta_data) - 1:
-                    id_list_query += row['ID']
-                else:
-                    id_list_query += row['ID'] + ' or '
-            # COMBAK: finish me
-            return None
+                    'where ID = ?')
+            for id in data.keys():
+                cur.execute(sqlstr, (id,))
+                delta_details += cur.fetchall()
+            return delta_details
+
+        def parse_data(data_from_sql, data_substracted):
+            """Parse the fetched data to table, for excel printing."""
+            return_data = []  # list of lists
+            # title
+            return_data.append(['非消耗品增加單編號', '物品編號', '物品名稱',
+                                '規格', '單位', '數量', '單價', '總價',
+                                '取得日期', '使用年限', '存置地點',
+                                '保管或使用單位', '保管或使用人'])
+            # data row
+            for row in data_from_sql:
+                data_row = []
+                # '非消耗品增加單編號'
+                data_row.append(row['add_list_ID'])
+                # '物品編號'
+                data_row.append(row['object_ID'] + '-' +
+                                row['serial_ID'])
+                # '物品名稱'
+                data_row.append(row['name'])
+                # '規格'
+                data_row.append(row['spec'])
+                # '單位'
+                data_row.append(row['unit'])
+                # '數量', key = ID, value = qty remain
+                try:
+                    data_row.append(data_substracted[row['ID']])
+                except KeyError:
+                    data_row.append('')
+                # '單價'
+                data_row.append(row['price'])
+                # '總價'
+                data_row.append(data_row[-1] * data_row[-2])
+                # '取得日期'
+                data_row.append(row['acquire_date'])
+                # '使用年限'
+                data_row.append(row['keep_year'])
+                # '存置地點'
+                data_row.append(row['place'])
+                # '保管或使用單位'
+                data_row.append(row['keep_department'])
+                # '保管或使用人'
+                data_row.append(row['keeper'])
+                return_data.append(data_row)
+            return return_data
+
+        def write_to_excel(array_2d, filename):
+            """Save 2d array to .xls file."""
+            wb = xlwt.Workbook()
+            ws = wb.add_sheet('result')
+            for rc, row in enumerate(array_2d):
+                for cc, column in enumerate(row):
+                    try:
+                        ws.write(r=rc, c=cc, label=column)
+                    except:
+                        # skip if encounter problems
+                        continue
+            wb.save(filename)
 
         # TODO:  finish me
         print('create_full_report')
         data = fetch_from_database(self.kwargs)
-        data = substract_data(data)
-
+        data_substracted = substract_data(data)
+        data_detail = fetch_detail_data(data_substracted)
+        data_parsed = parse_data(data_detail, data_substracted)
+        write_to_excel(data_parsed, 'result.xls')
 
 def main():
     myDocBuilder = DocBuilder()

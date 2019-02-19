@@ -1621,14 +1621,17 @@ class DocBuilder():
             # save file
             template.save(filename)
 
+        def convert_to_pdf():
+            """Convert to pdf and save (using current working directory)"""
+            cwd = os.getcwd()
+            self.docx_to_pdf(cwd + '\\\\result.docx', cwd + '\\\\result.pdf')
+
         print('create_monthly_report')
         data_p1, data_details = fetch_from_database(self.kwargs)
         data_parsed = parse_data((data_p1, data_details))
         write_excel(data_parsed, 'result.xls')
         write_docx(data_parsed, 'result.docx', self.kwargs)
-        # convert to pdf and save (using current working directory)
-        cwd = os.getcwd()
-        self.docx_to_pdf(cwd + '\\\\result.docx', cwd + '\\\\result.pdf')
+        convert_to_pdf()
 
     def create_full_report(self):
         """Creates full report, saves data as excel, docx, and pdf."""
@@ -1739,8 +1742,9 @@ class DocBuilder():
                 # '非消耗品增加單編號'
                 data_row.append(row['add_list_ID'])
                 # '物品編號'
-                data_row.append(row['object_ID'] + '-' +
-                                row['serial_ID'])
+                id = row['object_ID'] + '-' + row['serial_ID']
+                id = id.replace(' ', '')
+                data_row.append(id)
                 # '物品名稱'
                 data_row.append(row['name'])
                 # '規格'
@@ -1782,13 +1786,37 @@ class DocBuilder():
                         continue
             wb.save(filename)
 
-        # TODO:  finish me
+        def write_to_docx(data, filename):
+            """Write data into a template and save as new."""
+            template = Document('./mydocbuilder/full_report_template.docx')
+            self.setMyFont(template)
+            table = template.tables[0]
+            for row_c, data_row in enumerate(data[1:]):
+                # get a new row to write in
+                if row_c == 0:  # no need for a new row
+                    table_row = table.rows[-1]
+                else:
+                    table_row = table.add_row()
+                # write in values
+                for col_c, cell in enumerate(table_row.cells):
+                    cell.text = str(data_row[col_c])
+                print(row_c, 'th row appended!')
+            template.save(filename)
+
+        def convert_to_pdf():
+            """Convert to pdf and save (using current working directory)"""
+            cwd = os.getcwd()
+            self.docx_to_pdf(cwd + '\\\\result.docx', cwd + '\\\\result.pdf')
+            print('pdf conversion done!')
+
         print('create_full_report')
         data = fetch_from_database(self.kwargs)
         data_substracted = substract_data(data)
         data_detail = fetch_detail_data(data_substracted)
         data_parsed = parse_data(data_detail, data_substracted)
         write_to_excel(data_parsed, 'result.xls')
+        write_to_docx(data_parsed, 'result.docx')
+        convert_to_pdf()
 
 def main():
     myDocBuilder = DocBuilder()

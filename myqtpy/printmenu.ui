@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>648</width>
-    <height>536</height>
+    <height>421</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,45 +16,6 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="1" column="2">
-      <widget class="QRadioButton" name="rb6">
-       <property name="font">
-        <font>
-         <family>微軟正黑體</family>
-         <pointsize>16</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>[增加單]</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="2">
-      <widget class="QRadioButton" name="rb9">
-       <property name="font">
-        <font>
-         <family>微軟正黑體</family>
-         <pointsize>16</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>盤點紀錄</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="QRadioButton" name="rb8">
-       <property name="font">
-        <font>
-         <family>微軟正黑體</family>
-         <pointsize>16</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>動產標籤</string>
-       </property>
-      </widget>
-     </item>
      <item row="1" column="0">
       <widget class="QRadioButton" name="rb4">
        <property name="font">
@@ -65,19 +26,6 @@
        </property>
        <property name="text">
         <string>[除帳]減損單</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QRadioButton" name="rb5">
-       <property name="font">
-        <font>
-         <family>微軟正黑體</family>
-         <pointsize>16</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>動產財產卡</string>
        </property>
       </widget>
      </item>
@@ -117,45 +65,6 @@
        </property>
        <property name="text">
         <string>[建帳]清單</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QRadioButton" name="rb7">
-       <property name="font">
-        <font>
-         <family>微軟正黑體</family>
-         <pointsize>16</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>[增減表]</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QRadioButton" name="rb10">
-       <property name="font">
-        <font>
-         <family>微軟正黑體</family>
-         <pointsize>16</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>盤存表</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QRadioButton" name="rb11">
-       <property name="font">
-        <font>
-         <family>微軟正黑體</family>
-         <pointsize>16</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>財產保管卡</string>
        </property>
       </widget>
      </item>
@@ -611,13 +520,6 @@
   <tabstop>rb2</tabstop>
   <tabstop>rb3</tabstop>
   <tabstop>rb4</tabstop>
-  <tabstop>rb5</tabstop>
-  <tabstop>rb6</tabstop>
-  <tabstop>rb7</tabstop>
-  <tabstop>rb8</tabstop>
-  <tabstop>rb9</tabstop>
-  <tabstop>rb10</tabstop>
-  <tabstop>rb11</tabstop>
   <tabstop>purchase_date_chk</tabstop>
   <tabstop>purchase_date_min</tabstop>
   <tabstop>purchase_date_max</tabstop>

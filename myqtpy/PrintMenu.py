@@ -12,8 +12,8 @@ if __name__ == '__main__':
 else:
     sys.path.append('./myqtpy/')
 from _print_menu_skeleton import Ui_Dialog as PrintMenuDialog
+from Processing import Processing
 from myconnect import connect
-from mydocbuilder.DocBuilder import DocBuilder
 
 class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
     def __init__(self, dialog):
@@ -21,7 +21,6 @@ class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
         super(self.__class__, self).__init__(dialog)
         self.setupUi(dialog)
         self.init_fields()
-        self.builder = DocBuilder()
 
     def init_fields(self):
         """This function is called once when the dialog ui is created."""
@@ -55,18 +54,19 @@ class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
                 'rb11': 'property_keeper_guide',}
 
     def on_previewBtn_clicked(self):
+        print('on_previewBtn_clicked')
         # TODO: finish this
         # find out what kind of document to create (crb = checked radio btn)
         crbName, crbWidget = self.get_checked_radio_button()
         doctype = self._radio_choices.get(crbName, None)
         filledFields = self.get_form_brief()
-        # Create the document(docx) as result.docx
-        self.builder.set_type(doctype)
-        self.builder.set_kwargs(**filledFields)
-        self.builder.construct()
-        # Convert into pdf
-        # Open a preview dialog showing the pdf
-        print('on_previewBtn_clicked')
+        # open a popup for progressbar, in which we call a DocBuilder
+        dialog = QtWidgets.QDialog()
+        process_bar_window = Processing(dialog)
+        process_bar_window.configurate_doc_worker(doctype, filledFields)
+        process_bar_window.run_thread()
+        dialog.exec_()
+        # TODO: Open a preview dialog showing the pdf
 
     def get_form_brief(self):
         """Returns brief(filled only) information of the form.

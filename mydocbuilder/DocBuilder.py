@@ -5,6 +5,7 @@ import sqlite3
 import sys
 from copy import copy, deepcopy
 
+import comtypes
 import comtypes.client
 import deprecation
 import xlwt
@@ -945,6 +946,7 @@ class DocBuilder():
         self.docx_to_pdf(cwd + '\\\\result.docx', cwd + '\\\\result.pdf')
 
     def docx_to_pdf(self, in_file, out_file):
+        comtypes.CoInitialize()
         word = comtypes.client.CreateObject('Word.Application')
         docx = word.Documents.Open(in_file)
         docx.SaveAs(out_file, FileFormat=wdFormatPDF)

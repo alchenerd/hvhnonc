@@ -27,10 +27,24 @@ class DocumentProcessThread(QThread):
 class Processing(QtWidgets.QDialog, ProcessingDialog):
     def __init__(self, dialog):
         self.dialog = dialog
+        self.dialog.closeEvent = self.closeEvent
         super(self.__class__, self).__init__(dialog)
         self.worker = DocumentProcessThread()
         self.setupUi(dialog)
         self.cancelButton.clicked.connect(self.onclick_cancel)
+        self.worker.finished.connect(self.on_thread_finished)
+        self.worker.builder.status_update.connect(self.on_status_update)
+
+    def on_status_update(self, max: int, current: int, msg: str):
+        self.progressBar.setMaximum(max)
+        self.progressBar.setValue(current)
+        self.message.setText(msg)
+
+    def on_thread_finished(self):
+        self.dialog.reject()
+
+    def closeEvent(self, evnt):
+        self.worker.terminate()
 
     def onclick_cancel(self):
         print('onclick_cancel')

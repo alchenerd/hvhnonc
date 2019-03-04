@@ -14,6 +14,7 @@ from docx.enum.style import WD_STYLE_TYPE
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.oxml.ns import qn
 from docx.shared import Pt
+from PyQt5.QtCore import pyqtSignal, QObject
 
 from myconnect import connect
 
@@ -28,10 +29,14 @@ if __name__ == '__main__':  # at mydocbuilder
 wdFormatPDF = 17  # magic constant but I'm too lazy to change case
 
 
-class DocBuilder():
+class DocBuilder(QObject):
     """DocBuilder is a customized docx creator exclusively for hvhnonc."""
 
+    # emits max, current, msg
+    status_update = pyqtSignal(int, int, str)
+
     def __init__(self, type_: str = 'default', **kwargs):
+        super(QObject, self).__init__()
         self.actions = {
             'default': self.hello_docx,
             'register_list': self.create_register_list,
@@ -60,6 +65,7 @@ class DocBuilder():
 
     def hello_docx(self):
         """Makes a dummy hello docx document."""
+        self.status_update.emit(1, 1, "You shouldn't be seeing this, hmm.")
         document = Document()
         document.add_heading('Hello .docx!', 0)
         p = document.add_paragraph('This is my test paragraph!')
@@ -1086,22 +1092,30 @@ class DocBuilder():
                 print('row', i, '/', len(data) - 2, 'appended!')
             return doc
 
-        print('create_register_list')
+        self.status_update.emit(6, 0, 'initalizing...')  #0/6
+        #print('create_register_list')
         # fetch data from database
+        self.status_update.emit(6, 1, 'fetching...')  #1/6
         data = fetch_from_database(self.kwargs)
         # parse data for xls, docx
+        self.status_update.emit(6, 2, 'parsing...')  #2/6
         data_parsed = parse_for_document(data)
         # write data and save to excel
+        self.status_update.emit(6, 3,'writing excel file...') #3/6
         write_to_excel(data_parsed, 'result.xls')
         # write to docx template
+        self.status_update.emit(6, 4,'writing word file...') #4/6
         document = construct_docx(data_parsed)
         # save .docx
         document.save('result.docx')
         # convert to pdf and save (using current working directory)
+        self.status_update.emit(6, 5,'converting to pdf...') #5/6
         cwd = os.getcwd()
         self.docx_to_pdf(cwd + '\\\\result.docx', cwd + '\\\\result.pdf')
         # update add_list_ID using sql Row data
         update_add_list_id(data)
+        self.status_update.emit(6, 6,'Done!') #6/6
+
 
     def create_unregister_list(self):
         """Creates an unregister list, saves data as excel, docx, and pdf."""
@@ -1251,20 +1265,27 @@ class DocBuilder():
                 print('row', i, '/', len(data) - 2, 'appended!')
             return doc
 
-        print('create_unregister_list')
+        self.status_update.emit(6, 0, 'initalizing...')  #0/6
+        #print('create_unregister_list')
         # fetch data from database
+        self.status_update.emit(6, 1, 'fetching...')  #1/6
         data = fetch_from_database(self.kwargs)
         # parse data for xls, docx
+        self.status_update.emit(6, 2, 'parsing...')  #2/6
         data = parse_for_document(data)
         # write data and save to excel
+        self.status_update.emit(6, 3, 'writing excel file...')  #3/6
         write_to_excel(data, 'result.xls')
         # write to docx template
+        self.status_update.emit(6, 4, 'writing word file...')  #4/6
         document = construct_docx(data)
         # save .docx
         document.save('result.docx')
         # convert to pdf and save (using current working directory)
+        self.status_update.emit(6, 5, 'converting to pdf...')  #5/6
         cwd = os.getcwd()
         self.docx_to_pdf(cwd + '\\\\result.docx', cwd + '\\\\result.pdf')
+        self.status_update.emit(6, 6, 'Done!')  #6/6
 
     def create_monthly_report(self):
         """Creates an monthly report, saves data as excel, docx, and pdf."""
@@ -1628,12 +1649,19 @@ class DocBuilder():
             cwd = os.getcwd()
             self.docx_to_pdf(cwd + '\\\\result.docx', cwd + '\\\\result.pdf')
 
+        self.status_update.emit(6, 0, 'initalizing...')  #0/6
         print('create_monthly_report')
+        self.status_update.emit(6, 1, 'fetching...')  #1/6
         data_p1, data_details = fetch_from_database(self.kwargs)
+        self.status_update.emit(6, 2, 'parsing...')  #2/6
         data_parsed = parse_data((data_p1, data_details))
+        self.status_update.emit(6, 3, 'writing excel file...')  #3/6
         write_excel(data_parsed, 'result.xls')
+        self.status_update.emit(6, 4, 'writing word file...')  #4/6
         write_docx(data_parsed, 'result.docx', self.kwargs)
+        self.status_update.emit(6, 5, 'converting to pdf...')  #5/6
         convert_to_pdf()
+        self.status_update.emit(6, 6, 'Done!')  #6/6
 
     def create_full_report(self):
         """Creates full report, saves data as excel, docx, and pdf."""
@@ -1811,14 +1839,23 @@ class DocBuilder():
             self.docx_to_pdf(cwd + '\\\\result.docx', cwd + '\\\\result.pdf')
             print('pdf conversion done!')
 
-        print('create_full_report')
+        self.status_update.emit(8, 0, 'initalizing...')  #0/8
+        #print('create_full_report')
+        self.status_update.emit(8, 1, 'fetching...')  #1/8
         data = fetch_from_database(self.kwargs)
+        self.status_update.emit(8, 2, 'data substracting...')  #2/8
         data_substracted = substract_data(data)
+        self.status_update.emit(8, 3, 'fetching detailed data...')  #3/8
         data_detail = fetch_detail_data(data_substracted)
+        self.status_update.emit(8, 4, 'parsing...')  #4/8
         data_parsed = parse_data(data_detail, data_substracted)
+        self.status_update.emit(8, 5, 'writing excel file...')  #5/8
         write_to_excel(data_parsed, 'result.xls')
+        self.status_update.emit(8, 6, 'writing word file...')  #6/8
         write_to_docx(data_parsed, 'result.docx')
+        self.status_update.emit(8, 7, 'converting to pdf...')  #7/8
         convert_to_pdf()
+        self.status_update.emit(8, 8, 'Done!')  #8/8
 
 def main():
     myDocBuilder = DocBuilder()

@@ -1064,7 +1064,7 @@ class DocBuilder(QObject):
             con.commit()
             con.close()
 
-        def construct_docx(data):
+        def construct_docx(data, status_update):
             """Open template, then modify according to rowCount."""
             doc = Document('./mydocbuilder/register_list_template.docx')
             # set font to 標楷體(16)
@@ -1089,7 +1089,9 @@ class DocBuilder(QObject):
                 row = doc.tables[0].add_row()
                 for cc, cell in enumerate(row.cells):
                     cell.paragraphs[0].text = datum[cc]
-                print('row', i, '/', len(data) - 2, 'appended!')
+                self.status_update.emit(
+                        6, 4,
+                        'writing word file({}/{})...'.format(i, len(data) - 2))
             return doc
 
         self.status_update.emit(6, 0, 'initalizing...')  #0/6
@@ -1104,8 +1106,8 @@ class DocBuilder(QObject):
         self.status_update.emit(6, 3,'writing excel file...') #3/6
         write_to_excel(data_parsed, 'result.xls')
         # write to docx template
-        self.status_update.emit(6, 4,'writing word file...') #4/6
-        document = construct_docx(data_parsed)
+        #status update 4/6 is in the function
+        document = construct_docx(data_parsed, self.status_update)
         # save .docx
         document.save('result.docx')
         # convert to pdf and save (using current working directory)
@@ -1237,7 +1239,7 @@ class DocBuilder(QObject):
                         continue
             wb.save(fn)
 
-        def construct_docx(data):
+        def construct_docx(data, status_update):
             """Open template, then modify according to rowCount."""
             doc = Document('./mydocbuilder/unregister_list_template.docx')
             # set font to 標楷體(12)
@@ -1262,7 +1264,9 @@ class DocBuilder(QObject):
                 row = doc.tables[0].add_row()
                 for cc, cell in enumerate(row.cells):
                     cell.paragraphs[0].text = datum[cc]
-                print('row', i, '/', len(data) - 2, 'appended!')
+                status_update.emit(
+                        6, 4,
+                        'writing word file({}/{})...'.format(i, len(data) - 2))
             return doc
 
         self.status_update.emit(6, 0, 'initalizing...')  #0/6
@@ -1277,8 +1281,8 @@ class DocBuilder(QObject):
         self.status_update.emit(6, 3, 'writing excel file...')  #3/6
         write_to_excel(data, 'result.xls')
         # write to docx template
-        self.status_update.emit(6, 4, 'writing word file...')  #4/6
-        document = construct_docx(data)
+        # status_update 4/6 is done in the function
+        document = construct_docx(data, self.status_update)
         # save .docx
         document.save('result.docx')
         # convert to pdf and save (using current working directory)
@@ -1816,7 +1820,7 @@ class DocBuilder(QObject):
                         continue
             wb.save(filename)
 
-        def write_to_docx(data, filename):
+        def write_to_docx(data, filename, status_update):
             """Write data into a template and save as new."""
             template = Document('./mydocbuilder/full_report_template.docx')
             self.setMyFont(template)
@@ -1830,7 +1834,10 @@ class DocBuilder(QObject):
                 # write in values
                 for col_c, cell in enumerate(table_row.cells):
                     cell.text = str(data_row[col_c])
-                print(row_c, 'th row appended!')
+                status_update.emit(
+                        8, 6,
+                        'writing word file({}/{})...'.format(row_c,
+                                                             len(data[1:])))
             template.save(filename)
 
         def convert_to_pdf():
@@ -1851,8 +1858,8 @@ class DocBuilder(QObject):
         data_parsed = parse_data(data_detail, data_substracted)
         self.status_update.emit(8, 5, 'writing excel file...')  #5/8
         write_to_excel(data_parsed, 'result.xls')
-        self.status_update.emit(8, 6, 'writing word file...')  #6/8
-        write_to_docx(data_parsed, 'result.docx')
+        #status update 6/8 is done in the function
+        write_to_docx(data_parsed, 'result.docx', self.status_update)
         self.status_update.emit(8, 7, 'converting to pdf...')  #7/8
         convert_to_pdf()
         self.status_update.emit(8, 8, 'Done!')  #8/8

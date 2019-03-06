@@ -33,4 +33,3 @@ class Ui_Dialog(object):
         Dialog.setWindowTitle(_translate("Dialog", "處理中..."))
         self.message.setText(_translate("Dialog", "TextLabel"))
         self.cancelButton.setText(_translate("Dialog", "取消"))
-

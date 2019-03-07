@@ -113,3 +113,4 @@ pyinstaller_command.txt
 *.xls
 *.pdf
 *.qrc
+pdfjs/*

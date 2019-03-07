@@ -6,12 +6,14 @@
 from PyQt5 import QtWidgets, QtCore
 from typing import Dict, Tuple
 import sys
+import os
 # These are mine
 if __name__ == '__main__':
     sys.path.append('../')
 else:
     sys.path.append('./myqtpy/')
 from _print_menu_skeleton import Ui_Dialog as PrintMenuDialog
+from PdfPreview import PdfPreview
 from Processing import Processing
 from myconnect import connect
 
@@ -55,18 +57,28 @@ class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
 
     def on_previewBtn_clicked(self):
         print('on_previewBtn_clicked')
-        # TODO: finish this
         # find out what kind of document to create (crb = checked radio btn)
         crbName, crbWidget = self.get_checked_radio_button()
         doctype = self._radio_choices.get(crbName, None)
         filledFields = self.get_form_brief()
         # open a popup for progressbar, in which we call a DocBuilder
         dialog = QtWidgets.QDialog()
-        process_bar_window = Processing(dialog)
-        process_bar_window.configurate_doc_worker(doctype, filledFields)
-        process_bar_window.run_thread()
+        process_bar_dialog = Processing(dialog)
+        process_bar_dialog.configurate_doc_worker(doctype, filledFields)
+        process_bar_dialog.run_thread()
         dialog.exec_()
-        # TODO: Open a preview dialog showing the pdf
+        # TODO: Open a preview dialog showing the pdf (using pdf.js)
+        dialog = QtWidgets.QDialog()
+        pdf_preview_dialog = PdfPreview(dialog)
+        viewer_url = 'file:///' + os.getcwd() + '/pdfjs/web/viewer.html'
+        file_path = 'file:///./../result.pdf'
+        #file_path = 'file:///' + os.getcwd() + '/result.pdf'
+        print('{}?file={}'.format(viewer_url, file_path))
+        pdf_preview_dialog.webEngineView.load(
+                QtCore.QUrl.fromUserInput(
+                        '{}?file={}'.format(viewer_url, file_path)))
+        dialog.exec_()
+
 
     def get_form_brief(self):
         """Returns brief(filled only) information of the form.

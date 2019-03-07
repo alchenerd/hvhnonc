@@ -42,17 +42,6 @@ class Processing(QtWidgets.QDialog, ProcessingDialog):
         self.message.setText(msg)
 
     def on_thread_finished(self):
-        self.dlg = QtWidgets.QDialog()
-        self.layout = QtWidgets.QVBoxLayout(self.dlg)
-        self.wv = QtWebEngineWidgets.QWebEngineView(self.dlg)
-        self.wv.settings().setAttribute(
-                QtWebEngineWidgets.QWebEngineSettings.PluginsEnabled, True)
-        cwd = os.getcwd()
-        fpath = 'file:\\\\\\' + cwd + '\\result.pdf'
-        print(fpath)
-        self.wv.load(QtCore.QUrl(fpath))
-        self.layout.addWidget(self.wv)
-        self.dlg.exec_()
         self.dialog.reject()
 
     def closeEvent(self, evnt):

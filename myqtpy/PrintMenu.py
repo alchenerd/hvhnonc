@@ -70,13 +70,6 @@ class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
         # TODO: Open a preview dialog showing the pdf (using pdf.js)
         dialog = QtWidgets.QDialog()
         pdf_preview_dialog = PdfPreview(dialog)
-        viewer_url = 'file:///' + os.getcwd() + '/pdfjs/web/viewer.html'
-        file_path = 'file:///./../result.pdf'
-        #file_path = 'file:///' + os.getcwd() + '/result.pdf'
-        print('{}?file={}'.format(viewer_url, file_path))
-        pdf_preview_dialog.webEngineView.load(
-                QtCore.QUrl.fromUserInput(
-                        '{}?file={}'.format(viewer_url, file_path)))
         dialog.exec_()
 
 

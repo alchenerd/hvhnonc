@@ -7,6 +7,7 @@ from PyQt5 import QtWidgets, QtCore
 from typing import Dict, Tuple
 import sys
 import os
+
 # These are mine
 if __name__ == '__main__':
     sys.path.append('../')
@@ -71,7 +72,6 @@ class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
         dialog = QtWidgets.QDialog()
         pdf_preview_dialog = PdfPreview(dialog)
         dialog.exec_()
-
 
     def get_form_brief(self):
         """Returns brief(filled only) information of the form.
@@ -237,6 +237,7 @@ class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
                     print(e)
                 cb.setEditText('')
         con.close()
+
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)

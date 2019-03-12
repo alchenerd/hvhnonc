@@ -16,12 +16,12 @@ class PdfPreview(QtWidgets.QDialog, PdfPreviewDialog):
         super(self.__class__, self).__init__(dialog)
         self.setupUi(dialog)
         # the viewer is at HVHNONC/pdfjs/web, so we need to get back
-        path_to_pdfjs = ('file:///' +
-                         os.getcwd().replace('\\', '/') +
-                         '/pdfjs/web/viewer.html')
-        path_to_file = ('file:///' +
-                        os.getcwd().replace('\\', '/') + 
-                        '/result.pdf')
+        path_to_pdfjs = ('file:///'
+                         + os.getcwd().replace('\\', '/')
+                         + '/pdfjs/web/viewer.html')
+        path_to_file = ('file:///'
+                        + os.getcwd().replace('\\', '/')
+                        + '/result.pdf')
         full_path = path_to_pdfjs + '?file=' + path_to_file
         print(full_path)
         self.webEngineView.load(QtCore.QUrl(full_path))

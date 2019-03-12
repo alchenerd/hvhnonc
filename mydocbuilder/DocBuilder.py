@@ -1118,7 +1118,6 @@ class DocBuilder(QObject):
         update_add_list_id(data)
         self.status_update.emit(6, 6,'Done!') #6/6
 
-
     def create_unregister_list(self):
         """Creates an unregister list, saves data as excel, docx, and pdf."""
 

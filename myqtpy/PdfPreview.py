@@ -3,7 +3,7 @@
 @author: alchenerd (alchenerd@gmail.com)
 """
 
-from PyQt5 import QtWidgets, QtCore, QtWebEngineWidgets
+from PyQt5 import QtGui, QtWidgets, QtCore, QtWebEngineWidgets
 import os
 # These are mine
 if __name__ == '__main__':
@@ -11,6 +11,7 @@ if __name__ == '__main__':
 else:
     from myqtpy._pdfpreview_skeleton import Ui_Dialog as PdfPreviewDialog
 
+# 2019/3/14: Now replaced by QtGui.QDesktopServices.openUrl
 class PdfPreview(QtWidgets.QDialog, PdfPreviewDialog):
     def __init__(self, dialog):
         super(self.__class__, self).__init__(dialog)
@@ -24,7 +25,10 @@ class PdfPreview(QtWidgets.QDialog, PdfPreviewDialog):
                         + '/result.pdf')
         full_path = path_to_pdfjs + '?file=' + path_to_file
         print(full_path)
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl(path_to_file))
+        """
         self.webEngineView.load(QtCore.QUrl(full_path))
+        """
 
 if __name__ == '__main__':
     import sys

@@ -3,10 +3,12 @@
 @author: alchenerd (alchenerd@gmail.com)
 """
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtPrintSupport import QPageSetupDialog, QPrintDialog, QPrinter
 from typing import Dict, Tuple
 import sys
 import os
+import deprecation
 
 # These are mine
 if __name__ == '__main__':
@@ -23,12 +25,13 @@ class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
         """Constructs ui, init form, then make a builder."""
         super(self.__class__, self).__init__(dialog)
         self.setupUi(dialog)
+        self.printer = QPrinter()
         self.init_fields()
 
     def init_fields(self):
         """This function is called once when the dialog ui is created."""
         # Select the first radio button
-        self.rb1.setChecked(True)
+        self.rb_register.setChecked(True)
         # initalize dateEdits
         self.init_date_edits()
         # load options for comboboxes
@@ -44,17 +47,28 @@ class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
         self.clearBtn.clicked.connect(self.on_clearBtn_clicked)
         self.previewBtn.clicked.connect(self.on_previewBtn_clicked)
         self._radio_choices = {
-                'rb1': 'register_list',
-                'rb2': 'monthly_report',
-                'rb3': 'full_report',
-                'rb4': 'unregister_list',
-                'rb5': 'property_card',
-                'rb6': 'added_list',
-                'rb7': 'change_list',
-                'rb8': 'property_tag',
-                'rb9': 'counting_record',
-                'rb10': 'counting_record',
-                'rb11': 'property_keeper_guide',}
+                'rb_register': 'register_list',
+                'rb_monthly': 'monthly_report',
+                'rb_full': 'full_report',
+                'rb_unregister': 'unregister_list',}
+
+    @deprecation.deprecated()
+    def on_pageSettingsBtn_clicked(self):
+        """Open a QPageSetupDialog"""
+        printsetdialog = QPageSetupDialog(self.printer,self)
+        printsetdialog.exec_()
+
+    @deprecation.deprecated()
+    def on_printBtn_clicked(self):
+        """Open a QPrintDialog"""
+        printdialog = QPrintDialog(self.printer,self)
+        if QtWidgets.QDialog.Accepted == printdialog.exec_():
+            print('fake printing')
+            # TODO: print result.pdf
+            pass
+            dialog = QtWidgets.QDialog()
+            pdf_preview_dialog = PdfPreview(dialog)
+            pdf_preview_dialog.webEngineView.print()
 
     def on_previewBtn_clicked(self):
         print('on_previewBtn_clicked')
@@ -68,10 +82,18 @@ class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
         process_bar_dialog.configurate_doc_worker(doctype, filledFields)
         process_bar_dialog.run_thread()
         dialog.exec_()
-        # TODO: Open a preview dialog showing the pdf (using pdf.js)
+        # call whatever the system use to open pdf
+        path_to_file = ('file:///' + os.getcwd().replace('\\', '/')
+                        + '/result.pdf')
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl(path_to_file))
+        # this part below is no longer uesd,
+        # but kept in case we need to retake this path
+        """
+        # Open a preview dialog showing the pdf (using pdf.js)
         dialog = QtWidgets.QDialog()
         pdf_preview_dialog = PdfPreview(dialog)
         dialog.exec_()
+        """
 
     def get_form_brief(self):
         """Returns brief(filled only) information of the form.

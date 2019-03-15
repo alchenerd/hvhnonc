@@ -6,24 +6,22 @@ import sqlite3
 
 _default_database = "HVHNONC.db"
 
+def _get_connection(databaseName: str = _default_database,
+                    useSQL3Row: bool = False):
+    """Return a sqlite3 connection and it's cursor.
 
-def _get_connection(
-        databaseName: str = _default_database, useSQL3Row: bool = False):
+    User can set useSQL3Row to true, making cursor return sqilte3.Row"""
     connect = sqlite3.connect(databaseName)
     if useSQL3Row:
         connect.row_factory = sqlite3.Row
     cursor = connect.cursor()
     return connect, cursor
-    row = cur.execute(sqlstr, params).fetchone()
-    try:
-        return row[0]
-    except Exception as e:
-        print(e, name)
-        return None
 
 def get_ch_name(name: str):
+    """Return a chinese name according to the database."""
     try:
         name.encode('ascii')
+    # Not returning None beacause we need a usable name
     except UnicodeEncodeError:
         return name
     con, cur = _get_connection()
@@ -38,11 +36,17 @@ def get_ch_name(name: str):
         return name
 
 def get_field_id(name: str) -> int:
+    """Return a column's ID(which is a field in the GUI form)."""
     con, cur = _get_connection()
-    sqlstr = ('select ID '
-              'from hvhnonc_fields '
-              'where ch_name=:name '
-              'or en_name=:name')
+    sqlstr = (
+            'select '
+                'ID '
+            'from '
+                'hvhnonc_fields '
+            'where '
+                'ch_name=:name '
+            'or '
+                'en_name=:name')
     params = {'name': name}
     row = cur.execute(sqlstr, params).fetchone()
     try:

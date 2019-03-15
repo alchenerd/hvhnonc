@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+@author: alchenerd (alchenerd@gmail.com)
+"""
+
 import datetime
 import os
 import sqlite3
@@ -18,9 +22,6 @@ from PyQt5.QtCore import pyqtSignal, QObject
 
 from myconnect import connect
 
-"""
-@author: alchenerd (alchenerd@gmail.com)
-"""
 
 if __name__ == '__main__':  # at mydocbuilder
     sys.path.append('../')
@@ -51,7 +52,7 @@ class DocBuilder(QObject):
         self.kwargs = kwargs.get('kwargs')
 
     def set_type(self, type_: str = 'default'):
-        """Sets the which type of the document to build."""
+        """Sets the type of which kind of document is going to be built."""
         self.type_ = type_
 
     def set_kwargs(self, **kwargs):
@@ -1862,6 +1863,7 @@ class DocBuilder(QObject):
         self.status_update.emit(8, 7, 'converting to pdf...')  #7/8
         convert_to_pdf()
         self.status_update.emit(8, 8, 'Done!')  #8/8
+
 
 def main():
     myDocBuilder = DocBuilder()

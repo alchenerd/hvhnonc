@@ -394,7 +394,7 @@ class Register(QtWidgets.QDialog, RegisterDialog):
                     date = QtCore.QDate(year, month, day)
                     x.setDate(date)
             except Exception as e:
-                if k not in ('ID', 'old_ID', 'page'):
+                if k not in ('ID', 'old_ID', 'page', 'add_list_ID'):
                     print(e)
 
     def get_record(self, index: int):

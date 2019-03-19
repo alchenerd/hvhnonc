@@ -11,7 +11,6 @@ from copy import copy, deepcopy
 
 import comtypes
 import comtypes.client
-import deprecation
 import xlwt
 from docx import Document
 from docx.enum.style import WD_STYLE_TYPE

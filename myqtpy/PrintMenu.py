@@ -52,24 +52,6 @@ class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
                 'rb_full': 'full_report',
                 'rb_unregister': 'unregister_list',}
 
-    @deprecation.deprecated()
-    def on_pageSettingsBtn_clicked(self):
-        """Open a QPageSetupDialog"""
-        printsetdialog = QPageSetupDialog(self.printer,self)
-        printsetdialog.exec_()
-
-    @deprecation.deprecated()
-    def on_printBtn_clicked(self):
-        """Open a QPrintDialog"""
-        printdialog = QPrintDialog(self.printer,self)
-        if QtWidgets.QDialog.Accepted == printdialog.exec_():
-            print('fake printing')
-            # TODO: print result.pdf
-            pass
-            dialog = QtWidgets.QDialog()
-            pdf_preview_dialog = PdfPreview(dialog)
-            pdf_preview_dialog.webEngineView.print()
-
     def on_previewBtn_clicked(self):
         print('on_previewBtn_clicked')
         # find out what kind of document to create (crb = checked radio btn)

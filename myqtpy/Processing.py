@@ -4,7 +4,7 @@
 """
 
 import os
-from PyQt5 import QtWidgets, QtCore, QtWebEngineWidgets
+from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QThread
 # These are mine
 if __name__ == '__main__':

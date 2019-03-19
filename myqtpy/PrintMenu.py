@@ -16,7 +16,6 @@ if __name__ == '__main__':
 else:
     sys.path.append('./myqtpy/')
 from _print_menu_skeleton import Ui_Dialog as PrintMenuDialog
-from PdfPreview import PdfPreview
 from Processing import Processing
 from myconnect import connect
 
@@ -68,14 +67,6 @@ class PrintMenu(QtWidgets.QDialog, PrintMenuDialog):
         path_to_file = ('file:///' + os.getcwd().replace('\\', '/')
                         + '/result.pdf')
         QtGui.QDesktopServices.openUrl(QtCore.QUrl(path_to_file))
-        # this part below is no longer uesd,
-        # but kept in case we need to retake this path
-        """
-        # Open a preview dialog showing the pdf (using pdf.js)
-        dialog = QtWidgets.QDialog()
-        pdf_preview_dialog = PdfPreview(dialog)
-        dialog.exec_()
-        """
 
     def get_form_brief(self):
         """Returns brief(filled only) information of the form.

@@ -114,3 +114,5 @@ pyinstaller_command.txt
 *.pdf
 *.qrc
 pdfjs/*
+dist_backup/
+dist_onefile/

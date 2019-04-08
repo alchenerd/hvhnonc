@@ -65,7 +65,7 @@ class DocBuilder(QObject):
 
     def hello_docx(self):
         """Makes a dummy hello docx document."""
-        self.status_update.emit(1, 1, "You shouldn't be seeing this, hmm.")
+        self.status_update.emit(1, 1, "This message shouldn't appear, hmm.")
         document = Document()
         document.add_heading('Hello .docx!', 0)
         p = document.add_paragraph('This is my test paragraph!')
@@ -223,6 +223,7 @@ class DocBuilder(QObject):
                 row = doc.tables[0].add_row()
                 for cc, cell in enumerate(row.cells):
                     cell.paragraphs[0].text = datum[cc]
+                    cell.paragraphs[0].alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
                 self.status_update.emit(
                         6, 4,
                         'writing word file({}/{})...'.format(i, len(data) - 2))

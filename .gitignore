@@ -117,3 +117,5 @@ pdfjs/*
 dist_backup/
 dist_onefile/
 TODO
+.vscode/*
+dist_archive/*

@@ -206,11 +206,14 @@ class DocBuilder(QObject):
             # fill in the header
             header = doc.sections[0].header
             replaceRow = header.tables[0].rows[0]
+            """
+            # 20190429: This part is now intentionally left blank.
             # fill in department
             target_paragraph = replaceRow.cells[0].paragraphs[0]
             target_paragraph.text = \
                 target_paragraph.text.format(**{'dept': '秘書室'})
             target_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+            """
             # fill in the date
             target_paragraph = replaceRow.cells[1].paragraphs[0]
             today = datetime.date.today()
